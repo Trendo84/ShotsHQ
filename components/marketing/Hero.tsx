@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { PhoneShowcase } from "@/components/marketing/PhoneShowcase";
+import { HeroRotatingTitle } from "@/components/marketing/HeroRotatingTitle";
 
 export function Hero() {
   return (
@@ -26,18 +27,13 @@ export function Hero() {
         <div className="grid grid-cols-12 gap-10 lg:gap-14 items-center">
           {/* Headline */}
           <div className="col-span-12 lg:col-span-8 flex flex-col gap-8 min-w-0">
-            <h1 className="t-display text-[clamp(2.5rem,7vw,5.5rem)] leading-[0.92] text-balance">
-              Ship App&nbsp;Store
-              <br />
-              <span className="text-[var(--accent)]">screenshots</span>
-              <br />
-              before&nbsp;coffee.
-            </h1>
+            <HeroRotatingTitle />
 
-            <p className="t-prose-lg max-w-[36ch]">
-              Drop in raw iOS screens. Get five to eight polished listing
-              images — copy, device frames, backdrops, 41 locales, every
-              required dimension — in under five minutes.
+            <p className="t-prose-lg max-w-[40ch]">
+              Drop in raw iOS screens. Get App Store listings, web hero
+              shots, press kits, OG cards, Discord and Product Hunt
+              assets — copy, device frames, backdrops, 41 locales,
+              every required dimension — in under five minutes.
             </p>
 
             <div className="flex flex-wrap gap-3 items-center">
