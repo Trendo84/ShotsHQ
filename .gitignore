@@ -26,3 +26,6 @@ test-results
 
 drizzle/meta
 .trigger
+
+# Local-only AI test outputs
+tmp/
