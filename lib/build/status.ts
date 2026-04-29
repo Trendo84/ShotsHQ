@@ -31,7 +31,7 @@ export type Phase = {
   steps:       Step[];
 };
 
-export const LAST_UPDATED = "2026-04-29 16:00 AEST";
+export const LAST_UPDATED = "2026-04-29 17:30 AEST";
 export const REPO_URL     = "https://github.com/Trendo84/ShotsHQ";
 export const PROD_URL     = "https://shotshq.com";
 
@@ -306,20 +306,34 @@ export const PHASES: Phase[] = [
     steps: [
       {
         id:     "gpt-image-1",
-        title:  "Add gpt-image-1 route alongside Flux 2",
-        status: "todo",
+        title:  "gpt-image-1 route — premium tier",
+        status: "done",
         description:
-          "Create /api/ai/image-premium using OpenAI's gpt-image-1 model. Tiered pricing: Flux 2 = 2 credits, gpt-image-1 = 8 credits. Far better text rendering and layout intelligence than Flux for design work.",
+          "POST /api/ai/template-set generates a cohesive 6-up App Store screenshot composition in a single gpt-image-1 call (PulseChef-style). Cost: 8 credits. Auto-refund on failure. Uploaded to R2. Synchronous (15-30s).",
         links: [
           { label: "gpt-image-1 docs", href: "https://platform.openai.com/docs/guides/images" },
         ],
       },
       {
-        id:     "prompt-library",
-        title:  "Build lib/ai/prompts/ library with design DNA",
+        id:     "template-set-ui",
+        title:  "Wire 'Generate template set' button on /projects/[id]",
         status: "todo",
         description:
-          "Currently `lib/ai/prompts.ts` is a stub. Replace with a directory: screenshot-copy, screenshot-layout, backdrop-image, template-builder, design-principles, plus an examples/ folder per app category.",
+          "UI to invoke /api/ai/template-set with style + palette + voice inputs. Show generated wide composition. 'Use this set' button slices into 6 frames and saves as project's starting templates.",
+      },
+      {
+        id:     "template-slicer",
+        title:  "Slice wide gpt-image-1 output into 6 frames",
+        status: "todo",
+        description:
+          "lib/canvas/slicer.ts: takes the 1536×1024 output → divides into 6 vertical slices → resizes each to App Store dimensions (1290×2796) → creates ShotsCanvas JSON with image-bg layer. User can edit each in Fabric.",
+      },
+      {
+        id:     "prompt-library",
+        title:  "Build lib/ai/prompts/ library with design DNA",
+        status: "in_progress",
+        description:
+          "Directory created. lib/ai/prompts/template-set.ts shipped with 6 style direction systems (minimal-light, tactical-dark, warm-organic, playful-gradient, tech-minimal, editorial). Still TODO: copy + layout + backdrop prompts, plus examples/ folder.",
       },
       {
         id:     "few-shot-examples",
