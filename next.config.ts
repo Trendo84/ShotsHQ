@@ -10,6 +10,11 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "*.r2.cloudflarestorage.com" },
       { protocol: "https", hostname: "img.clerk.com" },
     ],
+    /* Allow high-quality variants for hero/backdrop assets — default 75
+       caused banding in the AI-generated gradient under mix-blend-screen. */
+    qualities: [75, 90, 95, 100],
+    /* AVIF first — dithers gradients better than WebP, smaller files. */
+    formats: ["image/avif", "image/webp"],
   },
   experimental: {
     serverActions: { bodySizeLimit: "10mb" },

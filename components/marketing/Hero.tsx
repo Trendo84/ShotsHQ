@@ -6,7 +6,10 @@ import { HeroRotatingTitle } from "@/components/marketing/HeroRotatingTitle";
 export function Hero() {
   return (
     <section className="relative border-b border-[var(--line)] overflow-hidden">
-      {/* Atmospheric backdrop */}
+      {/* Atmospheric backdrop — quality bumped to 95 (default 75 caused
+          visible banding in the gradient under mix-blend-screen). The
+          dither layer below adds 1.5% grain noise to break up any
+          residual banding from 8-bit color gradients. */}
       <div
         aria-hidden
         className="absolute inset-0 pointer-events-none hero-backdrop"
@@ -16,9 +19,20 @@ export function Hero() {
           alt=""
           fill
           priority
+          quality={95}
           sizes="(max-width: 1024px) 100vw, 80vw"
           className="object-cover object-right-top opacity-90 mix-blend-screen select-none"
           draggable={false}
+        />
+        {/* Grain dither — masks 8-bit gradient banding without visible texture */}
+        <div
+          aria-hidden
+          className="absolute inset-0 pointer-events-none mix-blend-overlay opacity-[0.045]"
+          style={{
+            backgroundImage:
+              "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
+            backgroundSize: "200px 200px",
+          }}
         />
       </div>
       <div className="absolute inset-0 blueprint pointer-events-none opacity-25" aria-hidden />
