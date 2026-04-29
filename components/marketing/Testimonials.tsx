@@ -17,7 +17,7 @@ const VOICES: Voice[] = [
     avatar: "/avatar-focus.png",
   },
   {
-    quote: "I shipped my screenshots before my coffee got cold. The Polotno editor doesn't fight me, which is a first.",
+    quote: "I shipped my screenshots before my coffee got cold. The canvas editor doesn't fight me, which is a first.",
     author: "M. Davies",
     handle: "@mdavies",
     app: "Tideline — Surf reports",

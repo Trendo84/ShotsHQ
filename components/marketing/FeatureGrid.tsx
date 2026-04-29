@@ -2,25 +2,25 @@ const FEATURES = [
   {
     code: "01",
     title: "AI copy",
-    body: "GPT-5 with Zod schemas. Headline, subheadline, CTA — fixed-length, never malformed.",
+    body: "Frontier-class language model writes headlines, subheadlines, and CTAs. Fixed-length, never malformed.",
     spec: "1 cr / gen",
   },
   {
     code: "02",
     title: "Backdrops",
-    body: "Lift the subject with birefnet, regenerate the background with Flux 2, composite at full fidelity.",
+    body: "AI lifts your app's subject, regenerates the background in your brand's palette, and composites at full fidelity.",
     spec: "2 cr / gen",
   },
   {
     code: "03",
     title: "Restyle",
-    body: "Drop in a reference shot. The model lifts the palette, mood, and light, then re-skins the whole pack.",
+    body: "Drop in a reference shot. The AI lifts its palette, mood, and lighting, then re-skins your whole pack to match.",
     spec: "3 cr / gen",
   },
   {
     code: "04",
     title: "41 locales",
-    body: "Fan-out in parallel. RTL and CJK auto-relayout, glyph-aware kerning, no clipped text.",
+    body: "Every language in parallel. RTL and CJK auto-relayout, glyph-aware kerning, no clipped text — anywhere.",
     spec: "1 cr / loc",
   },
   {

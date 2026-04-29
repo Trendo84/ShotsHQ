@@ -23,7 +23,7 @@ const ROADMAP: Item[] = [
     id: "ab-locales",
     title: "A/B headline variants per locale",
     blurb:
-      "Two headlines per language, A/B baked into the export bundle. Cheap GPT-5 call, big perceived value.",
+      "Two headlines per language, A/B baked into the export bundle. Lightweight AI call, big perceived value.",
     status: "In dev",
   },
   {

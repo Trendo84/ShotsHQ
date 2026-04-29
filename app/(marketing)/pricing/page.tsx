@@ -52,12 +52,12 @@ export default function PricingPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-[var(--line)] border border-[var(--line)]">
             {[
-              { label: "AI copy generation",    cost: 1, body: "GPT-5 structured headline, subheadline, CTA." },
-              { label: "AI backdrop",           cost: 2, body: "Birefnet matte + Flux 2 background replacement." },
-              { label: "AI restyle from ref",   cost: 3, body: "Lift palette and mood, restyle the full pack." },
+              { label: "AI copy generation",    cost: 1, body: "AI-generated headline, subheadline, and CTA — guaranteed well-formed." },
+              { label: "AI backdrop",           cost: 2, body: "Subject-aware AI background generation in your brand's palette." },
+              { label: "AI restyle from ref",   cost: 3, body: "Lift palette and mood from a reference, restyle the full pack." },
               { label: "Translate (per locale)",cost: 1, body: "Auto-relayout, RTL-aware, parallel fan-out." },
-              { label: "Standard export",       cost: 0, body: "Server-side sharp render to all dimensions." },
-              { label: "App Store Connect upload", cost: 0, body: "Push generated assets directly to ASC." },
+              { label: "Standard export",       cost: 0, body: "Server-side render to every required App Store dimension." },
+              { label: "App Store Connect upload", cost: 0, body: "Push generated assets directly to App Store Connect." },
             ].map((row) => (
               <div key={row.label} className="bg-[var(--bg)] p-5 flex flex-col gap-3 min-h-[150px]">
                 <div className="flex items-baseline justify-between gap-3">

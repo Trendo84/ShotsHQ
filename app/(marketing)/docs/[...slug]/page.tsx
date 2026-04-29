@@ -53,7 +53,7 @@ const DOCS: Record<string, DocEntry> = {
       <>
         <h2>Project</h2>
         <p>
-          A project owns app metadata (name, description, category), Polotno
+          A project owns app metadata (name, description, category), the
           canvas state, and a list of generated screenshots.
         </p>
         <h2>Screenshot</h2>
@@ -101,19 +101,19 @@ const DOCS: Record<string, DocEntry> = {
     ),
   },
   editor: {
-    title: "POLOTNO CANVAS",
+    title: "CANVAS EDITOR",
     excerpt: "Layers, frames, autosave, keyboard shortcuts.",
     body: (
       <>
         <h2>Auto-save</h2>
         <p>
-          Polotno store changes are debounced 500ms and flushed to{" "}
-          <samp>projects.polotno_json</samp>.
+          Canvas changes are debounced 500ms and flushed to{" "}
+          <samp>projects.canvas_json</samp>.
         </p>
         <h2>Server is authoritative</h2>
         <p>
-          The browser never produces final exports. <samp>sharp</samp> on the
-          server re-renders from the JSON state to guarantee pixel parity.
+          The browser never produces final exports. The server re-renders
+          from the JSON canvas state to guarantee pixel parity.
         </p>
         <h2>Shortcuts</h2>
         <ul>
@@ -127,36 +127,35 @@ const DOCS: Record<string, DocEntry> = {
   },
   "ai-copy": {
     title: "AI COPY GENERATION",
-    excerpt: "GPT-5 with Zod-enforced output. No malformed JSON, ever.",
+    excerpt: "Structured AI output. No malformed JSON, ever.",
     body: (
       <>
         <h2>Schema</h2>
-        <pre>{`const HeadlineSchema = z.object({
-  headline: z.string().max(40),
-  subheadline: z.string().max(80),
-  emoji: z.string().optional(),
-  ctaSuggestion: z.string().max(20),
-});`}</pre>
+        <p>
+          Headlines, subheadlines, and CTAs come back with guaranteed
+          length limits and required fields — never malformed, never
+          truncated mid-render.
+        </p>
         <h2>Cost</h2>
         <p>1 credit per generation. Refunded on failure.</p>
         <h2>Prompt source</h2>
         <p>
-          All prompts live in <samp>lib/ai/prompts.ts</samp>. Never inline
-          prompts in feature code — they need version control and A/B hooks.
+          All prompts are version-controlled and A/B-hookable. We tune
+          them centrally so output stays brand-consistent across the pack.
         </p>
       </>
     ),
   },
   "ai-backdrop": {
     title: "AI BACKDROP",
-    excerpt: "fal.ai Flux 2 + birefnet matte for clean composites.",
+    excerpt: "Subject lift + AI-generated background, composited cleanly.",
     body: (
       <>
         <h2>Pipeline</h2>
         <ol>
-          <li>birefnet extracts a high-fidelity subject matte</li>
-          <li>Flux 2 paints a backdrop matching app mood + palette</li>
-          <li>sharp composites at full resolution</li>
+          <li>AI extracts a high-fidelity subject matte from your screenshot</li>
+          <li>AI paints a backdrop matching your app's mood and palette</li>
+          <li>The server composites both at full resolution</li>
         </ol>
         <h2>Cost</h2>
         <p>2 credits per generation.</p>
@@ -165,7 +164,7 @@ const DOCS: Record<string, DocEntry> = {
   },
   translate: {
     title: "TRANSLATION",
-    excerpt: "41 locales fan out in parallel via Trigger.dev batch.",
+    excerpt: "41 locales fan out in parallel. Auto-relayout per language.",
     body: (
       <>
         <h2>Locales</h2>

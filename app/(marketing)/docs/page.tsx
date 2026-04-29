@@ -17,17 +17,17 @@ const SECTIONS = [
     title: "Editor",
     code: "02",
     items: [
-      { slug: "editor",       label: "Polotno canvas",       sub: "Layers, frames, autosave" },
+      { slug: "editor",       label: "Canvas editor",        sub: "Layers, frames, autosave" },
       { slug: "device-frames",label: "Device frames",        sub: "iPhone 6.9″, 6.7″, iPad 13″" },
-      { slug: "export",       label: "Export pipeline",      sub: "Sharp render to all dimensions" },
+      { slug: "export",       label: "Export pipeline",      sub: "Server render to all dimensions" },
     ],
   },
   {
     title: "AI modules",
     code: "03",
     items: [
-      { slug: "ai-copy",      label: "AI copy generation",   sub: "GPT-5 + Zod schemas" },
-      { slug: "ai-backdrop",  label: "AI backdrop",          sub: "Flux 2 + birefnet" },
+      { slug: "ai-copy",      label: "AI copy generation",   sub: "Structured headline output" },
+      { slug: "ai-backdrop",  label: "AI backdrop",          sub: "Subject lift + AI-generated background" },
       { slug: "translate",    label: "Translation",          sub: "41 locales, parallel fan-out" },
     ],
   },

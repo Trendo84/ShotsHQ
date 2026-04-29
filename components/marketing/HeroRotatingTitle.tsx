@@ -40,12 +40,12 @@ export function HeroRotatingTitle() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="t-display text-[clamp(2.25rem,7vw,5.5rem)] leading-[0.92] text-balance break-words">
-        Ship&nbsp;App&nbsp;Store
+      <h1 className="t-display text-[clamp(2rem,7vw,5.5rem)] leading-[0.92]">
+        <span className="whitespace-nowrap">Ship App Store</span>
         <br />
-        <span className="text-[var(--accent)]">screenshots</span>
+        <span className="text-[var(--accent)] whitespace-nowrap">screenshots</span>
         <br />
-        before&nbsp;coffee.
+        <span className="whitespace-nowrap">before coffee.</span>
       </h1>
 
       {/* Rotating surface chip — communicates 'plus everything else' */}

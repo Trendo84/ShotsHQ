@@ -16,10 +16,10 @@ const ENTRIES: Array<{
     date: "2026-04-25",
     channel: "STABLE",
     changes: [
-      { tag: "ADD",   body: "GPT-5 structured headline schema with CTA suggestion field." },
+      { tag: "ADD",   body: "Structured AI headline schema with CTA suggestion field." },
       { tag: "ADD",   body: "Lifetime deal landing page with seat counter, capped at 500." },
-      { tag: "FIX",   body: "Polotno autosave debounce raised to 500ms; prior 200ms thrashed Postgres." },
-      { tag: "FIX",   body: "Stripe meter idempotency now reuses ledger key — replay-safe." },
+      { tag: "FIX",   body: "Editor autosave debounce raised to 500ms; prior 200ms thrashed the database." },
+      { tag: "FIX",   body: "Billing meter idempotency now reuses ledger key — replay-safe." },
     ],
   },
   {
@@ -29,7 +29,7 @@ const ENTRIES: Array<{
     changes: [
       { tag: "ADD",   body: "Direct upload to App Store Connect via JWT-signed API." },
       { tag: "ADD",   body: "iPad 13″ M4 master frame asset (2064 × 2752)." },
-      { tag: "PERF",  body: "sharp render pipeline now streams to R2; p50 dropped from 4.8s to 3.2s." },
+      { tag: "PERF",  body: "Server render pipeline now streams to storage; p50 dropped from 4.8s to 3.2s." },
     ],
   },
   {
@@ -37,8 +37,8 @@ const ENTRIES: Array<{
     date: "2026-03-28",
     channel: "STABLE",
     changes: [
-      { tag: "ADD",   body: "fal.ai Flux 2 background regeneration + birefnet subject matte." },
-      { tag: "ADD",   body: "41-locale fan-out via Trigger.dev parallel batch task." },
+      { tag: "ADD",   body: "AI background regeneration with subject lift and brand-aware palette." },
+      { tag: "ADD",   body: "41-locale fan-out via parallel batch processing." },
       { tag: "FIX",   body: "Arabic / Hebrew layouts now mirror correctly across all device frames." },
     ],
   },
@@ -47,9 +47,9 @@ const ENTRIES: Array<{
     date: "2026-03-14",
     channel: "BETA",
     changes: [
-      { tag: "ADD",   body: "Studio Monthly subscription via Stripe Billing Meters API." },
-      { tag: "ADD",   body: "Public beta opened on ProductHunt + IndieHackers." },
-      { tag: "REM",   body: "Removed deprecated `usageRecords.create` calls; meter events only." },
+      { tag: "ADD",   body: "Studio Monthly subscription with metered usage." },
+      { tag: "ADD",   body: "Public beta opened on Product Hunt + Indie Hackers." },
+      { tag: "REM",   body: "Removed deprecated billing calls; meter events only." },
     ],
   },
   {
@@ -57,7 +57,7 @@ const ENTRIES: Array<{
     date: "2026-02-29",
     channel: "INTERNAL",
     changes: [
-      { tag: "ADD",   body: "Polotno editor licensed and integrated; canvas state persisted to JSONB." },
+      { tag: "ADD",   body: "Canvas editor integrated; canvas state persisted to JSONB." },
       { tag: "ADD",   body: "Credit ledger system with idempotency-keyed transactions." },
     ],
   },

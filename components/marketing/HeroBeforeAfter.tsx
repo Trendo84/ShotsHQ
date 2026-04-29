@@ -68,8 +68,9 @@ export function HeroBeforeAfter({ className = "" }: { className?: string }) {
             opacity:   revealed ? 1 : 0,
           }}
         >
-          <span className="absolute -top-7 left-0 t-mono-xs uppercase tracking-[0.18em] text-[var(--fg-mute)] whitespace-nowrap">
-            <span className="text-[var(--accent)]">●</span> Raw input
+          <span className="absolute -top-9 left-0 inline-flex items-center gap-2 px-2 py-1 border border-[var(--line-strong)] bg-[var(--bg)] t-mono-xs uppercase tracking-[0.18em] text-[var(--fg)] whitespace-nowrap">
+            <span className="block w-1.5 h-1.5 rounded-full bg-[var(--accent)]" />
+            <span className="text-[12px]">Raw input</span>
           </span>
 
           {/* Phone frame */}
@@ -95,18 +96,20 @@ export function HeroBeforeAfter({ className = "" }: { className?: string }) {
 
         {/* ── ARROW with caption ─────────────────────────────────────────── */}
         <div
-          className="flex flex-col items-center gap-2 px-1 transition-all duration-[900ms] ease-[cubic-bezier(0.32,0.72,0,1)]"
+          className="flex flex-col items-center gap-3 px-2 transition-all duration-[900ms] ease-[cubic-bezier(0.32,0.72,0,1)]"
           style={{
             opacity: revealed ? 1 : 0,
             transitionDelay: "200ms",
           }}
         >
-          <span className="t-mono-xs uppercase tracking-[0.16em] text-[var(--fg-mute)] hidden sm:inline">
+          <span className="t-mono-xs uppercase tracking-[0.18em] text-[var(--fg-mute)]">
             ShotsHQ
           </span>
-          <ArrowRight />
-          <span className="t-mono-xs uppercase tracking-[0.16em] text-[var(--accent)] hidden sm:inline">
-            ~5 min
+          <span className="grid place-items-center w-12 h-12 sm:w-14 sm:h-14 border border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-fg)] shadow-[0_0_24px_-4px_var(--accent)]">
+            <ArrowRight />
+          </span>
+          <span className="t-mono-xs uppercase tracking-[0.18em] text-[var(--accent)] font-semibold whitespace-nowrap">
+            ~ 5 min
           </span>
         </div>
 
@@ -119,8 +122,9 @@ export function HeroBeforeAfter({ className = "" }: { className?: string }) {
             transitionDelay: "120ms",
           }}
         >
-          <span className="absolute -top-7 right-0 t-mono-xs uppercase tracking-[0.18em] text-[var(--fg-mute)] whitespace-nowrap">
-            Shipped <span className="text-[var(--accent)]">●</span>
+          <span className="absolute -top-9 right-0 inline-flex items-center gap-2 px-2 py-1 border border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-fg)] t-mono-xs uppercase tracking-[0.18em] whitespace-nowrap">
+            <span className="text-[12px] font-semibold">Shipped</span>
+            <span className="block w-1.5 h-1.5 rounded-full bg-[var(--accent-fg)]" />
           </span>
 
           <div
@@ -145,14 +149,13 @@ export function HeroBeforeAfter({ className = "" }: { className?: string }) {
 function ArrowRight() {
   return (
     <svg
-      width="22"
-      height="22"
+      width="20"
+      height="20"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.5"
+      strokeWidth="2"
       strokeLinecap="square"
-      className="text-[var(--accent)]"
       aria-hidden
     >
       <path d="M4 12 L20 12" />
