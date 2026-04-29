@@ -56,14 +56,17 @@ export function Hero() {
               </span>
             </div>
 
-            {/* Trust chip */}
-            <div className="flex items-center gap-2 t-mono-xs text-[var(--fg-mute)]">
+            {/* Trust chip — built-in-public signal, not "pre-launch" */}
+            <div className="flex items-center gap-2 t-mono-xs text-[var(--fg-mute)] flex-wrap">
               <span className="inline-flex items-center gap-1.5 border border-[var(--signal)] text-[var(--signal)] px-2 py-1 uppercase tracking-[0.16em]">
                 <span className="block w-1.5 h-1.5 rounded-full bg-[var(--signal)]" />
-                Pre-launch
+                Built in public
               </span>
               <span className="hidden sm:inline">
-                · Built by an indie dev for indie devs
+                · Indie dev solo studio · See{" "}
+                <Link href="/changelog" className="text-[var(--fg)] underline underline-offset-2 decoration-[var(--line-strong)] hover:decoration-[var(--accent)]">
+                  changelog
+                </Link>
               </span>
             </div>
           </div>

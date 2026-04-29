@@ -18,7 +18,7 @@ const ENTRIES: Array<{
     channel: "STABLE",
     changes: [
       { tag: "ADD",   body: "Structured AI headline schema with CTA suggestion field." },
-      { tag: "ADD",   body: "Lifetime deal landing page with seat counter, capped at 500." },
+      { tag: "ADD",   body: "Brand-extraction endpoint — paste any URL, get a brand profile that drives AI output." },
       { tag: "FIX",   body: "Editor autosave debounce raised to 500ms; prior 200ms thrashed the database." },
       { tag: "FIX",   body: "Billing meter idempotency now reuses ledger key — replay-safe." },
     ],

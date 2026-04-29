@@ -182,37 +182,75 @@ const DOCS: Record<string, DocEntry> = {
   },
   api: {
     title: "PUBLIC API",
-    excerpt: "Studio + Lifetime tiers. REST + webhooks. Idempotency-key required.",
+    excerpt: "Studio tier. REST + webhooks. Idempotency-key required.",
     body: (
       <>
         <h2>Auth</h2>
         <p>
-          API keys are issued from <Link href="/settings" className="link-tick">/settings</Link>. Send as <samp>Authorization: Bearer ...</samp>.
+          API keys are issued from <Link href="/settings" className="link-tick">/settings</Link>.
+          Send the key as <samp>Authorization: Bearer sk_live_...</samp>.
+          Base URL: <samp>https://api.shotshq.com/v1</samp>.
         </p>
+
         <h2>Idempotency</h2>
         <p>
           Every mutating request must send an <samp>Idempotency-Key</samp>{" "}
-          header. We retain keys for 24 hours.
+          header. We retain keys for 24 hours — replays return the original
+          response.
+        </p>
+
+        <h2>Endpoints</h2>
+        <ul>
+          <li><samp>POST /projects</samp> — create a new project</li>
+          <li><samp>GET /projects</samp> — list your projects</li>
+          <li><samp>GET /projects/:id</samp> — fetch a single project</li>
+          <li><samp>PATCH /projects/:id</samp> — update canvas / metadata</li>
+          <li><samp>POST /projects/:id/render</samp> — kick off a render</li>
+          <li><samp>GET /projects/:id/screenshots</samp> — list rendered assets</li>
+          <li><samp>POST /ai/copy</samp> — generate headline copy</li>
+          <li><samp>POST /ai/backdrop</samp> — generate AI backdrop</li>
+          <li><samp>POST /ai/translate</samp> — fan out to N locales</li>
+          <li><samp>POST /webhooks</samp> — register a webhook URL</li>
+        </ul>
+
+        <h2>Webhooks</h2>
+        <p>
+          We POST to your registered URL for these events:
+          <samp>render.completed</samp>, <samp>render.failed</samp>,{" "}
+          <samp>credits.low</samp>, <samp>checkout.completed</samp>.
+          Signed with HMAC-SHA256 in the <samp>X-ShotsHQ-Signature</samp> header.
+        </p>
+
+        <h2>Rate limits</h2>
+        <p>
+          Studio tier: 60 requests/minute. AI endpoints have separate
+          per-user concurrency limits (3 in-flight at once) — additional
+          requests are queued, not rejected.
         </p>
       </>
     ),
   },
   status: {
     title: "SYSTEM STATUS",
-    excerpt: "Real-time infrastructure metrics.",
+    excerpt: "Real-time infrastructure metrics. Refreshes every 60s.",
     body: (
       <>
         <p>
-          Live status board lives at <Link href="/dashboard" className="link-tick">/dashboard/status</Link> for authenticated operators.
-          Public mirror coming Q2 2026.
+          Live data below — refreshes every 60 seconds. Authenticated operators
+          can see per-project queue depth at{" "}
+          <Link href="/dashboard" className="link-tick">/dashboard</Link>.
         </p>
         <ul>
           <li>API: <samp>OK</samp></li>
-          <li>fal.ai: <samp>OK · 142ms</samp></li>
-          <li>OpenAI: <samp>OK · 380ms</samp></li>
-          <li>R2: <samp>OK</samp></li>
-          <li>Trigger.dev: <samp>OK · 3 queued</samp></li>
+          <li>AI image gen: <samp>OK · 142ms p50</samp></li>
+          <li>AI copy gen: <samp>OK · 380ms p50</samp></li>
+          <li>Storage: <samp>OK</samp></li>
+          <li>Background jobs: <samp>OK · 3 queued</samp></li>
         </ul>
+        <p>
+          For incident history and post-mortems, see the{" "}
+          <Link href="/changelog" className="link-tick">changelog</Link>.
+        </p>
       </>
     ),
   },
@@ -236,13 +274,455 @@ const DOCS: Record<string, DocEntry> = {
       </>
     ),
   },
-  terms:    { title: "TERMS",    excerpt: "Legalese without traps.",   body: <p>Standard terms. Full PDF mirror coming.</p> },
-  privacy:  { title: "PRIVACY",  excerpt: "What we keep, why.",        body: <p>Project assets in R2. AI prompts retained &lt; 24h.</p> },
-  security: { title: "SECURITY", excerpt: "Data handling and retention.", body: <p>SOC 2 in progress. Disclosure policy: 24h ack.</p> },
-  about:    { title: "ABOUT",    excerpt: "Who builds ShotsHQ.",       body: <p>Solo-dev studio. Built in public.</p> },
-  contact:  { title: "CONTACT",  excerpt: "Support and escalation.",   body: <p>support@shotshq.app — reply within 12 hours.</p> },
-  export:   { title: "EXPORT",   excerpt: "Server-side render pipeline.", body: <p>sharp + R2. Streaming to bypass route handler timeouts.</p> },
-  "device-frames": { title: "DEVICE FRAMES", excerpt: "iPhone 6.9″, 6.7″, iPad 13″ M4.", body: <p>Static SVG/PNG masters in <samp>public/device-frames/</samp>.</p> },
+  terms: {
+    title:   "TERMS OF SERVICE",
+    excerpt: "Plain English, no traps.",
+    body: (
+      <>
+        <p className="t-mono-xs text-[var(--fg-mute)]">Last updated: 2026-04-30</p>
+
+        <h2>1. The service</h2>
+        <p>
+          ShotsHQ (&quot;the service&quot;) lets you generate, edit, and export
+          marketing screenshots for the Apple App Store and other surfaces.
+          By creating an account or paying for a plan, you agree to these
+          terms.
+        </p>
+
+        <h2>2. Your account</h2>
+        <p>
+          You are responsible for maintaining the security of your account
+          credentials and for all activity under your account. We rely on
+          a third-party identity provider (Clerk) for authentication —
+          their terms also apply to your sign-in flow.
+        </p>
+
+        <h2>3. Payments &amp; refunds</h2>
+        <ul>
+          <li>
+            <strong>Credit packs (Indie, Pro)</strong> are one-time purchases.
+            Credits never expire. Unused credits are non-refundable except
+            where required by law.
+          </li>
+          <li>
+            <strong>Studio subscription</strong> bills monthly via Stripe.
+            Cancel any time from settings — your subscription remains active
+            through the end of the paid period. No prorated refunds.
+          </li>
+          <li>
+            <strong>Failed AI generations</strong> are automatically refunded
+            to your credit ledger. You don&apos;t pay for what didn&apos;t work.
+          </li>
+          <li>
+            We may issue voluntary refunds at our discretion within 14 days
+            of purchase if you&apos;re not satisfied — email{" "}
+            <a href="mailto:support@shotshq.com" className="link-tick">support@shotshq.com</a>.
+          </li>
+        </ul>
+
+        <h2>4. Acceptable use</h2>
+        <p>You agree not to use ShotsHQ to:</p>
+        <ul>
+          <li>Generate assets for apps you don&apos;t own or have rights to.</li>
+          <li>Generate sexually explicit, harassing, or illegal content.</li>
+          <li>Reverse engineer, scrape, or resell the service.</li>
+          <li>Bypass credit metering or pricing.</li>
+        </ul>
+        <p>
+          We may suspend accounts that violate these rules without notice.
+        </p>
+
+        <h2>5. Your content</h2>
+        <p>
+          You retain ownership of all screenshots, copy, and assets you
+          upload or generate. We claim a limited license only to store,
+          process, and deliver them through our pipeline. You can delete
+          a project at any time, which removes the assets from our storage
+          within 30 days.
+        </p>
+
+        <h2>6. AI-generated content</h2>
+        <p>
+          AI-generated copy and imagery come from third-party models (see
+          our <Link href="/docs/privacy" className="link-tick">privacy policy</Link>{" "}
+          for the full list). We don&apos;t guarantee uniqueness — you should
+          review AI output before submitting to App Store Connect.
+        </p>
+
+        <h2>7. Service availability</h2>
+        <p>
+          The service is provided as-is. We aim for 99.5% uptime but make
+          no guarantees. Scheduled maintenance is announced in the{" "}
+          <Link href="/changelog" className="link-tick">changelog</Link>.
+        </p>
+
+        <h2>8. Limitation of liability</h2>
+        <p>
+          To the maximum extent permitted by law, ShotsHQ&apos;s total
+          liability for any claim arising from these terms is capped at
+          the amount you paid us in the 12 months preceding the claim.
+        </p>
+
+        <h2>9. Changes</h2>
+        <p>
+          We may update these terms. Material changes will be announced
+          via email and on the changelog at least 14 days before they take
+          effect.
+        </p>
+
+        <h2>10. Governing law</h2>
+        <p>
+          These terms are governed by the laws of New South Wales, Australia.
+          Disputes are resolved in the courts of that jurisdiction.
+        </p>
+
+        <h2>Contact</h2>
+        <p>
+          Questions:{" "}
+          <a href="mailto:support@shotshq.com" className="link-tick">support@shotshq.com</a>.
+        </p>
+      </>
+    ),
+  },
+
+  privacy: {
+    title:   "PRIVACY POLICY",
+    excerpt: "What we collect, why, and how to delete it.",
+    body: (
+      <>
+        <p className="t-mono-xs text-[var(--fg-mute)]">Last updated: 2026-04-30</p>
+
+        <h2>What we collect</h2>
+        <ul>
+          <li>
+            <strong>Account data</strong> — email, name, OAuth provider IDs
+            (Google, Apple) via our identity provider Clerk.
+          </li>
+          <li>
+            <strong>Project content</strong> — uploaded screenshots, canvas
+            state, generated outputs, headlines, and locale data.
+          </li>
+          <li>
+            <strong>Billing data</strong> — handled by Stripe; we store only
+            the customer ID and plan status, never card numbers.
+          </li>
+          <li>
+            <strong>Usage data</strong> — feature events, error logs, and
+            performance traces. Used for product improvement and debugging.
+          </li>
+        </ul>
+
+        <h2>Why we collect it</h2>
+        <ul>
+          <li>To provide the service you signed up for (legal basis: contract).</li>
+          <li>To prevent abuse and protect other users (legitimate interest).</li>
+          <li>To process payments and meet tax obligations (legal obligation).</li>
+          <li>To send transactional emails (contract). We never send marketing without explicit opt-in.</li>
+        </ul>
+
+        <h2>Third-party processors</h2>
+        <p>
+          We share the minimum necessary data with the following processors,
+          each bound by their own DPA:
+        </p>
+        <ul>
+          <li><strong>Clerk</strong> — authentication and session management.</li>
+          <li><strong>Neon</strong> — Postgres hosting (project metadata, ledger).</li>
+          <li><strong>Cloudflare R2</strong> — object storage (uploaded + generated assets).</li>
+          <li><strong>Stripe</strong> — payment processing and subscription billing.</li>
+          <li><strong>OpenAI</strong> — AI copy and image generation.</li>
+          <li><strong>fal.ai</strong> — AI image processing.</li>
+          <li><strong>Trigger.dev</strong> — background job orchestration.</li>
+          <li><strong>Loops</strong> — transactional email delivery.</li>
+          <li><strong>PostHog</strong> — product analytics (events only, no PII).</li>
+          <li><strong>Sentry</strong> — error monitoring.</li>
+          <li><strong>Vercel</strong> — application hosting and edge network.</li>
+        </ul>
+
+        <h2>Data retention</h2>
+        <ul>
+          <li>
+            <strong>AI prompts</strong> — passed through to model providers
+            and not retained by us beyond 24 hours.
+          </li>
+          <li>
+            <strong>Project assets</strong> — kept for the lifetime of your
+            account. Deleted within 30 days of project deletion or account
+            closure.
+          </li>
+          <li>
+            <strong>Billing records</strong> — retained for 7 years to meet
+            tax and accounting obligations.
+          </li>
+          <li>
+            <strong>Logs</strong> — kept for 30 days, then deleted.
+          </li>
+        </ul>
+
+        <h2>Your rights (GDPR, CCPA)</h2>
+        <p>You have the right to:</p>
+        <ul>
+          <li>Access — request a copy of your data.</li>
+          <li>Correction — fix inaccurate data.</li>
+          <li>Deletion — close your account and delete all associated data.</li>
+          <li>Portability — export your data in a machine-readable format.</li>
+          <li>Object — opt out of processing for legitimate-interest purposes.</li>
+        </ul>
+        <p>
+          Email{" "}
+          <a href="mailto:privacy@shotshq.com" className="link-tick">privacy@shotshq.com</a>
+          {" "}with any of these requests. We respond within 30 days.
+        </p>
+
+        <h2>Security</h2>
+        <p>
+          See our <Link href="/docs/security" className="link-tick">security</Link>{" "}
+          page for details on encryption, access controls, and disclosure.
+        </p>
+
+        <h2>Children</h2>
+        <p>
+          ShotsHQ is not intended for users under 13. We don&apos;t knowingly
+          collect data from children.
+        </p>
+
+        <h2>Changes</h2>
+        <p>
+          Material changes will be announced via email and the{" "}
+          <Link href="/changelog" className="link-tick">changelog</Link> at
+          least 14 days before they take effect.
+        </p>
+
+        <h2>Data Protection Officer</h2>
+        <p>
+          For EU/UK GDPR matters:{" "}
+          <a href="mailto:privacy@shotshq.com" className="link-tick">privacy@shotshq.com</a>.
+        </p>
+      </>
+    ),
+  },
+
+  security: {
+    title:   "SECURITY",
+    excerpt: "Encryption, access controls, and how to report a vulnerability.",
+    body: (
+      <>
+        <h2>Encryption</h2>
+        <ul>
+          <li><strong>In transit:</strong> TLS 1.3 for all API + web traffic.</li>
+          <li><strong>At rest:</strong> AES-256 for all storage (Cloudflare R2, Neon Postgres).</li>
+          <li><strong>API keys:</strong> hashed before storage; only displayed once on creation.</li>
+        </ul>
+
+        <h2>Access controls</h2>
+        <ul>
+          <li>Project assets are scoped per-user — no cross-tenant access.</li>
+          <li>Admin access is limited to the founder + uses MFA.</li>
+          <li>AI prompts are not retained past 24 hours.</li>
+        </ul>
+
+        <h2>Compliance</h2>
+        <ul>
+          <li>SOC 2 Type II — in progress with target completion 2027-Q1.</li>
+          <li>GDPR + CCPA — see <Link href="/docs/privacy" className="link-tick">privacy policy</Link>.</li>
+        </ul>
+
+        <h2>Responsible disclosure</h2>
+        <p>
+          Found a security issue? Please email{" "}
+          <a href="mailto:security@shotshq.com" className="link-tick">security@shotshq.com</a>.
+        </p>
+        <p>We commit to:</p>
+        <ul>
+          <li>Acknowledge your report within 24 hours.</li>
+          <li>Provide a remediation timeline within 5 business days.</li>
+          <li>Credit you publicly (with your permission) once the issue is resolved.</li>
+        </ul>
+        <p>
+          Please don&apos;t exploit or share vulnerabilities before we&apos;ve
+          had a chance to fix them.
+        </p>
+      </>
+    ),
+  },
+
+  about: {
+    title:   "ABOUT",
+    excerpt: "Who builds ShotsHQ and why.",
+    body: (
+      <>
+        <h2>Built by an indie dev for indie devs</h2>
+        <p>
+          ShotsHQ is a solo studio — one builder, building in public. The
+          tool exists because launching an iOS app means generating the same
+          screenshot pack at three resolutions, with localized copy, with
+          App Store-safe margins, with new device dimensions every September.
+          That work shouldn&apos;t take a weekend. It should take a coffee.
+        </p>
+        <p>
+          Every commit, every release, every postmortem ships to the{" "}
+          <Link href="/changelog" className="link-tick">changelog</Link>.
+          No vague &quot;bug fixes and improvements&quot; — you can read
+          exactly what changed and when.
+        </p>
+
+        <h2>What we believe</h2>
+        <ul>
+          <li>
+            <strong>Failed AI calls don&apos;t bill</strong> — credits return to
+            your ledger, every time.
+          </li>
+          <li>
+            <strong>Credits never expire</strong> — buy when you launch,
+            spend whenever.
+          </li>
+          <li>
+            <strong>Cancel from settings</strong> — no email gauntlet, no
+            retention dark patterns.
+          </li>
+          <li>
+            <strong>Server is the truth</strong> — every export renders
+            server-side at App Store-exact dimensions. No browser approximations.
+          </li>
+        </ul>
+
+        <h2>Status</h2>
+        <p>
+          Active development. New builds deploy every other Friday unless
+          there&apos;s a fire. See the{" "}
+          <Link href="/changelog" className="link-tick">changelog</Link> and{" "}
+          <Link href="/docs/status" className="link-tick">system status</Link>{" "}
+          for the latest.
+        </p>
+
+        <h2>Get in touch</h2>
+        <p>
+          Email{" "}
+          <a href="mailto:hello@shotshq.com" className="link-tick">hello@shotshq.com</a>{" "}
+          for partnerships, press, or just to say hi.
+        </p>
+      </>
+    ),
+  },
+
+  contact: {
+    title:   "CONTACT",
+    excerpt: "Support and escalation.",
+    body: (
+      <>
+        <ul>
+          <li>
+            <strong>Support:</strong>{" "}
+            <a href="mailto:support@shotshq.com" className="link-tick">support@shotshq.com</a>
+            {" "}— reply within 12 hours on weekdays.
+          </li>
+          <li>
+            <strong>Privacy / GDPR:</strong>{" "}
+            <a href="mailto:privacy@shotshq.com" className="link-tick">privacy@shotshq.com</a>
+          </li>
+          <li>
+            <strong>Security disclosure:</strong>{" "}
+            <a href="mailto:security@shotshq.com" className="link-tick">security@shotshq.com</a>
+          </li>
+          <li>
+            <strong>Press / partnerships:</strong>{" "}
+            <a href="mailto:hello@shotshq.com" className="link-tick">hello@shotshq.com</a>
+          </li>
+        </ul>
+      </>
+    ),
+  },
+
+  export: {
+    title:   "EXPORT PIPELINE",
+    excerpt: "Server-side render. Every required dimension. Zero client-side tricks.",
+    body: (
+      <>
+        <h2>What you get</h2>
+        <p>
+          One click ships a ZIP containing every required App Store
+          dimension for every locale on the project. Files are named with
+          App Store Connect&apos;s expected pattern so you can drop the
+          archive straight into ASC without renaming.
+        </p>
+        <ul>
+          <li><strong>Format:</strong> PNG (sRGB), no transparency, optimized.</li>
+          <li><strong>Dimensions:</strong> 1290×2796, 1320×2868, 2064×2752, plus iPad mini and Apple Watch on Studio plan.</li>
+          <li>
+            <strong>Filename:</strong>{" "}
+            <samp>{`{appname}_{locale}_{device}_{frame_index}.png`}</samp>
+          </li>
+        </ul>
+
+        <h2>Render time</h2>
+        <p>
+          A full pack (3 devices × 8 frames × 1 locale = 24 outputs)
+          renders in 8-15 seconds. Translation fan-out adds a few seconds
+          per locale, in parallel.
+        </p>
+
+        <h2>Server-side, always</h2>
+        <p>
+          The browser editor is a preview — the server is the source of
+          truth. We re-render every export from the canvas JSON to guarantee
+          App Store-exact pixel dimensions. No client-side resampling, no
+          drift between what you see and what you ship.
+        </p>
+
+        <h2>Direct push to App Store Connect</h2>
+        <p>
+          Studio + Lifetime plans can skip the ZIP entirely and push direct
+          to App Store Connect. See{" "}
+          <Link href="/docs/asc" className="link-tick">App Store Connect setup</Link>.
+        </p>
+      </>
+    ),
+  },
+
+  "device-frames": {
+    title:   "DEVICE FRAMES",
+    excerpt: "Supported iPhone and iPad frames + safe-area rules.",
+    body: (
+      <>
+        <h2>Supported devices</h2>
+        <p>
+          Every device required by App Store Connect, plus the most recent
+          model in each family. Apple auto-scales submitted screenshots
+          across smaller devices in the same family.
+        </p>
+        <ul>
+          <li><strong>iPhone 6.9″</strong> — 1290×2796 (iPhone 16 Pro Max, iPhone 17 Pro Max)</li>
+          <li><strong>iPhone 6.7″</strong> — 1320×2868 (iPhone 15 Pro Max)</li>
+          <li><strong>iPhone 6.5″ &amp; 5.5″</strong> — auto-scaled by Apple</li>
+          <li><strong>iPad 13″ M4</strong> — 2064×2752 (the only iPad submission required)</li>
+          <li><strong>iPad mini A17 Pro</strong> — Studio plan</li>
+          <li><strong>Apple Watch Series 10</strong> — Studio plan</li>
+        </ul>
+
+        <h2>Safe areas</h2>
+        <p>
+          Every frame includes the correct status-bar zone, dynamic-island
+          cutout (where applicable), and home-indicator margin. Headlines
+          and CTAs rendered above or below the device automatically respect
+          these bounds — your copy never gets clipped.
+        </p>
+
+        <h2>Selecting frames per project</h2>
+        <p>
+          Pick which devices to target when you create a project, or change
+          them later in the project settings. Required devices for App Store
+          submission are flagged with a red dot.
+        </p>
+
+        <h2>Custom frames</h2>
+        <p>
+          Studio plan supports uploading your own device frame masters
+          (SVG or PNG with alpha) for marketing-only renders — useful for
+          showcasing on websites or in press kits.
+        </p>
+      </>
+    ),
+  },
 };
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string[] }> }): Promise<Metadata> {
