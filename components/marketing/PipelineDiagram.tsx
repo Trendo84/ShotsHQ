@@ -85,13 +85,13 @@ export function PipelineDiagram() {
               height: "11px",
             }}
           >
-            <div className="pipeline-tracer absolute h-[11px] w-[11px] -translate-x-1/2 will-change-[left]">
-              {/* Soft trail */}
-              <div className="absolute -inset-y-[3px] -left-[40px] right-[6px] bg-gradient-to-l from-[color-mix(in_srgb,var(--accent)_70%,transparent)] to-transparent rounded-full blur-[3px]" />
-              {/* Halo glow */}
-              <div className="absolute inset-0 bg-[var(--accent)] blur-[8px] opacity-90 rounded-full" />
-              {/* Hot core */}
-              <div className="absolute inset-0 bg-[var(--accent)] rounded-full shadow-[0_0_18px_var(--accent)]" />
+            <div className="pipeline-tracer absolute h-[7px] w-[7px] -translate-x-1/2 will-change-[left]">
+              {/* Subtle horizontal trail — thin line, no comet */}
+              <div className="absolute top-1/2 -translate-y-1/2 right-[3px] h-px w-[64px] bg-gradient-to-l from-[var(--accent)] to-transparent opacity-70" />
+              {/* Soft halo */}
+              <div className="absolute inset-0 bg-[var(--accent)] blur-[5px] opacity-80 rounded-full" />
+              {/* Crisp core */}
+              <div className="absolute inset-0 bg-[var(--accent)] rounded-full" />
             </div>
           </div>
 
