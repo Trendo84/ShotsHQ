@@ -1,0 +1,355 @@
+"use client";
+
+import { useState } from "react";
+import { Type, Smartphone, Image as ImageIcon, Layers, Sparkles } from "lucide-react";
+import { cn } from "@/lib/utils/cn";
+import { CURRENT_DEVICES, groupByFamily } from "@/lib/devices/catalog";
+import { DeviceTile } from "@/components/devices/DeviceTile";
+import type { ShotsBackground, TextRole } from "@/lib/canvas/schema";
+
+const PANELS = [
+  { id: "frame",      label: "DEVICE FRAME", icon: Smartphone, code: "01" },
+  { id: "background", label: "BACKDROP",     icon: ImageIcon,  code: "02" },
+  { id: "text",       label: "TEXT",         icon: Type,       code: "03" },
+  { id: "layers",     label: "LAYERS",       icon: Layers,     code: "04" },
+  { id: "ai",         label: "AI",           icon: Sparkles,   code: "05" },
+];
+
+type LeftPanelProps = {
+  onAddText?:      (role: TextRole) => void;
+  onSetBackground?: (bg: ShotsBackground) => void;
+};
+
+export function LeftPanel({ onAddText, onSetBackground }: LeftPanelProps = {}) {
+  const [active, setActive] = useState<string>("frame");
+  return (
+    <aside className="w-[280px] border-r border-[var(--line)] flex flex-col bg-[var(--bg)]">
+      <div className="grid grid-cols-5 border-b border-[var(--line)]">
+        {PANELS.map((p) => {
+          const Icon = p.icon;
+          const isActive = active === p.id;
+          return (
+            <button
+              key={p.id}
+              onClick={() => setActive(p.id)}
+              className={cn(
+                "py-3 flex flex-col items-center gap-1 t-mono-xs border-r border-[var(--line)] last:border-r-0 transition-colors",
+                isActive
+                  ? "bg-[var(--accent)] text-[var(--accent-fg)]"
+                  : "text-[var(--fg-mute)] hover:text-[var(--fg)]",
+              )}
+              title={p.label}
+            >
+              <Icon size={14} />
+              <span className="text-[8px]">{p.code}</span>
+            </button>
+          );
+        })}
+      </div>
+      <div className="flex-1 overflow-y-auto p-4">
+        {active === "frame"      && <FramePanel />}
+        {active === "background" && <BackgroundPanel onSetBackground={onSetBackground} />}
+        {active === "text"       && <TextPanel onAddText={onAddText} />}
+        {active === "layers"     && <LayersPanel />}
+        {active === "ai"         && <AIPanel />}
+      </div>
+    </aside>
+  );
+}
+
+function FramePanel() {
+  const [selected, setSelected] = useState<string>("iphone-17-pro-max");
+  const [activeFamily, setActiveFamily] = useState<"iphone" | "ipad">("iphone");
+  const grouped = groupByFamily(CURRENT_DEVICES);
+  const list = grouped[activeFamily];
+
+  return (
+    <>
+      <h3 className="t-mono-xs text-[var(--accent)] mb-3">[ DEVICE FRAME ]</h3>
+      <div className="inline-flex border border-[var(--line)] divide-x divide-[var(--line)] mb-3">
+        {(["iphone", "ipad"] as const).map((f) => (
+          <button
+            key={f}
+            type="button"
+            onClick={() => setActiveFamily(f)}
+            className={cn(
+              "px-3 py-1.5 t-mono-xs uppercase tracking-[0.12em] transition-colors",
+              activeFamily === f ? "bg-[var(--fg)] text-[var(--bg)]" : "text-[var(--fg-dim)] hover:text-[var(--fg)]",
+            )}
+          >
+            {f === "iphone" ? "iPhone" : "iPad"}
+          </button>
+        ))}
+      </div>
+      <ul className="grid grid-cols-2 gap-2">
+        {list.map((d) => (
+          <li key={d.id}>
+            <button
+              type="button"
+              onClick={() => setSelected(d.id)}
+              aria-pressed={selected === d.id}
+              className={cn(
+                "w-full text-left border p-2 transition-colors",
+                selected === d.id
+                  ? "border-[var(--accent)] bg-[color-mix(in_srgb,var(--accent)_8%,transparent)]"
+                  : "border-[var(--line)] hover:border-[var(--accent)]",
+              )}
+            >
+              <DeviceTile device={d} selected={selected === d.id} size="sm" showName />
+              {d.isStoreRequired && (
+                <div className="text-[9px] uppercase tracking-[0.12em] font-semibold text-[var(--accent)] mt-1.5">Required</div>
+              )}
+            </button>
+          </li>
+        ))}
+      </ul>
+      <p className="t-mono-xs text-[var(--fg-mute)] mt-4 leading-relaxed">
+        Select the device for the active screenshot. Required devices are
+        the ones App Store Connect demands; everything else is optional.
+      </p>
+    </>
+  );
+}
+
+const SOLID_COLORS = [
+  "#0A0A0A", "#F4F4F0", "#FF2A2A", "#E61919",
+  "#4AF626", "#FFC233", "#1A47FF", "#9B59B6",
+  "#F39C12", "#16A085", "#34495E", "#7F8C8D",
+];
+
+type GradientPreset = { preview: string; bg: ShotsBackground & { type: "gradient" } };
+const GRADIENT_PRESETS: GradientPreset[] = [
+  { preview: "linear-gradient(180deg, #FF2A2A, #0A0A0A)", bg: { type: "gradient", colors: ["#FF2A2A", "#0A0A0A"], angle: 180 } },
+  { preview: "linear-gradient(180deg, #4AF626, #0A0A0A)", bg: { type: "gradient", colors: ["#4AF626", "#0A0A0A"], angle: 180 } },
+  { preview: "linear-gradient(45deg,  #FFC233, #FF2A2A)", bg: { type: "gradient", colors: ["#FFC233", "#FF2A2A"], angle: 45  } },
+  { preview: "linear-gradient(0deg,   #F4F4F0, #EAE8E3)", bg: { type: "gradient", colors: ["#F4F4F0", "#EAE8E3"], angle: 0   } },
+  { preview: "linear-gradient(180deg, #1A47FF, #0A0A0A)", bg: { type: "gradient", colors: ["#1A47FF", "#0A0A0A"], angle: 180 } },
+  { preview: "linear-gradient(180deg, #9B59B6, #0A0A0A)", bg: { type: "gradient", colors: ["#9B59B6", "#0A0A0A"], angle: 180 } },
+];
+
+function BackgroundPanel({ onSetBackground }: { onSetBackground?: (bg: ShotsBackground) => void }) {
+  return (
+    <>
+      <h3 className="t-mono-xs text-[var(--accent)] mb-3">[ BACKDROP ]</h3>
+      <div>
+        <div className="t-mono-xs text-[var(--fg-mute)] mb-2">SOLID</div>
+        <div className="grid grid-cols-6 gap-1">
+          {SOLID_COLORS.map((c) => (
+            <button
+              key={c}
+              onClick={() => onSetBackground?.({ type: "solid", color: c })}
+              className="aspect-square border border-[var(--line)] hover:border-[var(--accent)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]"
+              style={{ background: c }}
+              title={c}
+            />
+          ))}
+        </div>
+      </div>
+      <div className="mt-5">
+        <div className="t-mono-xs text-[var(--fg-mute)] mb-2">GRADIENT</div>
+        <div className="grid grid-cols-3 gap-1">
+          {GRADIENT_PRESETS.map((g, i) => (
+            <button
+              key={i}
+              onClick={() => onSetBackground?.(g.bg)}
+              className="aspect-[3/4] border border-[var(--line)] hover:border-[var(--accent)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]"
+              style={{ background: g.preview }}
+            />
+          ))}
+        </div>
+      </div>
+      <div className="mt-5 border-t border-[var(--line)] pt-4">
+        <div className="t-mono-xs text-[var(--fg-mute)] mb-2">AI GENERATE</div>
+        <button className="btn btn-accent w-full text-[10px] py-2">
+          ▸ FLUX 2 BACKDROP · 2 CR
+        </button>
+      </div>
+    </>
+  );
+}
+
+const TEXT_PRESETS: { role: TextRole; label: string; preview: string; sub: string }[] = [
+  { role: "headline",    label: "DISPLAY",   preview: "t-display text-[20px] leading-tight",    sub: "ARCHIVO BLACK · 130PX" },
+  { role: "eyebrow",     label: "EYEBROW",   preview: "font-mono text-[var(--accent)] text-[13px] tracking-widest uppercase", sub: "JETBRAINS MONO · 52PX" },
+  { role: "subheadline", label: "SUBHEAD",   preview: "font-sans text-[15px] text-[var(--fg-dim)]", sub: "INTER · 58PX" },
+  { role: "cta",         label: "CTA BADGE", preview: "font-mono text-[12px] text-[var(--accent)] uppercase tracking-wider", sub: "JETBRAINS MONO · 48PX" },
+];
+
+function TextPanel({ onAddText }: { onAddText?: (role: TextRole) => void }) {
+  return (
+    <>
+      <h3 className="t-mono-xs text-[var(--accent)] mb-3">[ TEXT LAYERS ]</h3>
+      <div className="space-y-2">
+        {TEXT_PRESETS.map((p) => (
+          <button
+            key={p.role}
+            onClick={() => onAddText?.(p.role)}
+            className="w-full text-left border border-[var(--line)] hover:border-[var(--accent)] p-3 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]"
+          >
+            <div className={p.preview}>{p.label}</div>
+            <div className="t-mono-xs text-[var(--fg-mute)] mt-1">{p.sub} · CLICK TO ADD</div>
+          </button>
+        ))}
+      </div>
+      <p className="t-mono-xs text-[var(--fg-mute)] mt-4 leading-relaxed">
+        Click a style to add a new text layer. Double-click the layer on canvas to edit.
+      </p>
+    </>
+  );
+}
+
+type LayerKind = "TXT" | "IMG" | "FRM" | "BG" | "GRD";
+type Layer = { id: string; type: LayerKind; label: string; visible: boolean; locked: boolean };
+
+const INITIAL_LAYERS: Layer[] = [
+  { id: "l1", type: "TXT", label: "Headline",         visible: true, locked: false },
+  { id: "l2", type: "TXT", label: "Subheadline",      visible: true, locked: false },
+  { id: "l3", type: "IMG", label: "Hero shot",        visible: true, locked: false },
+  { id: "l4", type: "FRM", label: "Device frame",     visible: true, locked: true  },
+  { id: "l5", type: "BG",  label: "Backdrop",         visible: true, locked: true  },
+  { id: "l6", type: "GRD", label: "Halftone overlay", visible: true, locked: false },
+];
+
+function LayersPanel() {
+  const [layers, setLayers] = useState<Layer[]>(INITIAL_LAYERS);
+  const [selected, setSelected] = useState<string | null>("l1");
+
+  function move(id: string, dir: -1 | 1) {
+    setLayers((cur) => {
+      const idx = cur.findIndex((l) => l.id === id);
+      if (idx < 0) return cur;
+      const next = idx + dir;
+      if (next < 0 || next >= cur.length) return cur;
+      const copy = [...cur];
+      [copy[idx], copy[next]] = [copy[next]!, copy[idx]!];
+      return copy;
+    });
+  }
+
+  function toggle(id: string, key: "visible" | "locked") {
+    setLayers((cur) => cur.map((l) => (l.id === id ? { ...l, [key]: !l[key] } : l)));
+  }
+
+  function remove(id: string) {
+    setLayers((cur) => cur.filter((l) => l.id !== id));
+    if (selected === id) setSelected(null);
+  }
+
+  return (
+    <>
+      <h3 className="t-mono-xs text-[var(--accent)] mb-3">[ LAYERS · {layers.length} ]</h3>
+      <ul className="font-mono text-[11px] space-y-px">
+        {layers.map((l, i) => {
+          const isSel = selected === l.id;
+          return (
+            <li
+              key={l.id}
+              className={cn(
+                "flex items-center gap-1.5 py-1.5 px-1.5 transition-colors",
+                isSel
+                  ? "bg-[color-mix(in_srgb,var(--accent)_10%,transparent)] border-l-2 border-[var(--accent)]"
+                  : "border-l-2 border-transparent hover:bg-[var(--bg-2)]",
+                !l.visible && "opacity-40",
+              )}
+            >
+              <button
+                type="button"
+                onClick={() => toggle(l.id, "visible")}
+                aria-label={l.visible ? "Hide layer" : "Show layer"}
+                className="text-[var(--fg-dim)] hover:text-[var(--fg)] w-4 shrink-0"
+                title={l.visible ? "Hide" : "Show"}
+              >
+                {l.visible ? "◉" : "○"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelected(l.id)}
+                className="flex-1 text-left flex items-center gap-2 min-w-0"
+              >
+                <span className="text-[var(--accent)] shrink-0">[{l.type}]</span>
+                <span className="text-[var(--fg)] truncate">{l.label}</span>
+              </button>
+              <div className="flex items-center gap-px shrink-0">
+                <button
+                  type="button"
+                  onClick={() => move(l.id, -1)}
+                  disabled={i === 0}
+                  aria-label="Move layer up"
+                  className="text-[var(--fg-mute)] hover:text-[var(--fg)] px-1 disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  ↑
+                </button>
+                <button
+                  type="button"
+                  onClick={() => move(l.id, 1)}
+                  disabled={i === layers.length - 1}
+                  aria-label="Move layer down"
+                  className="text-[var(--fg-mute)] hover:text-[var(--fg)] px-1 disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  ↓
+                </button>
+                <button
+                  type="button"
+                  onClick={() => toggle(l.id, "locked")}
+                  aria-label={l.locked ? "Unlock layer" : "Lock layer"}
+                  className="text-[var(--fg-mute)] hover:text-[var(--fg)] px-1"
+                  title={l.locked ? "Unlock" : "Lock"}
+                >
+                  {l.locked ? "⊠" : "⊡"}
+                </button>
+                {!l.locked && (
+                  <button
+                    type="button"
+                    onClick={() => remove(l.id)}
+                    aria-label="Delete layer"
+                    className="text-[var(--fg-mute)] hover:text-[var(--accent)] px-1"
+                    title="Delete"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+      <button
+        type="button"
+        className="mt-3 w-full border border-dashed border-[var(--line-strong)] hover:border-[var(--accent)] hover:text-[var(--accent)] text-[var(--fg-dim)] py-2 t-mono-xs uppercase tracking-[0.14em] transition-colors"
+      >
+        + Add Layer
+      </button>
+    </>
+  );
+}
+
+function AIPanel() {
+  return (
+    <>
+      <h3 className="t-mono-xs text-[var(--accent)] mb-3">[ AI MODULES ]</h3>
+      <div className="space-y-2">
+        {[
+          { label: "GENERATE COPY",   sub: "GPT-5 · 1 CR / GEN",  variant: "accent" as const },
+          { label: "GENERATE BG",     sub: "FLUX 2 · 2 CR / GEN", variant: "default" as const },
+          { label: "RESTYLE FROM REF",sub: "FLUX 2 · 3 CR / GEN", variant: "default" as const },
+          { label: "TRANSLATE × 41",  sub: "GPT-5 · 1 CR / LOC",  variant: "default" as const },
+        ].map((b) => (
+          <button
+            key={b.label}
+            className={cn(
+              "w-full text-left border p-3 transition-colors hover:border-[var(--accent)]",
+              b.variant === "accent" ? "border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-fg)]" : "border-[var(--line)]",
+            )}
+          >
+            <div className="t-mono-sm">{b.label} &gt;&gt;</div>
+            <div className="t-mono-xs opacity-70 mt-1">{b.sub}</div>
+          </button>
+        ))}
+      </div>
+      <div className="mt-5 border-t border-[var(--line)] pt-4 t-mono-xs text-[var(--fg-mute)] leading-relaxed">
+        ALL AI CALLS DISPATCH TO TRIGGER.DEV. PROGRESS STREAMS VIA
+        useRealtimeRun. FAILED CALLS REFUND CREDITS AUTOMATICALLY.
+      </div>
+    </>
+  );
+}
