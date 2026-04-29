@@ -31,7 +31,7 @@ export type Phase = {
   steps:       Step[];
 };
 
-export const LAST_UPDATED = "2026-04-29 17:30 AEST";
+export const LAST_UPDATED = "2026-04-29 18:30 AEST";
 export const REPO_URL     = "https://github.com/Trendo84/ShotsHQ";
 export const PROD_URL     = "https://shotshq.com";
 
@@ -315,18 +315,32 @@ export const PHASES: Phase[] = [
         ],
       },
       {
+        id:     "per-frame-pipeline",
+        title:  "Per-frame composite pipeline (production path)",
+        status: "done",
+        description:
+          "lib/render/composite.ts: takes AI backdrop + real screenshot + headline → outputs 1290×2796 App Store-ready PNG. lib/render/iphone-frame.ts: vector iPhone 16 Pro with screen cutout. lib/ai/prompts/backdrop.ts: per-frame backdrop-only prompt (no phone, no UI, no text). End-to-end smoke test passing — output is genuinely submission-grade.",
+      },
+      {
+        id:     "wide-preview-as-feature",
+        title:  "Demote wide-composition to 'Style Preview' feature",
+        status: "in_progress",
+        description:
+          "/api/ai/template-set route still works but is no longer the production path. It's now a low-cost vibe-check tool (1 call shows the full direction). Production output flows through the per-frame composite pipeline.",
+      },
+      {
         id:     "template-set-ui",
         title:  "Wire 'Generate template set' button on /projects/[id]",
         status: "todo",
         description:
-          "UI to invoke /api/ai/template-set with style + palette + voice inputs. Show generated wide composition. 'Use this set' button slices into 6 frames and saves as project's starting templates.",
+          "UI on project page: pick style, paste app description, generate wide preview (8 cr), then 'Generate full set' triggers per-frame backdrops + composite (24 cr total).",
       },
       {
-        id:     "template-slicer",
-        title:  "Slice wide gpt-image-1 output into 6 frames",
+        id:     "premium-mockup-pack",
+        title:  "Swap vector iPhone frame for premium PNG mockup library",
         status: "todo",
         description:
-          "lib/canvas/slicer.ts: takes the 1536×1024 output → divides into 6 vertical slices → resizes each to App Store dimensions (1290×2796) → creates ShotsCanvas JSON with image-bg layer. User can edit each in Fabric.",
+          "Buy/license 6-8 photo-realistic iPhone mockup PNGs (Envato, Mockup World, etc., ~$30 total). Replace vector frame in lib/render/iphone-frame.ts with PNG paths. Architecture is identical — just better-looking frames.",
       },
       {
         id:     "prompt-library",
