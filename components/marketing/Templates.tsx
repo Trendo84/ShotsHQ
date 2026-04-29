@@ -301,15 +301,15 @@ export function Templates({ compact = false }: { compact?: boolean }) {
 
   return (
     <section className="border-b border-[var(--line)]">
-      <div className="max-w-[1480px] mx-auto px-4 md:px-8 py-20 md:py-28">
+      <div className="max-w-[1480px] mx-auto px-4 md:px-8 py-14 md:py-20">
         <div className="grid grid-cols-12 gap-8 mb-10 items-end">
           <h2 className="col-span-12 md:col-span-7 t-display text-[clamp(2.25rem,5.5vw,4.5rem)] leading-[0.95]">
             Start from a<br />
             <span className="text-[var(--accent)]">starter.</span>
           </h2>
           <p className="col-span-12 md:col-span-5 t-prose max-w-md">
-            {TEMPLATE_COUNT} curated starting points. Pick one, swap your screens in,
-            ship. Or build a project from blank if you&apos;d rather.
+            {TEMPLATE_COUNT}&nbsp;curated starting points. Pick one, swap your
+            screens in, ship. Or build a project from blank if you&apos;d rather.
           </p>
         </div>
 
@@ -412,9 +412,13 @@ function FilterTab({
   );
 }
 
-function TemplateCard({ t, dense = false }: { t: Template; dense?: boolean }) {
+function TemplateCard({ t, dense: _dense = false }: { t: Template; dense?: boolean }) {
   return (
-    <article className="group border border-[var(--line)] bg-[var(--bg)] hover:border-[var(--line-strong)] transition-colors flex flex-col">
+    <Link
+      href={`/sign-up?template=${t.slug}`}
+      aria-label={`Use the ${t.name} template`}
+      className="group relative border border-[var(--line)] bg-[var(--bg)] hover:border-[var(--accent)] transition-colors flex flex-col cursor-pointer focus-visible:outline-none focus-visible:border-[var(--accent)] focus-visible:ring-1 focus-visible:ring-[var(--accent)]"
+    >
       <div className="aspect-[3/4] relative overflow-hidden flex items-center justify-center px-3 py-3" style={{ background: t.bg, color: t.fg }}>
         {/* Decorative texture per template */}
         <Texture decor={t.decor} accent={t.accent} fg={t.fg} />
@@ -456,7 +460,20 @@ function TemplateCard({ t, dense = false }: { t: Template; dense?: boolean }) {
           {t.tag}
         </span>
       </div>
-    </article>
+
+      {/* Hover overlay — clear interaction affordance */}
+      <span
+        aria-hidden
+        className="absolute inset-0 bg-[var(--accent)]/0 group-hover:bg-[var(--accent)]/10 transition-colors duration-200 pointer-events-none"
+      />
+      <span
+        aria-hidden
+        className="absolute bottom-3 right-3 inline-flex items-center gap-2 px-3 py-1.5 bg-[var(--accent)] text-[var(--accent-fg)] t-mono-xs uppercase tracking-[0.14em] opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] pointer-events-none"
+      >
+        Use template
+        <span className="font-bold">→</span>
+      </span>
+    </Link>
   );
 }
 

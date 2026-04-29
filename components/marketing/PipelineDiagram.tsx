@@ -137,7 +137,7 @@ function stageDelay(i: number, total: number): number {
 export function PipelineDiagram() {
   return (
     <section className="border-b border-[var(--line)]">
-      <div className="max-w-[1480px] mx-auto px-4 md:px-8 py-20 md:py-28">
+      <div className="max-w-[1480px] mx-auto px-4 md:px-8 py-14 md:py-20">
 
         {/* Header */}
         <div className="grid grid-cols-12 gap-8 mb-14 items-end">
@@ -247,7 +247,9 @@ export function PipelineDiagram() {
         </div>
 
         {/* ── Mobile ──────────────────────────────────────────────────────── */}
-        <ol className="md:hidden relative space-y-5 pl-7">
+        {/* aria-hidden keeps SR users from reading the same 7 items twice —
+            the desktop <ol> above is the canonical, semantic list. */}
+        <ol aria-hidden="true" className="md:hidden relative space-y-5 pl-7">
           <div aria-hidden className="absolute left-[24px] top-3 bottom-3 w-px bg-[var(--line)]" />
           <div
             aria-hidden

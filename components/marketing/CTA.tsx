@@ -4,7 +4,7 @@ export function CTA() {
   return (
     <section className="relative overflow-hidden">
       <div className="absolute inset-0 blueprint opacity-50 pointer-events-none" aria-hidden />
-      <div className="relative z-10 max-w-[1480px] mx-auto px-4 md:px-8 py-20 md:py-28">
+      <div className="relative z-10 max-w-[1480px] mx-auto px-4 md:px-8 py-16 md:py-24">
         <div className="grid grid-cols-12 gap-8 items-end">
           <h2 className="col-span-12 md:col-span-8 t-display text-[clamp(2.75rem,7.5vw,6.5rem)] leading-[0.92] text-balance">
             Stop designing.<br />

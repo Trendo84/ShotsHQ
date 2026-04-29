@@ -35,7 +35,7 @@ const VOICES: Voice[] = [
 export function Testimonials() {
   return (
     <section className="border-b border-[var(--line)]">
-      <div className="max-w-[1480px] mx-auto px-4 md:px-8 py-20 md:py-28">
+      <div className="max-w-[1480px] mx-auto px-4 md:px-8 py-14 md:py-20">
         <h2 className="t-display text-[clamp(2rem,5vw,4rem)] mb-12 leading-[0.95] max-w-3xl text-balance">
           What indie devs say<br />
           <span className="text-[var(--accent)]">when they ship.</span>

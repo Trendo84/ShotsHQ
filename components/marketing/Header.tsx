@@ -62,8 +62,8 @@ export function MarketingHeader() {
                 <span
                   aria-hidden
                   className={cn(
-                    "absolute left-3 right-3 -bottom-[1px] h-[2px] origin-left transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]",
-                    active ? "bg-[var(--accent)] scale-x-100" : "bg-[var(--accent)] scale-x-0",
+                    "absolute left-3 right-3 -bottom-[2px] h-[3px] origin-left transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]",
+                    active ? "bg-[var(--accent)] scale-x-100" : "bg-[var(--accent)] scale-x-0 group-hover:scale-x-50",
                   )}
                 />
               </Link>

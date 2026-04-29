@@ -32,29 +32,32 @@ const FEATURES: Feature[] = [
     visual: <RestyleVisual />,
   },
   {
-    code:  "04",
-    title: "41 locales",
-    body:  "Every language in parallel. RTL and CJK auto-relayout, glyph-aware kerning, no clipped text — anywhere.",
-    spec:  "1 cr / loc",
+    code:   "04",
+    title:  "41 locales",
+    body:   "Every language in parallel. RTL and CJK auto-relayout, glyph-aware kerning, no clipped text — anywhere.",
+    spec:   "1 cr / loc",
+    visual: <LocalesVisual />,
   },
   {
-    code:  "05",
-    title: "Device frames",
-    body:  "iPhone 6.9″ / 6.7″ / iPad 13″ M4. Crisp masters, dynamic-island accurate, every safe area honoured.",
-    spec:  "Free",
+    code:   "05",
+    title:  "Device frames",
+    body:   "iPhone 6.9″ / 6.7″ / iPad 13″ M4. Crisp masters, dynamic-island accurate, every safe area honoured.",
+    spec:   "Free",
+    visual: <DevicesVisual />,
   },
   {
-    code:  "06",
-    title: "Direct upload",
-    body:  "Push generated assets to App Store Connect. Per-locale, per-device, zero filename gymnastics.",
-    spec:  "Free",
+    code:   "06",
+    title:  "Direct upload",
+    body:   "Push generated assets to App Store Connect. Per-locale, per-device, zero filename gymnastics.",
+    spec:   "Free",
+    visual: <UploadVisual />,
   },
 ];
 
 export function FeatureGrid() {
   return (
     <section className="border-b border-[var(--line)]">
-      <div className="max-w-[1480px] mx-auto px-4 md:px-8 py-20 md:py-28">
+      <div className="max-w-[1480px] mx-auto px-4 md:px-8 py-14 md:py-20">
         <div className="grid grid-cols-12 gap-8 mb-14 items-end">
           <h2 className="col-span-12 md:col-span-7 t-display text-[clamp(2rem,5.5vw,4.5rem)] leading-[0.95] text-balance">
             Six modules.<br />
@@ -238,6 +241,124 @@ function MiniPhone({ screenColor }: { screenColor: string }) {
     >
       <div className="absolute top-[5%] left-1/2 -translate-x-1/2 w-[30%] h-[5%] bg-black rounded-full z-10" />
       <div className="absolute inset-[8%] top-[10%] rounded-[2px]" style={{ background: screenColor, opacity: 0.85 }} />
+    </div>
+  );
+}
+
+// ── Row 2 visuals ────────────────────────────────────────────────────────────
+
+function LocalesVisual() {
+  // Eight locale chips — same monospace treatment, accent on EN as the "source"
+  const LOCALES = ["EN", "FR", "DE", "ES", "JA", "ZH", "AR", "PT"];
+  return (
+    <div className="flex flex-wrap gap-1" aria-hidden>
+      {LOCALES.map((l) => (
+        <span
+          key={l}
+          className={`inline-flex items-center justify-center px-1.5 py-0.5 t-mono-xs uppercase tracking-[0.12em] border ${
+            l === "EN"
+              ? "border-[var(--accent)] text-[var(--accent)]"
+              : "border-[var(--line-strong)] text-[var(--fg-mute)]"
+          }`}
+        >
+          {l}
+        </span>
+      ))}
+      <span className="inline-flex items-center justify-center px-1.5 py-0.5 t-mono-xs uppercase tracking-[0.12em] border border-[var(--line)] text-[var(--fg-mute)]">
+        +33
+      </span>
+    </div>
+  );
+}
+
+function DevicesVisual() {
+  // Three device silhouettes — iPhone 6.9", iPhone 6.7", iPad 13" — to scale
+  return (
+    <div className="grid grid-cols-[1fr_1fr_1.4fr] gap-3 items-end h-[60px]" aria-hidden>
+      {/* iPhone 6.9 — tallest portrait */}
+      <DeviceSilhouette label="6.9″" tone="accent" aspect="9/19.5" />
+      {/* iPhone 6.7 — slightly shorter */}
+      <DeviceSilhouette label="6.7″" tone="default" aspect="9/19" />
+      {/* iPad 13 — landscape proportions, wider */}
+      <DeviceSilhouette label="13″" tone="default" aspect="13/9" wide />
+    </div>
+  );
+}
+
+function DeviceSilhouette({
+  label, tone, aspect, wide = false,
+}: {
+  label:  string;
+  tone:   "default" | "accent";
+  aspect: string;
+  wide?:  boolean;
+}) {
+  return (
+    <div className="flex flex-col items-center gap-1.5 h-full justify-end">
+      <div
+        className={`relative border bg-[var(--bg-2)] overflow-hidden ${wide ? "w-full h-[55%]" : "w-[55%] h-full"} ${
+          tone === "accent" ? "border-[var(--accent)]" : "border-[var(--line-strong)]"
+        }`}
+        style={{ aspectRatio: aspect }}
+      >
+        {/* Dynamic island / camera bar */}
+        {!wide && (
+          <span
+            className="absolute left-1/2 -translate-x-1/2 top-[6%] block bg-black rounded-full"
+            style={{ width: "30%", height: "4%" }}
+            aria-hidden
+          />
+        )}
+        {wide && (
+          <span
+            className="absolute right-[6%] top-1/2 -translate-y-1/2 block bg-black rounded-full"
+            style={{ width: "3%", height: "8%" }}
+            aria-hidden
+          />
+        )}
+      </div>
+      <span className={`t-mono-xs text-[8px] uppercase tracking-[0.12em] ${
+        tone === "accent" ? "text-[var(--accent)]" : "text-[var(--fg-mute)]"
+      }`}>
+        {label}
+      </span>
+    </div>
+  );
+}
+
+function UploadVisual() {
+  // Project asset → upload arrow → App Store icon
+  return (
+    <div className="grid grid-cols-[1fr_auto_1fr] gap-2 items-center" aria-hidden>
+      {/* Source: project ZIP / pack */}
+      <MiniBox label="PACK" tone="mute">
+        <div className="absolute inset-1 grid grid-cols-3 gap-px">
+          {[0, 1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="bg-[var(--fg-dim)] opacity-50" />
+          ))}
+        </div>
+        <span className="absolute bottom-0.5 right-0.5 t-mono-xs text-[7px] text-[var(--fg-mute)]">.zip</span>
+      </MiniBox>
+      {/* Upload arrow with cloud */}
+      <div className="flex flex-col items-center gap-0.5 mt-4">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" strokeWidth="2" strokeLinecap="square"
+             className="text-[var(--accent)]" aria-hidden>
+          <path d="M12 4 L12 14" />
+          <path d="M7 9 L12 4 L17 9" />
+          <path d="M4 18 L20 18" />
+        </svg>
+        <span className="t-mono-xs text-[7px] text-[var(--accent)] uppercase tracking-[0.16em]">PUSH</span>
+      </div>
+      {/* Target: App Store Connect */}
+      <MiniBox label="ASC" tone="accent">
+        <div className="relative w-full h-full flex items-center justify-center">
+          {/* Stylized App Store "A" icon */}
+          <div className="w-7 h-7 rounded-md bg-gradient-to-br from-[var(--accent)] via-[#FF6B6B] to-[#FF2A2A] flex items-center justify-center text-white text-[12px] font-bold leading-none">
+            A
+          </div>
+        </div>
+      </MiniBox>
     </div>
   );
 }

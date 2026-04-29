@@ -26,22 +26,22 @@ export function ThemeSwitcher({
       {showLabel && (
         <span
           className="t-mono-xs uppercase tracking-[0.16em] text-[var(--fg-mute)] hidden lg:inline"
-          title="ShotsHQ ships in two visual archetypes — Tactical (dark, technical) or Swiss (light, editorial). Swap any time."
+          title="Switch between dark and light themes. Tactical is the default."
         >
-          Style
+          Theme
         </span>
       )}
       <div
         role="group"
-        aria-label="Visual archetype — Tactical (dark, technical) or Swiss (light, editorial)"
-        title="Swap visual archetype. Tactical = dark technical, Swiss = light editorial."
+        aria-label="Theme — Tactical (dark) or Swiss (light)"
+        title="Switch between dark and light themes."
         className="inline-flex items-stretch border border-[var(--line-strong)] bg-[var(--bg)]"
       >
         <button
           type="button"
           aria-pressed={theme === "tactical"}
           onClick={() => setTheme("tactical")}
-          title="Tactical — dark, technical, monospace"
+          title="Tactical — dark theme"
           className={cn(
             "t-mono-xs px-2.5 transition-colors",
             compact ? "py-1.5" : "py-2",
@@ -56,7 +56,7 @@ export function ThemeSwitcher({
           type="button"
           aria-pressed={theme === "swiss"}
           onClick={() => setTheme("swiss")}
-          title="Swiss — light, editorial, typographic"
+          title="Swiss — light theme"
           className={cn(
             "t-mono-xs px-2.5 border-l border-[var(--line-strong)] transition-colors",
             compact ? "py-1.5" : "py-2",

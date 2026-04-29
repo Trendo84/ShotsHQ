@@ -37,7 +37,7 @@ export function Faq() {
   const [open, setOpen] = useState<number | null>(0);
   return (
     <section className="border-b border-[var(--line)]">
-      <div className="max-w-[1480px] mx-auto px-4 md:px-8 py-20 md:py-28">
+      <div className="max-w-[1480px] mx-auto px-4 md:px-8 py-14 md:py-20">
         <div className="grid grid-cols-12 gap-8 mb-12 items-end">
           <h2 className="col-span-12 md:col-span-7 t-display text-[clamp(2rem,4.5vw,3.5rem)] leading-[0.95] text-balance">
             Questions, answered.
@@ -49,30 +49,39 @@ export function Faq() {
 
         <div className="border border-[var(--line)]">
           {FAQS.map((f, i) => {
-            const isOpen = open === i;
+            const isOpen   = open === i;
+            const btnId    = `faq-q-${i}`;
+            const panelId  = `faq-a-${i}`;
             return (
-              <button
-                key={f.q}
-                onClick={() => setOpen(isOpen ? null : i)}
-                aria-expanded={isOpen}
-                className="block w-full text-left border-b border-[var(--line)] last:border-b-0 hover:bg-[var(--bg-2)] transition-colors focus-visible:outline-none focus-visible:bg-[var(--bg-2)] focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-[var(--accent)]"
-              >
-                <div className="grid grid-cols-12 items-center gap-3 px-5 py-4">
-                  <span className="col-span-1 t-eyebrow t-numeric">{String(i + 1).padStart(2, "0")}</span>
-                  <span className="col-span-10 t-display text-[18px] md:text-[22px] leading-tight normal-case tracking-[-0.02em]">
-                    {f.q}
-                  </span>
-                  <span className="col-span-1 text-right text-[var(--accent)] text-[20px] font-medium">
-                    {isOpen ? "−" : "+"}
-                  </span>
-                </div>
-                {isOpen && (
-                  <div className="px-5 pb-5 grid grid-cols-12 gap-3">
-                    <div className="col-span-1" />
-                    <p className="col-span-10 t-prose">{f.a}</p>
+              <div key={f.q} className="border-b border-[var(--line)] last:border-b-0">
+                <button
+                  id={btnId}
+                  onClick={() => setOpen(isOpen ? null : i)}
+                  aria-expanded={isOpen}
+                  aria-controls={panelId}
+                  className="block w-full text-left hover:bg-[var(--bg-2)] transition-colors focus-visible:outline-none focus-visible:bg-[var(--bg-2)] focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-[var(--accent)]"
+                >
+                  <div className="grid grid-cols-12 items-center gap-3 px-5 py-4">
+                    <span className="col-span-1 t-eyebrow t-numeric">{String(i + 1).padStart(2, "0")}</span>
+                    <span className="col-span-10 t-display text-[18px] md:text-[22px] leading-tight normal-case tracking-[-0.02em]">
+                      {f.q}
+                    </span>
+                    <span className="col-span-1 text-right text-[var(--accent)] text-[20px] font-medium" aria-hidden>
+                      {isOpen ? "−" : "+"}
+                    </span>
                   </div>
-                )}
-              </button>
+                </button>
+                <div
+                  id={panelId}
+                  role="region"
+                  aria-labelledby={btnId}
+                  hidden={!isOpen}
+                  className="px-5 pb-5 grid grid-cols-12 gap-3"
+                >
+                  <div className="col-span-1" />
+                  <p className="col-span-10 t-prose">{f.a}</p>
+                </div>
+              </div>
             );
           })}
         </div>

@@ -123,7 +123,7 @@ export function HeroBeforeAfterSlider({ className = "" }: { className?: string }
           if (e.key === "ArrowLeft")  setPos((p) => Math.max(2,  p - 4));
           if (e.key === "ArrowRight") setPos((p) => Math.min(98, p + 4));
         }}
-        className="relative aspect-[9/19.5] max-w-[420px] mx-auto select-none touch-none cursor-ew-resize overflow-hidden border border-[color-mix(in_srgb,var(--fg)_8%,transparent)] shadow-[0_24px_60px_-20px_rgba(0,0,0,0.7),0_8px_16px_-8px_rgba(0,0,0,0.5)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
+        className="relative aspect-[9/19.5] max-w-[360px] lg:max-w-[400px] mx-auto select-none touch-none cursor-ew-resize overflow-hidden border border-[color-mix(in_srgb,var(--fg)_8%,transparent)] shadow-[0_24px_60px_-20px_rgba(0,0,0,0.7),0_8px_16px_-8px_rgba(0,0,0,0.5)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
       >
         {/* AFTER — bottom layer, full width */}
         <Image

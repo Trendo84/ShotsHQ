@@ -23,7 +23,7 @@ export function Hero() {
       </div>
       <div className="absolute inset-0 blueprint pointer-events-none opacity-25" aria-hidden />
 
-      <div className="relative z-10 max-w-[1480px] mx-auto px-4 md:px-8 pt-16 md:pt-24 pb-20 md:pb-28">
+      <div className="relative z-10 max-w-[1480px] mx-auto px-4 md:px-8 pt-12 md:pt-16 pb-14 md:pb-20">
         <div className="grid grid-cols-12 gap-10 lg:gap-14 items-center">
           {/* Headline column */}
           <div className="col-span-12 lg:col-span-7 flex flex-col gap-6 sm:gap-8 min-w-0">
