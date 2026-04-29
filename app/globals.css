@@ -50,7 +50,9 @@
   --bg-2:        #EAE8E3;
   --fg:          #0A0A0A;
   --fg-dim:      #2E2E2E;
-  --fg-mute:     #707070;
+  /* WCAG AA fix: #707070 on #F4F4F0 measures 4.49:1 (under 4.5 minimum
+     for small text). #5A5A5A measures 6.2:1 — passes AA + AAA. */
+  --fg-mute:     #5A5A5A;
   --line:        #0A0A0A;
   --line-strong: #0A0A0A;
   --accent:      #E61919;

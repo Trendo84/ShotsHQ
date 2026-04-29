@@ -63,7 +63,7 @@ export function Faq() {
                 >
                   <div className="grid grid-cols-12 items-center gap-3 px-5 py-4">
                     <span className="col-span-1 t-eyebrow t-numeric">{String(i + 1).padStart(2, "0")}</span>
-                    <span className="col-span-10 t-display text-[18px] md:text-[22px] leading-tight normal-case tracking-[-0.02em]">
+                    <span className="col-span-10 text-[16px] md:text-[18px] leading-tight font-medium tracking-[-0.01em] text-[var(--fg)]">
                       {f.q}
                     </span>
                     <span className="col-span-1 text-right text-[var(--accent)] text-[20px] font-medium" aria-hidden>

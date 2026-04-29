@@ -146,7 +146,7 @@ export function PipelineDiagram() {
               <span className="block w-1.5 h-1.5 rounded-full bg-[var(--accent)] animate-pulse" />
               Live trace · cycles below
             </div>
-            <h2 className="t-display text-[clamp(2rem,5vw,4rem)] leading-[0.95] text-balance">
+            <h2 className="t-display text-[clamp(2rem,5.5vw,4.5rem)] leading-[0.95] text-balance">
               Seven stages.<br />
               <span className="text-[var(--accent)]">One pipeline.</span>
             </h2>

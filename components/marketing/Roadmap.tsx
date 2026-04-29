@@ -67,22 +67,18 @@ export function Roadmap() {
   return (
     <section className="border-b border-[var(--line)] bg-[var(--bg-2)]">
       <div className="max-w-[1480px] mx-auto px-4 md:px-8 py-14 md:py-20">
-        <div className="grid grid-cols-12 gap-8 mb-12 items-end">
-          <div className="col-span-12 md:col-span-7">
-            <div className="t-eyebrow t-eyebrow-accent mb-3">Roadmap · Public</div>
-            <h2 className="t-display text-[clamp(2rem,5vw,4rem)] leading-[0.95] text-balance">
-              What's<br />
-              <span className="text-[var(--accent)]">shipping next.</span>
-            </h2>
+
+        {/* Section cadence break — content leads, heading demoted to bottom-left.
+            Breaks the "kicker → big H2 → body → grid" rhythm of every other
+            section on the page. */}
+        <div className="flex items-baseline justify-between gap-6 mb-6 flex-wrap">
+          <div className="t-eyebrow t-eyebrow-accent">▸ Public roadmap</div>
+          <div className="t-mono-xs text-[var(--fg-mute)] tabular-nums">
+            {ROADMAP.length} items · live status
           </div>
-          <p className="col-span-12 md:col-span-5 t-prose max-w-md">
-            We ship in the open. Every item below is on the work order —
-            statuses flip live as features move from <em>In dev</em> to{" "}
-            <em>Live</em>. Bug us in <a className="link-tick" href="mailto:roadmap@shotshq.app">roadmap@shotshq.app</a> if a missing item should jump the queue.
-          </p>
         </div>
 
-        <ol className="border border-[var(--line)] bg-[var(--bg)]">
+        <ol className="border border-[var(--line)] bg-[var(--bg)] mb-10">
           {ROADMAP.map((item, i) => (
             <li
               key={item.id}
@@ -105,6 +101,19 @@ export function Roadmap() {
             </li>
           ))}
         </ol>
+
+        {/* Heading sits AT THE BOTTOM — captions the work-order, doesn't crown it. */}
+        <div className="grid grid-cols-12 gap-8 items-end">
+          <h2 className="col-span-12 md:col-span-7 t-display text-[clamp(1.5rem,3.5vw,2.5rem)] leading-[0.95] tracking-[-0.02em] normal-case">
+            What&apos;s <span className="text-[var(--accent)]">shipping next.</span>
+          </h2>
+          <p className="col-span-12 md:col-span-5 t-prose text-[14px] max-w-md">
+            We ship in the open. Statuses above flip live as features move
+            from <em>in dev</em> to <em>live</em>. Bug us at{" "}
+            <a className="link-tick" href="mailto:roadmap@shotshq.com">roadmap@shotshq.com</a>{" "}
+            if a missing item should jump the queue.
+          </p>
+        </div>
       </div>
     </section>
   );

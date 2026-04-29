@@ -24,15 +24,15 @@ export function Hero() {
       <div className="absolute inset-0 blueprint pointer-events-none opacity-25" aria-hidden />
 
       <div className="relative z-10 max-w-[1480px] mx-auto px-4 md:px-8 pt-12 md:pt-16 pb-14 md:pb-20">
-        <div className="grid grid-cols-12 gap-10 lg:gap-14 items-center">
+        <div className="grid grid-cols-12 gap-10 lg:gap-14 items-start">
           {/* Headline column */}
           <div className="col-span-12 lg:col-span-7 flex flex-col gap-6 sm:gap-8 min-w-0">
             <HeroRotatingTitle />
 
-            <p className="t-prose-lg max-w-[40ch]">
-              Drop in your raw iOS screenshots. Get App Store listings,
-              hero shots, OG cards, and 41 locales — every required
-              dimension, in minutes.
+            <p className="t-prose-lg max-w-[44ch]">
+              Your app in every App Store format, every locale, every
+              required dimension — in minutes. Drop in raw screenshots.
+              Ship everything else.
             </p>
 
             <div className="flex flex-wrap gap-3 items-center">

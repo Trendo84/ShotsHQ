@@ -1,5 +1,6 @@
 import { MarketingHeader } from "@/components/marketing/Header";
 import { MarketingFooter } from "@/components/marketing/Footer";
+import { StickyCtaBar } from "@/components/marketing/StickyCtaBar";
 
 export default function MarketingLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -7,6 +8,7 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
       <MarketingHeader />
       <main id="main" className="flex-1">{children}</main>
       <MarketingFooter />
+      <StickyCtaBar />
     </div>
   );
 }

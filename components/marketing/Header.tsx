@@ -73,7 +73,12 @@ export function MarketingHeader() {
 
         <div className="col-span-5 md:col-span-3 flex items-center justify-end gap-2 px-3 py-2">
           <ThemeSwitcher compact className="hidden md:inline-flex" />
-          <Link href="/sign-in" className="hidden md:inline-flex text-[13px] text-[var(--fg-dim)] hover:text-[var(--fg)] px-3 py-1.5 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]">Sign in</Link>
+          <Link
+            href="/sign-in"
+            className="hidden md:inline-flex items-center text-[13px] text-[var(--fg-dim)] hover:text-[var(--fg)] hover:border-[var(--accent)] px-3 py-1.5 border border-[var(--line-strong)] transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]"
+          >
+            Sign in
+          </Link>
           <Link href="/sign-up" className="btn btn-accent text-[11px] tracking-[0.06em] py-2 px-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]">Start free</Link>
           <button onClick={() => setOpen(!open)} className="md:hidden p-2 text-[var(--fg)]" aria-label="Toggle menu" aria-expanded={open}>
             {open ? <X size={18} /> : <Menu size={18} />}
