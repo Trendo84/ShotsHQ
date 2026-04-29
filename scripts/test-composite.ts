@@ -65,12 +65,17 @@ async function main() {
   }
 
   // ── 2. Composite ────────────────────────────────────────────────────────
+  // Use a real MIKI FM screenshot if available, else placeholder
+  const screenshotPath = resolve(process.cwd(), "tmp/test-app/IMG_0208.PNG");
+  const screenshotPng  = existsSync(screenshotPath) ? readFileSync(screenshotPath) : null;
+  console.log(screenshotPng ? "Using real MIKI FM screenshot" : "Using placeholder");
+
   console.log("Compositing 1290×2796 frame…");
   const t1 = Date.now();
   const final = await compositeFrame({
     device:         "iphone_69",
     backdropPng:    backdrop,
-    screenshotPng:  null, // placeholder — user's real screenshot would go here
+    screenshotPng,
     headline,
     subhead,
     applyWatermark: false,
