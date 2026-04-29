@@ -1,6 +1,6 @@
-import { eq, sum } from "drizzle-orm";
+import { eq, sum, desc } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { creditLedger, users } from "@/lib/db/schema";
+import { creditLedger, users, type CreditLedger } from "@/lib/db/schema";
 
 export type DebitParams = {
   userId: string;
@@ -137,4 +137,14 @@ export async function getBalance(userId: string): Promise<number> {
     .from(creditLedger)
     .where(eq(creditLedger.userId, userId));
   return Number(row?.total ?? 0);
+}
+
+/** Recent ledger entries for the billing page (newest first). */
+export async function getLedgerHistory(userId: string, limit = 50): Promise<CreditLedger[]> {
+  return db
+    .select()
+    .from(creditLedger)
+    .where(eq(creditLedger.userId, userId))
+    .orderBy(desc(creditLedger.createdAt))
+    .limit(limit);
 }

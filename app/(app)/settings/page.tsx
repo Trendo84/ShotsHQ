@@ -2,38 +2,50 @@ import { Topbar } from "@/components/app/Topbar";
 import { Input, Textarea } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { requireUser } from "@/lib/auth/clerk";
 
 const SECTIONS = [
   {
-    code: "01",
-    title: "Profile",
+    code:        "01",
+    title:       "Profile",
     description: "Displayed on operator cards, receipts, and the public showcase.",
   },
   {
-    code: "02",
-    title: "Studio API",
+    code:        "02",
+    title:       "Studio API",
     description: "Studio + Lifetime plan. Rotate any time.",
   },
   {
-    code: "03",
-    title: "App Store Connect",
+    code:        "03",
+    title:       "App Store Connect",
     description: "Enable direct push of generated assets.",
   },
   {
-    code: "04",
-    title: "Danger zone",
+    code:        "04",
+    title:       "Danger zone",
     description: "Operations that cannot be undone.",
-    danger: true,
+    danger:      true,
   },
-];
+] as const;
 
-function SectionHeading({ code, title, description, danger = false }: typeof SECTIONS[number] & { danger?: boolean }) {
+function SectionHeading({
+  code, title, description, danger = false,
+}: {
+  code: string;
+  title: string;
+  description: string;
+  danger?: boolean;
+}) {
   return (
     <div className="col-span-12 md:col-span-4 md:pr-8">
       <div className={`t-eyebrow ${danger ? "text-[var(--accent)]" : "t-eyebrow-accent"} mb-3`}>
         {code} · {danger ? "Caution" : "Section"}
       </div>
-      <h2 className={`t-display text-[28px] leading-[0.95] mb-3 normal-case tracking-[-0.02em] ${danger ? "text-[var(--accent)]" : ""}`}>
+      <h2
+        className={`t-display text-[clamp(1.5rem,2.6vw,1.875rem)] leading-[0.95] mb-3 normal-case tracking-[-0.02em] text-balance ${
+          danger ? "text-[var(--accent)]" : ""
+        }`}
+      >
         {title}
       </h2>
       <p className="t-prose text-[14px] max-w-xs">{description}</p>
@@ -41,16 +53,20 @@ function SectionHeading({ code, title, description, danger = false }: typeof SEC
   );
 }
 
-export default function SettingsPage() {
+export default async function SettingsPage() {
+  const user      = await requireUser();
+  const isStudio  = user.plan === "studio_monthly" || user.plan === "studio_annual" || user.plan === "lifetime";
+  const handle    = user.email.split("@")[0] ?? "";
+
   return (
     <>
       <Topbar section="Settings" breadcrumb={["Operator", "Settings"]} />
 
-      <div className="px-6 lg:px-10 pt-12 pb-10 max-w-[1480px] border-b border-[var(--line)]">
-        <div className="grid grid-cols-12 gap-8 items-end">
+      <div className="px-4 sm:px-6 lg:px-10 pt-10 lg:pt-12 pb-8 lg:pb-10 max-w-[1480px] border-b border-[var(--line)]">
+        <div className="grid grid-cols-12 gap-6 lg:gap-8 items-end">
           <div className="col-span-12 md:col-span-7">
             <div className="t-eyebrow t-eyebrow-accent mb-3">Account</div>
-            <h1 className="t-display text-[clamp(2.25rem,4vw,3.75rem)] normal-case tracking-[-0.04em]">
+            <h1 className="t-display text-[clamp(2rem,4vw,3.75rem)] leading-[0.95] normal-case tracking-[-0.04em] text-balance">
               Operator config.
             </h1>
           </div>
@@ -61,28 +77,32 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <div className="px-6 lg:px-10 max-w-[1480px] divide-y divide-[var(--line)]">
+      <div className="px-4 sm:px-6 lg:px-10 max-w-[1480px] divide-y divide-[var(--line)]">
+
         {/* Profile */}
-        <section className="grid grid-cols-12 gap-8 py-12">
+        <section className="grid grid-cols-12 gap-6 lg:gap-8 py-10 lg:py-12">
           <SectionHeading {...SECTIONS[0]!} />
           <div className="col-span-12 md:col-span-8 space-y-5 max-w-2xl">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <Label>Display name</Label>
-                <Input placeholder="K. Arnesen" defaultValue="K. Arnesen" />
+                <Input placeholder="Your name" defaultValue="" />
               </div>
               <div>
                 <Label>Handle</Label>
-                <Input placeholder="@arnesendev" defaultValue="@arnesendev" />
+                <Input placeholder={`@${handle}`} defaultValue="" />
               </div>
             </div>
             <div>
               <Label>Email</Label>
-              <Input type="email" defaultValue="ivansajtovi@gmail.com" />
+              <Input type="email" defaultValue={user.email} readOnly />
+              <p className="t-mono-xs text-[var(--fg-mute)] mt-1.5">
+                ▸ Synced from Clerk. Update via your auth provider.
+              </p>
             </div>
             <div>
               <Label>Bio (public)</Label>
-              <Textarea rows={3} defaultValue="Solo iOS dev. Ships small focused tools." />
+              <Textarea rows={3} placeholder="Tell people what you ship in one or two lines." defaultValue="" />
             </div>
             <div className="pt-1">
               <Button variant="accent" className="text-[12px] tracking-[0.04em] normal-case">Save profile</Button>
@@ -91,30 +111,44 @@ export default function SettingsPage() {
         </section>
 
         {/* Studio API */}
-        <section className="grid grid-cols-12 gap-8 py-12">
+        <section className="grid grid-cols-12 gap-6 lg:gap-8 py-10 lg:py-12">
           <SectionHeading {...SECTIONS[1]!} />
           <div className="col-span-12 md:col-span-8 space-y-4 max-w-2xl">
-            <div>
-              <Label>API key</Label>
-              <div className="flex gap-2">
-                <Input readOnly defaultValue="sk_live_••••••••••••••••••••••••H7L2" />
-                <Button variant="ghost" className="text-[11px] tracking-[0.04em] normal-case">Copy</Button>
-                <Button variant="destructive" className="text-[11px] tracking-[0.04em] normal-case">Rotate</Button>
+            {!isStudio ? (
+              <div className="border border-dashed border-[var(--line-strong)] p-5">
+                <div className="t-mono-xs text-[var(--fg-mute)] mb-1">LOCKED</div>
+                <p className="t-prose text-[14px] mb-3">
+                  API access is included with Studio and Lifetime plans.
+                </p>
+                <Button variant="ghost" className="text-[11px] tracking-[0.04em] normal-case">
+                  ▸ Upgrade to Studio
+                </Button>
               </div>
-            </div>
-            <div>
-              <Label>Webhook URL</Label>
-              <Input placeholder="https://your.app/webhooks/shotshq" />
-            </div>
-            <div>
-              <Label>Webhook secret</Label>
-              <Input readOnly defaultValue="whsec_••••••••••••••••••••••5XQp" />
-            </div>
+            ) : (
+              <>
+                <div>
+                  <Label>API key</Label>
+                  <div className="flex gap-2 flex-wrap">
+                    <Input readOnly defaultValue="sk_live_•••••••••••••••••••••••" className="flex-1 min-w-0" />
+                    <Button variant="ghost" className="text-[11px] tracking-[0.04em] normal-case">Copy</Button>
+                    <Button variant="destructive" className="text-[11px] tracking-[0.04em] normal-case">Rotate</Button>
+                  </div>
+                </div>
+                <div>
+                  <Label>Webhook URL</Label>
+                  <Input placeholder="https://your.app/webhooks/shotshq" />
+                </div>
+                <div>
+                  <Label>Webhook secret</Label>
+                  <Input readOnly defaultValue="whsec_•••••••••••••••••••••" />
+                </div>
+              </>
+            )}
           </div>
         </section>
 
         {/* App Store Connect */}
-        <section className="grid grid-cols-12 gap-8 py-12">
+        <section className="grid grid-cols-12 gap-6 lg:gap-8 py-10 lg:py-12">
           <SectionHeading {...SECTIONS[2]!} />
           <div className="col-span-12 md:col-span-8 space-y-4 max-w-2xl">
             <div>
@@ -136,22 +170,22 @@ export default function SettingsPage() {
         </section>
 
         {/* Danger zone */}
-        <section className="grid grid-cols-12 gap-8 py-12">
-          <SectionHeading {...SECTIONS[3]!} danger />
+        <section className="grid grid-cols-12 gap-6 lg:gap-8 py-10 lg:py-12">
+          <SectionHeading {...SECTIONS[3]!} />
           <div className="col-span-12 md:col-span-8 space-y-4 max-w-2xl">
-            <div className="border border-[var(--accent)] p-5 flex items-center justify-between gap-4">
-              <div>
+            <div className="border border-[var(--accent)] p-4 sm:p-5 flex items-center justify-between gap-4 flex-wrap">
+              <div className="min-w-0">
                 <div className="text-[14px] font-medium text-[var(--fg)]">Export all data</div>
                 <div className="text-[12px] text-[var(--fg-mute)] mt-1">JSON archive — projects, exports, ledger.</div>
               </div>
-              <Button variant="ghost" className="text-[11px] tracking-[0.04em] normal-case">Request export</Button>
+              <Button variant="ghost" className="text-[11px] tracking-[0.04em] normal-case shrink-0">Request export</Button>
             </div>
-            <div className="border border-[var(--accent)] p-5 flex items-center justify-between gap-4">
-              <div>
+            <div className="border border-[var(--accent)] p-4 sm:p-5 flex items-center justify-between gap-4 flex-wrap">
+              <div className="min-w-0">
                 <div className="text-[14px] font-medium text-[var(--accent)]">Delete account</div>
                 <div className="text-[12px] text-[var(--fg-mute)] mt-1">Removes all projects, exports, ledger. Irreversible.</div>
               </div>
-              <Button variant="destructive" className="text-[11px] tracking-[0.04em] normal-case">Delete</Button>
+              <Button variant="destructive" className="text-[11px] tracking-[0.04em] normal-case shrink-0">Delete</Button>
             </div>
           </div>
         </section>

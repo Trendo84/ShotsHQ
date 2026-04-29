@@ -42,7 +42,7 @@ export function FeatureGrid() {
     <section className="border-b border-[var(--line)]">
       <div className="max-w-[1480px] mx-auto px-4 md:px-8 py-20 md:py-28">
         <div className="grid grid-cols-12 gap-8 mb-14 items-end">
-          <h2 className="col-span-12 md:col-span-7 t-display text-[clamp(2.25rem,5.5vw,4.5rem)] leading-[0.95]">
+          <h2 className="col-span-12 md:col-span-7 t-display text-[clamp(2rem,5.5vw,4.5rem)] leading-[0.95] text-balance">
             Six modules.<br />
             No junk drawer.
           </h2>

@@ -46,7 +46,7 @@ export function HeroRotatingTitle() {
 
   return (
     <h1
-      className="t-display text-[clamp(2.5rem,7vw,5.5rem)] leading-[0.92] text-balance"
+      className="t-display text-[clamp(2.25rem,7vw,5.5rem)] leading-[0.92] text-balance break-words hyphens-auto"
       onMouseEnter={() => { paused.current = true;  }}
       onMouseLeave={() => { paused.current = false; }}
       aria-live="polite"

@@ -36,7 +36,7 @@ export function Testimonials() {
   return (
     <section className="border-b border-[var(--line)]">
       <div className="max-w-[1480px] mx-auto px-4 md:px-8 py-20 md:py-28">
-        <h2 className="t-display text-[clamp(2rem,5vw,4rem)] mb-12 leading-[0.95] max-w-3xl">
+        <h2 className="t-display text-[clamp(2rem,5vw,4rem)] mb-12 leading-[0.95] max-w-3xl text-balance">
           What operators say<br />
           <span className="text-[var(--accent)]">when they ship.</span>
         </h2>

@@ -17,26 +17,27 @@ const LOCALES = [
 
 export default function AiPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const [prompt, setPrompt] = useState("Surf forecast app for indie iOS. Wave height, tide, wind. Apple Watch sync.");
+  const [prompt, setPrompt] = useState("");
   const [running, setRunning] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [activeLocales, setActiveLocales] = useState<string[]>(["en", "fr", "de", "ja"]);
+  const [activeLocales, setActiveLocales] = useState<string[]>(["en"]);
   const [result, setResult] = useState<{ headline: string; subheadline: string; cta: string } | null>(null);
 
   function dispatchCopy() {
+    if (!prompt.trim()) return;
     setRunning(true);
     setProgress(0);
     setResult(null);
-    // Simulate streamed progress.
+    // Streamed progress placeholder — wires to /api/ai/generate-copy in the next pass.
     const interval = setInterval(() => {
       setProgress((p) => {
         if (p >= 100) {
           clearInterval(interval);
           setRunning(false);
           setResult({
-            headline: "TIDE CHARTED.",
-            subheadline: "WAVE HEIGHT, WIND, TIDE — IN ONE GLANCE.",
-            cta: "CHECK FORECAST",
+            headline:    "—",
+            subheadline: "Hook this button up to /api/ai/generate-copy",
+            cta:         "—",
           });
           return 100;
         }
@@ -51,7 +52,7 @@ export default function AiPage({ params }: { params: Promise<{ id: string }> }) 
 
   return (
     <>
-      <Topbar section="AI PANEL" breadcrumb={["OPERATOR", "PROJECTS", "Tideline", "AI"]} />
+      <Topbar section="AI PANEL" breadcrumb={["OPERATOR", "PROJECTS", "AI"]} />
 
       <div className="grid grid-cols-12 border-b-2 border-[var(--line-strong)]">
         <div className="col-span-12 md:col-span-7 border-r border-[var(--line)] p-6 md:p-10">
@@ -60,14 +61,16 @@ export default function AiPage({ params }: { params: Promise<{ id: string }> }) 
             AI<br />MODULES
           </h1>
         </div>
-        <aside className="col-span-12 md:col-span-5 p-6 md:p-10 grid grid-cols-2 gap-3 content-end">
-          <div className="border border-[var(--line)] p-4">
-            <div className="t-mono-xs text-[var(--fg-mute)]">CREDITS</div>
-            <div className="t-display text-[36px] t-numeric mt-1">142</div>
+        <aside className="col-span-12 md:col-span-5 p-5 sm:p-6 md:p-10 grid grid-cols-2 gap-3 content-end border-t md:border-t-0 border-[var(--line)]">
+          <div className="border border-[var(--line)] p-3 sm:p-4">
+            <div className="t-mono-xs text-[var(--fg-mute)]">MODELS</div>
+            <div className="t-display text-[clamp(1.5rem,3vw,2.25rem)] t-numeric mt-1 leading-none">2</div>
+            <div className="t-mono-xs text-[var(--fg-mute)] mt-1">GPT-5 + Flux 2</div>
           </div>
-          <div className="border border-[var(--line)] p-4">
+          <div className="border border-[var(--line)] p-3 sm:p-4">
             <div className="t-mono-xs text-[var(--fg-mute)]">QUEUE</div>
-            <div className="t-display text-[36px] t-numeric mt-1">0</div>
+            <div className="t-display text-[clamp(1.5rem,3vw,2.25rem)] t-numeric mt-1 leading-none">0</div>
+            <div className="t-mono-xs text-[var(--fg-mute)] mt-1">no active</div>
           </div>
         </aside>
       </div>
@@ -81,7 +84,12 @@ export default function AiPage({ params }: { params: Promise<{ id: string }> }) 
           </div>
           <h2 className="t-display text-[36px] mb-4">HEADLINE GENERATOR</h2>
           <Label>APP CONTEXT</Label>
-          <Textarea rows={4} value={prompt} onChange={(e) => setPrompt(e.target.value)} />
+          <Textarea
+            rows={4}
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            placeholder="Briefly describe your app — name, category, what it does, target user. The model uses this to generate headlines that read like your brand wrote them."
+          />
           <div className="mt-4 flex gap-3 items-center">
             <Button variant="accent" disabled={running} onClick={dispatchCopy}>
               {running ? "▸ DISPATCHING…" : "▸ DISPATCH GPT-5 · 1 CR"}
@@ -116,27 +124,15 @@ export default function AiPage({ params }: { params: Promise<{ id: string }> }) 
           )}
         </div>
 
-        <aside className="col-span-12 lg:col-span-5 p-6 md:p-10">
+        <aside className="col-span-12 lg:col-span-5 p-5 sm:p-6 md:p-10 border-t lg:border-t-0 border-[var(--line)]">
           <div className="t-mono-xs text-[var(--accent)] mb-3">[ JOB QUEUE ]</div>
-          <ul className="font-mono text-[11px] space-y-1.5">
-            {[
-              { id: "cp_8a72", task: "ai-generate-copy", state: "RUNNING", at: "10:14:08" },
-              { id: "bg_1a93", task: "ai-background",    state: "DONE",    at: "10:11:02" },
-              { id: "tr_44e1", task: "translate × 41",   state: "DONE",    at: "10:08:33" },
-              { id: "rs_87c0", task: "ai-restyle",       state: "ERR",     at: "10:05:12" },
-            ].map((r) => (
-              <li key={r.id} className="grid grid-cols-[80px_1fr_60px_56px] gap-2 border-b border-[var(--line)] py-1.5">
-                <span className="text-[var(--fg-mute)]">{r.at}</span>
-                <span>{r.task}</span>
-                <span className={
-                  r.state === "RUNNING" ? "text-[var(--accent)]" :
-                  r.state === "ERR"     ? "text-[var(--accent)]" :
-                  "text-[var(--signal)]"
-                }>{r.state}</span>
-                <span className="text-[var(--fg-mute)] text-right">{r.id}</span>
-              </li>
-            ))}
-          </ul>
+          <div className="border border-dashed border-[var(--line-strong)] p-5 sm:p-6 text-center">
+            <div className="t-mono-xs text-[var(--fg-mute)] mb-2">QUEUE EMPTY</div>
+            <p className="t-mono-sm text-[var(--fg-dim)] leading-relaxed">
+              Dispatched jobs stream here in real time via Trigger.dev.
+              Failed runs auto-refund credits.
+            </p>
+          </div>
         </aside>
       </section>
 
