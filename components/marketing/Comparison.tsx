@@ -41,26 +41,29 @@ export function Comparison() {
   return (
     <section className="border-b border-[var(--line)]">
       <div className="max-w-[1480px] mx-auto px-4 md:px-8 py-14 md:py-20">
-        <div className="grid grid-cols-12 gap-8 mb-12 items-end">
-          <div className="col-span-12 md:col-span-7 flex items-end gap-4 md:gap-6 min-w-0">
-            <Image
-              src="/comparison-trophy.png"
-              alt=""
-              aria-hidden="true"
-              width={120}
-              height={120}
-              className="hidden sm:block w-[88px] h-[88px] md:w-[120px] md:h-[120px] shrink-0 select-none comparison-trophy"
-              draggable={false}
-            />
-            <h2 className="t-display text-[clamp(2rem,5vw,4rem)] leading-[0.95] min-w-0">
-              How we stack up.
-            </h2>
-          </div>
-          <p className="col-span-12 md:col-span-5 t-prose max-w-md">
-            Versus AppLaunchpad, Previewed, AppMockUp. Subscription traps,
-            deceptive paywalls, editor lag.
-          </p>
+
+        {/* Pattern-break: single-column header, no kicker, no right-column
+            description. Utility section — opens with the H2 directly,
+            small inline subtitle, table below. Breaks the kicker → H2 →
+            right-column rhythm of the surrounding sections. */}
+        <div className="flex items-end gap-4 md:gap-6 min-w-0 mb-3">
+          <Image
+            src="/comparison-trophy.png"
+            alt=""
+            aria-hidden="true"
+            width={120}
+            height={120}
+            className="hidden sm:block w-[72px] h-[72px] md:w-[96px] md:h-[96px] shrink-0 select-none comparison-trophy"
+            draggable={false}
+          />
+          <h2 className="t-display text-[clamp(2rem,5vw,4rem)] leading-[0.95] min-w-0">
+            How we stack up.
+          </h2>
         </div>
+        <p className="t-mono-sm text-[var(--fg-mute)] mb-10 max-w-2xl">
+          ▸ Versus AppLaunchpad · Previewed · AppMockUp.
+          {" "}Subscription traps, deceptive paywalls, editor lag.
+        </p>
 
         <div className="border border-[var(--line)] max-w-full md:max-w-4xl overflow-x-auto">
           <div className="grid grid-cols-[1fr_92px_92px] sm:grid-cols-[1fr_140px_140px] md:grid-cols-[1fr_180px_180px] border-b border-[var(--line)] bg-[var(--bg-2)]">

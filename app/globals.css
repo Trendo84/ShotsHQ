@@ -31,7 +31,9 @@
   --bg-2:        #16161A;
   --fg:          #EAEAEA;
   --fg-dim:      #B5B5B5;
-  --fg-mute:     #707070;
+  /* WCAG AA fix: #707070 on #0A0A0A = 4.04:1 (under 4.5 minimum for
+     small text). #909090 on #0A0A0A = 6.2:1 — passes AA + AAA. */
+  --fg-mute:     #909090;
   --line:        #2A2A2A;
   --line-strong: #4A4A4A;
   --accent:      #E61919;

@@ -40,14 +40,29 @@ export function StickyCtaBar() {
       `}
     >
       <div className="max-w-[1480px] mx-auto px-4 md:px-8 py-2.5 flex items-center justify-between gap-4">
-        <span className="t-mono-xs uppercase tracking-[0.16em] text-[var(--fg-mute)] hidden sm:flex items-center gap-2 truncate">
-          <span className="block w-1.5 h-1.5 rounded-full bg-[var(--accent)] animate-pulse" />
-          <span className="truncate">Ship App Store screenshots before coffee.</span>
-        </span>
+        <Link
+          href="/"
+          tabIndex={visible ? 0 : -1}
+          className="hidden sm:flex items-center gap-2 group min-w-0"
+          aria-label="ShotsHQ home"
+        >
+          <span className="block w-2 h-2 bg-[var(--accent)] shrink-0" />
+          <span className="t-display text-[15px] tracking-[-0.04em] leading-none">SHOTSHQ</span>
+          <sup className="t-mono-xs text-[var(--fg-mute)] hidden md:inline">®</sup>
+          <span className="t-mono-xs text-[var(--fg-mute)] tracking-[0.16em] uppercase ml-2 truncate">
+            · Free forever
+          </span>
+        </Link>
 
-        <span className="sm:hidden t-mono-xs uppercase tracking-[0.16em] text-[var(--fg)] truncate">
-          Ship faster.
-        </span>
+        <Link
+          href="/"
+          tabIndex={visible ? 0 : -1}
+          className="sm:hidden flex items-center gap-2 min-w-0"
+          aria-label="ShotsHQ home"
+        >
+          <span className="block w-2 h-2 bg-[var(--accent)] shrink-0" />
+          <span className="t-display text-[14px] tracking-[-0.04em] leading-none">SHOTSHQ</span>
+        </Link>
 
         <div className="flex items-center gap-2 shrink-0">
           <Link
