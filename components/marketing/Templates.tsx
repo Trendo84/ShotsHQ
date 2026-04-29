@@ -300,14 +300,14 @@ export function Templates({ compact = false }: { compact?: boolean }) {
         </div>
 
         {compact && (
-          <div className="mt-10 flex justify-center">
+          <div className="mt-12 flex justify-center">
             <Link
               href="/templates"
-              className="group inline-flex items-center gap-3 border border-[var(--line-strong)] hover:border-[var(--accent)] pl-5 pr-1.5 py-1.5 transition-colors"
+              className="group inline-flex items-center gap-3 bg-[var(--accent)] text-[var(--accent-fg)] pl-6 pr-1.5 py-2 transition-transform duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]"
             >
-              <span className="t-eyebrow normal-case tracking-[0.06em] text-[12px] text-[var(--fg)]">All templates</span>
-              <span className="inline-grid place-items-center w-9 h-9 bg-[var(--bg-2)] text-[var(--fg)] group-hover:bg-[var(--accent)] group-hover:text-[var(--accent-fg)] transition-colors">
-                →
+              <span className="btn-label">Browse all templates</span>
+              <span className="inline-grid place-items-center w-9 h-9 bg-[var(--accent-fg)] text-[var(--accent)] transition-transform duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0.5 leading-none font-bold">
+                <span aria-hidden className="-mt-px">→</span>
               </span>
             </Link>
           </div>

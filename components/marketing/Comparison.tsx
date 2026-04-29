@@ -4,14 +4,14 @@ import { Check, Minus } from "lucide-react";
 type Cell = string | "yes" | "no";
 
 const ROWS: Array<{ label: string; shots: Cell; others: Cell }> = [
-  { label: "AI headline copy",                       shots: "GPT-5",          others: "Manual" },
-  { label: "Background regeneration",                shots: "Flux 2",         others: "Stock only" },
-  { label: "41-locale fan-out",                      shots: "Automatic",      others: "Manual × N" },
-  { label: "Device frames (6.9″ / 6.7″ / iPad 13″)", shots: "yes",            others: "Partial" },
-  { label: "Direct App Store Connect upload",        shots: "yes",            others: "no" },
-  { label: "Watermark-free free tier",               shots: "no",             others: "no" },
-  { label: "Project versioning",                     shots: "Postgres",       others: "Browser only" },
-  { label: "Pricing model",                          shots: "Credits + lifetime", others: "Monthly only" },
+  { label: "AI headline copy",                       shots: "Frontier LLM",      others: "Manual" },
+  { label: "AI background generation",               shots: "Best-in-class image model", others: "Stock only" },
+  { label: "41-locale fan-out",                      shots: "Automatic",         others: "Manual × N" },
+  { label: "Device frames (6.9″ / 6.7″ / iPad 13″)", shots: "yes",               others: "Partial" },
+  { label: "Direct App Store Connect upload",        shots: "yes",               others: "no" },
+  { label: "Free tier exports",                      shots: "Watermarked",       others: "Watermarked or paywalled" },
+  { label: "Project versioning",                     shots: "Cloud (Postgres)",  others: "Browser only" },
+  { label: "Pricing model",                          shots: "Credits + Studio plan", others: "Monthly only" },
 ];
 
 function Value({ v, accent }: { v: Cell; accent?: boolean }) {

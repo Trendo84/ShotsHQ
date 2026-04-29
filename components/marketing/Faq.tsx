@@ -5,7 +5,7 @@ import { useState } from "react";
 const FAQS: Array<{ q: string; a: React.ReactNode }> = [
   {
     q: "Why iOS only?",
-    a: "Wedge focus. Indie iOS devs ship to one store with three required dimensions — that's a tractable problem. Android adds device fragmentation we'd rather not solve in v1.",
+    a: "We focus on iOS first because indie devs ship to one store with three required screenshot sizes — a solvable problem we can nail completely. Android's device fragmentation is on the roadmap for v2.",
   },
   {
     q: "Are credits really good forever?",
@@ -13,19 +13,23 @@ const FAQS: Array<{ q: string; a: React.ReactNode }> = [
   },
   {
     q: "What happens on a failed AI generation?",
-    a: "Automatic refund. Every Trigger.dev task wraps the AI call and credits are returned to the ledger with a 'refund' reason on failure.",
+    a: "Automatic refund. The credits return to your ledger with a 'refund' reason — you don't pay for anything that didn't deliver.",
   },
   {
     q: "Can I edit raw screenshots, or only AI-generated ones?",
-    a: "Both. Polotno is the canvas — you can drag, type, swap layers, layer device frames, and export at any required dimension. AI is opt-in.",
+    a: "Both. The canvas editor lets you drag, type, swap layers, layer device frames, and export at any required dimension. AI is opt-in — every step is editable by hand.",
   },
   {
     q: "Is there an API?",
     a: "Studio plan only. Generate, render, export — programmatic access for solo developers running CI/CD release pipelines.",
   },
   {
+    q: "Does the free tier add a watermark?",
+    a: "Yes. Free-tier exports include a small SHOTSHQ watermark in the corner. It's removed automatically on any paid pack or Studio plan.",
+  },
+  {
     q: "What's your data policy?",
-    a: "Project assets live in Cloudflare R2 under your account. AI prompts are sent to OpenAI / fal.ai per their respective TOS; we don't retain prompts past 24 hours.",
+    a: "Your project assets live in your own private storage — only you and your team can access them. AI prompts run through partner providers under their respective terms; we don't retain prompts past 24 hours.",
   },
 ];
 

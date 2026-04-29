@@ -72,6 +72,7 @@ export function MarketingFooter() {
           <span className="col-span-12 md:col-span-6 flex items-center gap-3 md:justify-end t-eyebrow normal-case tracking-[0.06em] text-[12px]">
             <span>v2.6</span>
             <span className="opacity-40">·</span>
+            <span className="text-[var(--fg-mute)]">Server time</span>
             <span className="t-numeric">{now} UTC</span>
             <span className="opacity-40">·</span>
             <Link href="/docs/status" className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">

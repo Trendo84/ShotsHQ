@@ -109,13 +109,13 @@ const I_DELIVER = (
 );
 
 const STAGES: Stage[] = [
-  { id: "01", label: "Intake",    icon: I_INTAKE,    title: "RAW SCREENSHOTS", detail: "Drop iOS PNGs. EXIF stripped, dimensions auto-verified, R2-staged."  },
-  { id: "02", label: "Analyze",   icon: I_ANALYZE,   title: "GPT-5 VISION",    detail: "Reads each frame for feature, mood, and palette signals."             },
-  { id: "03", label: "Copy",      icon: I_COPY,      title: "HEADLINE BANK",   detail: "Eight candidates per frame. Zod-validated structured output."         },
-  { id: "04", label: "Backdrop",  icon: I_BACKDROP,  title: "ART DIRECTION",   detail: "gpt-image-1 backdrops. Real iPhone frame composited on top."          },
-  { id: "05", label: "Translate", icon: I_TRANSLATE, title: "41 LOCALES",      detail: "Parallel fan-out. Auto-relayout for each language length."            },
-  { id: "06", label: "Render",    icon: I_RENDER,    title: "SERVER PNGs",     detail: "Sharp on the server. Every required dimension. No client tricks."    },
-  { id: "07", label: "Deliver",   icon: I_DELIVER,   title: "EXPORT READY",    detail: "R2 zip for download. Or direct push to App Store Connect."           },
+  { id: "01", label: "Intake",    icon: I_INTAKE,    title: "RAW SCREENSHOTS", detail: "Drag in your iOS PNGs. Dimensions verified, files staged automatically."   },
+  { id: "02", label: "Analyze",   icon: I_ANALYZE,   title: "AI VISION READ",  detail: "Picks out the feature, mood, and palette in every screen."                  },
+  { id: "03", label: "Copy",      icon: I_COPY,      title: "HEADLINE BANK",   detail: "Eight headline options per screen. Guaranteed well-formed output."          },
+  { id: "04", label: "Backdrop",  icon: I_BACKDROP,  title: "ART DIRECTION",   detail: "AI-generated backdrops. A real iPhone frame composites on top."             },
+  { id: "05", label: "Translate", icon: I_TRANSLATE, title: "41 LOCALES",      detail: "Every language in parallel. Auto-relayout when copy length changes."        },
+  { id: "06", label: "Render",    icon: I_RENDER,    title: "SERVER EXPORTS",  detail: "Server-side render at every required dimension. Pixel-perfect."             },
+  { id: "07", label: "Deliver",   icon: I_DELIVER,   title: "EXPORT READY",    detail: "Download as a ZIP. Or push direct to App Store Connect."                    },
 ];
 
 // ── Pacing ───────────────────────────────────────────────────────────────────
@@ -141,10 +141,16 @@ export function PipelineDiagram() {
 
         {/* Header */}
         <div className="grid grid-cols-12 gap-8 mb-14 items-end">
-          <h2 className="col-span-12 md:col-span-7 t-display text-[clamp(2rem,5vw,4rem)] leading-[0.95]">
-            Seven stages.<br />
-            <span className="text-[var(--accent)]">One pipeline.</span>
-          </h2>
+          <div className="col-span-12 md:col-span-7">
+            <div className="t-mono-xs uppercase tracking-[0.16em] text-[var(--fg-mute)] mb-3 flex items-center gap-2">
+              <span className="block w-1.5 h-1.5 rounded-full bg-[var(--accent)] animate-pulse" />
+              Live trace · cycles below
+            </div>
+            <h2 className="t-display text-[clamp(2rem,5vw,4rem)] leading-[0.95] text-balance">
+              Seven stages.<br />
+              <span className="text-[var(--accent)]">One pipeline.</span>
+            </h2>
+          </div>
           <p className="col-span-12 md:col-span-5 t-prose max-w-md">
             Every stage is independently observable, retryable, and refunds
             credits on failure — including partial failures inside a locale

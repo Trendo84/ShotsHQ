@@ -1,12 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
-import { PhoneShowcase } from "@/components/marketing/PhoneShowcase";
+import { HeroBeforeAfter } from "@/components/marketing/HeroBeforeAfter";
 import { HeroRotatingTitle } from "@/components/marketing/HeroRotatingTitle";
 
 export function Hero() {
   return (
     <section className="relative border-b border-[var(--line)] overflow-hidden">
-      {/* Atmospheric backdrop — radial bloom for tactical, blueprint grid for both */}
+      {/* Atmospheric backdrop */}
       <div
         aria-hidden
         className="absolute inset-0 pointer-events-none hero-backdrop"
@@ -23,17 +23,16 @@ export function Hero() {
       </div>
       <div className="absolute inset-0 blueprint pointer-events-none opacity-25" aria-hidden />
 
-      <div className="relative z-10 max-w-[1480px] mx-auto px-4 md:px-8 pt-20 md:pt-28 pb-24 md:pb-32">
+      <div className="relative z-10 max-w-[1480px] mx-auto px-4 md:px-8 pt-16 md:pt-24 pb-20 md:pb-28">
         <div className="grid grid-cols-12 gap-10 lg:gap-14 items-center">
-          {/* Headline */}
-          <div className="col-span-12 lg:col-span-8 flex flex-col gap-8 min-w-0">
+          {/* Headline column */}
+          <div className="col-span-12 lg:col-span-7 flex flex-col gap-6 sm:gap-8 min-w-0">
             <HeroRotatingTitle />
 
             <p className="t-prose-lg max-w-[40ch]">
-              Drop in raw iOS screens. Get App Store listings, web hero
-              shots, press kits, OG cards, Discord and Product Hunt
-              assets — copy, device frames, backdrops, 41 locales,
-              every required dimension — in under five minutes.
+              Drop in your raw iOS screenshots. Get App Store listings,
+              hero shots, OG cards, and 41 locales — every required
+              dimension, in minutes.
             </p>
 
             <div className="flex flex-wrap gap-3 items-center">
@@ -52,12 +51,26 @@ export function Hero() {
               >
                 See pricing
               </Link>
+              <span className="t-mono-xs text-[var(--fg-mute)]">
+                No card · Free tier exports include a watermark
+              </span>
+            </div>
+
+            {/* Trust chip */}
+            <div className="flex items-center gap-2 t-mono-xs text-[var(--fg-mute)]">
+              <span className="inline-flex items-center gap-1.5 border border-[var(--signal)] text-[var(--signal)] px-2 py-1 uppercase tracking-[0.16em]">
+                <span className="block w-1.5 h-1.5 rounded-full bg-[var(--signal)]" />
+                Pre-launch
+              </span>
+              <span className="hidden sm:inline">
+                · Built by an indie dev for indie devs
+              </span>
             </div>
           </div>
 
-          {/* Phone showcase */}
-          <div className="col-span-12 lg:col-span-4 relative">
-            <PhoneShowcase />
+          {/* Before / After composition */}
+          <div className="col-span-12 lg:col-span-5 relative pt-8 sm:pt-10 lg:pt-0">
+            <HeroBeforeAfter />
           </div>
         </div>
       </div>
