@@ -16,6 +16,7 @@
  */
 
 import type { TemplateSetStyle } from "./template-set";
+import type { BrandProfile } from "@/lib/brand/schema";
 
 export type FramePurpose =
   | "hero"          // First frame — sets the brand
@@ -38,7 +39,33 @@ export type BackdropParams = {
   voice?:         string;
   /** Index in the set (1-6) — helps the model vary composition slightly. */
   frameIndex?:    number;
+  /** Optional extracted brand profile — when present, locks tightly to
+   *  the user's actual brand instead of generic style direction. */
+  brand?:         BrandProfile;
 };
+
+/**
+ * Convenience: build BackdropParams from a BrandProfile + frame purpose.
+ * Used when the user provided a URL and we extracted a brand.
+ */
+export function paramsFromBrand(
+  brand:       BrandProfile,
+  purpose:     FramePurpose,
+  frameIndex?: number,
+): BackdropParams {
+  return {
+    appName:        brand.productName,
+    appDescription: brand.productPitch,
+    category:       brand.category,
+    style:          brand.vibe,
+    purpose,
+    primaryColor:   brand.primaryColor,
+    accentColor:    brand.accentColor,
+    voice:          brand.voice,
+    frameIndex,
+    brand,
+  };
+}
 
 const STYLE_DIRECTION: Record<TemplateSetStyle, string> = {
   "minimal-light":
@@ -81,11 +108,21 @@ export function buildBackdropPrompt(p: BackdropParams): string {
   const direction = STYLE_DIRECTION[p.style];
   const purpose   = PURPOSE_HINT[p.purpose];
   const palette   = p.primaryColor && p.accentColor
-    ? `Locked palette: primary ${p.primaryColor}, accent ${p.accentColor}.`
+    ? `Locked palette: primary ${p.primaryColor}, accent ${p.accentColor}${p.brand?.backgroundColor ? `, background ${p.brand.backgroundColor}` : ""}${p.brand?.foregroundColor ? `, foreground ${p.brand.foregroundColor}` : ""}.`
     : `Pick a palette consistent with the style direction.`;
   const voice = p.voice ? `Brand voice: ${p.voice}.` : "";
   const idxLine = p.frameIndex
     ? `This is frame ${p.frameIndex} of 6 in a cohesive set. Maintain visual consistency with the rest of the set; vary composition subtly so each frame feels distinct.`
+    : "";
+
+  // When we have a fully-extracted brand, lock the typography hints too.
+  const typography = p.brand
+    ? `TYPOGRAPHY (the user's actual brand): display font feels like "${p.brand.displayFont}", body font feels like "${p.brand.bodyFont}". Match this energy in any decorative type accents you draw.`
+    : "";
+
+  // Include 2-3 of the user's own taglines so the AI sees their voice.
+  const voiceSamples = p.brand?.taglineIdeas?.length
+    ? `EXAMPLE TAGLINES from this brand (for voice reference, do NOT render any text in the image): "${p.brand.taglineIdeas.slice(0, 3).join('", "')}".`
     : "";
 
   return [
@@ -115,6 +152,8 @@ export function buildBackdropPrompt(p: BackdropParams): string {
     `STYLE DIRECTION: ${direction}`,
     palette,
     voice,
+    typography,
+    voiceSamples,
     "",
     `FRAME PURPOSE: ${purpose}`,
     idxLine,

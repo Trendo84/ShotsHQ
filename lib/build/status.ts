@@ -31,7 +31,7 @@ export type Phase = {
   steps:       Step[];
 };
 
-export const LAST_UPDATED = "2026-04-29 18:30 AEST";
+export const LAST_UPDATED = "2026-04-29 19:30 AEST";
 export const REPO_URL     = "https://github.com/Trendo84/ShotsHQ";
 export const PROD_URL     = "https://shotshq.com";
 
@@ -355,6 +355,14 @@ export const PHASES: Phase[] = [
         status: "todo",
         description:
           "Productivity, fitness, finance, social, AI tools, games. 5 examples each. Each example: app description input → copy + layout output. Pasted into the GPT call as context. Quality jumps without fine-tuning.",
+      },
+      {
+        id:     "brand-extraction",
+        title:  "Brand extraction from URL — 'paste your site, get matching screenshots'",
+        status: "done",
+        description:
+          "POST /api/brand/extract takes any URL → fetches HTML → gpt-5 returns a structured BrandProfile (palette, typography, voice, vibe, tagline ideas). Validated on linear.app: extracted exact Linear colors (#6E56CF, #5EA2EF, #08090A) + correct vibe + Linear-voice taglines. Profile feeds directly into gpt-image-1 backdrop prompts so output stays brand-perfect.",
+        notes:  "Stolen pattern from SkillUI's design-system extraction approach.",
       },
       {
         id:     "starter-templates",

@@ -74,15 +74,16 @@ export function PipelineDiagram() {
             style={{ left: `${SPINE_INSET_PCT}%`, right: `${SPINE_INSET_PCT}%`, top: "44px" }}
           />
 
-          {/* Tracer — bright dot + trail */}
+          {/* Tracer — bright dot + trail. Container is exactly the dot's
+              size, vertically centered on the spine line (y=44px). */}
           <div
             aria-hidden
             className="absolute pointer-events-none"
             style={{
-              top:    "39px",
+              top:    "41px", // spine at 44, dot is 7px → center at 44.5 ≈ spine
               left:   `${SPINE_INSET_PCT}%`,
               right:  `${SPINE_INSET_PCT}%`,
-              height: "11px",
+              height: "7px",
             }}
           >
             <div className="pipeline-tracer absolute h-[7px] w-[7px] -translate-x-1/2 will-change-[left]">
