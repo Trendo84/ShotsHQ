@@ -58,9 +58,9 @@ const SURFACES: Surface[] = [
   {
     id:          "ph",
     name:        "Product Hunt",
-    spec:        "1270 × 760 · gallery × 8",
-    status:      "Soon",
-    description: "Exact dimensions, exact aspect. Eight-tile gallery formatted for hunt day.",
+    spec:        "1270×760 · 8 tiles + 240×240 icon",
+    status:      "Beta",
+    description: "Eight-tile gallery + topic icon + featured banner. Hunt-day ready.",
     aspect:      "16 / 11",
     layout:      "ph-gallery",
   },

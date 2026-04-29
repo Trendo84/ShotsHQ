@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { HeroBeforeAfter } from "@/components/marketing/HeroBeforeAfter";
+import { HeroBeforeAfterSlider } from "@/components/marketing/HeroBeforeAfterSlider";
 import { HeroRotatingTitle } from "@/components/marketing/HeroRotatingTitle";
 
 export function Hero() {
@@ -71,9 +71,9 @@ export function Hero() {
             </div>
           </div>
 
-          {/* Before / After composition */}
+          {/* Interactive before / after — drag to compare */}
           <div className="col-span-12 lg:col-span-5 relative pt-8 sm:pt-10 lg:pt-0">
-            <HeroBeforeAfter />
+            <HeroBeforeAfterSlider />
           </div>
         </div>
       </div>
