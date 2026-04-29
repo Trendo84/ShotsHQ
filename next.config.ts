@@ -20,6 +20,41 @@ const nextConfig: NextConfig = {
     serverActions: { bodySizeLimit: "10mb" },
   },
   serverExternalPackages: ["sharp", "@aws-sdk/client-s3"],
+
+  /* HTTP security headers — Next does not add these by default. CSP is
+     deliberately permissive on script-src for now (Clerk + PostHog need
+     'unsafe-inline' + 'unsafe-eval'); tighten with hashes/nonces post-launch. */
+  async headers() {
+    const securityHeaders = [
+      { key: "X-Frame-Options",        value: "DENY" },
+      { key: "X-Content-Type-Options", value: "nosniff" },
+      { key: "Referrer-Policy",        value: "strict-origin-when-cross-origin" },
+      { key: "Permissions-Policy",     value: "camera=(), microphone=(), geolocation=(), interest-cohort=()" },
+      { key: "X-DNS-Prefetch-Control", value: "on" },
+      {
+        key:   "Strict-Transport-Security",
+        value: "max-age=63072000; includeSubDomains; preload",
+      },
+      {
+        key: "Content-Security-Policy",
+        value: [
+          "default-src 'self'",
+          "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://clerk.com https://*.clerk.accounts.dev https://challenges.cloudflare.com https://us.i.posthog.com https://us-assets.i.posthog.com",
+          "connect-src 'self' https://clerk.com https://*.clerk.accounts.dev https://api.clerk.com https://us.i.posthog.com https://us-assets.i.posthog.com https://*.r2.cloudflarestorage.com https://*.r2.dev https://api.openai.com https://fal.run https://*.ingest.sentry.io",
+          "img-src 'self' data: blob: https:",
+          "media-src 'self' blob:",
+          "style-src 'self' 'unsafe-inline'",
+          "font-src 'self' https://fonts.gstatic.com data:",
+          "frame-src 'self' https://challenges.cloudflare.com https://*.clerk.accounts.dev",
+          "frame-ancestors 'none'",
+          "base-uri 'self'",
+          "form-action 'self' https://*.clerk.accounts.dev",
+          "worker-src 'self' blob:",
+        ].join("; "),
+      },
+    ];
+    return [{ source: "/(.*)", headers: securityHeaders }];
+  },
 };
 
 export default withSentryConfig(nextConfig, {

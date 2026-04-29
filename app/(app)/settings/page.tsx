@@ -1,8 +1,11 @@
 import { Topbar } from "@/components/app/Topbar";
-import { Input, Textarea } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { requireUser } from "@/lib/auth/clerk";
+import {
+  AscForm,
+  ProfileForm,
+  StudioApiForm,
+} from "@/components/settings/SettingsForms";
 
 const SECTIONS = [
   {
@@ -82,90 +85,24 @@ export default async function SettingsPage() {
         {/* Profile */}
         <section className="grid grid-cols-12 gap-6 lg:gap-8 py-10 lg:py-12">
           <SectionHeading {...SECTIONS[0]!} />
-          <div className="col-span-12 md:col-span-8 space-y-5 max-w-2xl">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <Label>Display name</Label>
-                <Input placeholder="Your name" defaultValue="" />
-              </div>
-              <div>
-                <Label>Handle</Label>
-                <Input placeholder={`@${handle}`} defaultValue="" />
-              </div>
-            </div>
-            <div>
-              <Label>Email</Label>
-              <Input type="email" defaultValue={user.email} readOnly />
-              <p className="t-mono-xs text-[var(--fg-mute)] mt-1.5">
-                ▸ Synced from Clerk. Update via your auth provider.
-              </p>
-            </div>
-            <div>
-              <Label>Bio (public)</Label>
-              <Textarea rows={3} placeholder="Tell people what you ship in one or two lines." defaultValue="" />
-            </div>
-            <div className="pt-1">
-              <Button variant="accent" className="text-[12px] tracking-[0.04em] normal-case">Save profile</Button>
-            </div>
+          <div className="col-span-12 md:col-span-8 max-w-2xl">
+            <ProfileForm email={user.email} handle={handle} />
           </div>
         </section>
 
         {/* Studio API */}
         <section className="grid grid-cols-12 gap-6 lg:gap-8 py-10 lg:py-12">
           <SectionHeading {...SECTIONS[1]!} />
-          <div className="col-span-12 md:col-span-8 space-y-4 max-w-2xl">
-            {!isStudio ? (
-              <div className="border border-dashed border-[var(--line-strong)] p-5">
-                <div className="t-mono-xs text-[var(--fg-mute)] mb-1">LOCKED</div>
-                <p className="t-prose text-[14px] mb-3">
-                  API access is included with Studio and Lifetime plans.
-                </p>
-                <Button variant="ghost" className="text-[11px] tracking-[0.04em] normal-case">
-                  ▸ Upgrade to Studio
-                </Button>
-              </div>
-            ) : (
-              <>
-                <div>
-                  <Label>API key</Label>
-                  <div className="flex gap-2 flex-wrap">
-                    <Input readOnly defaultValue="sk_live_•••••••••••••••••••••••" className="flex-1 min-w-0" />
-                    <Button variant="ghost" className="text-[11px] tracking-[0.04em] normal-case">Copy</Button>
-                    <Button variant="destructive" className="text-[11px] tracking-[0.04em] normal-case">Rotate</Button>
-                  </div>
-                </div>
-                <div>
-                  <Label>Webhook URL</Label>
-                  <Input placeholder="https://your.app/webhooks/shotshq" />
-                </div>
-                <div>
-                  <Label>Webhook secret</Label>
-                  <Input readOnly defaultValue="whsec_•••••••••••••••••••••" />
-                </div>
-              </>
-            )}
+          <div className="col-span-12 md:col-span-8 max-w-2xl">
+            <StudioApiForm enabled={isStudio} />
           </div>
         </section>
 
         {/* App Store Connect */}
         <section className="grid grid-cols-12 gap-6 lg:gap-8 py-10 lg:py-12">
           <SectionHeading {...SECTIONS[2]!} />
-          <div className="col-span-12 md:col-span-8 space-y-4 max-w-2xl">
-            <div>
-              <Label>Issuer ID</Label>
-              <Input placeholder="69a6de7d-xxxx-xxxx-xxxx-xxxxxxxxxxxx" />
-            </div>
-            <div>
-              <Label>Key ID</Label>
-              <Input placeholder="2X9YABCDEFG" />
-            </div>
-            <div>
-              <Label>Private key (.p8)</Label>
-              <Textarea rows={6} placeholder="-----BEGIN PRIVATE KEY-----..." />
-            </div>
-            <div className="pt-1">
-              <Button variant="accent" className="text-[12px] tracking-[0.04em] normal-case">Verify and save</Button>
-            </div>
+          <div className="col-span-12 md:col-span-8 max-w-2xl">
+            <AscForm />
           </div>
         </section>
 

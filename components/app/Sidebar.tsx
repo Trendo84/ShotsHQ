@@ -19,7 +19,7 @@ const NAV: Array<{ href: string; label: string; icon: typeof LayoutGrid }> = [
   { href: "/settings",   label: "Settings",  icon: Settings    },
 ];
 
-export function Sidebar({ creditBalance = 142, plan = "Indie" }: { creditBalance?: number; plan?: string }) {
+export function Sidebar({ creditBalance = 0, plan = "Free" }: { creditBalance?: number; plan?: string }) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   return (
@@ -90,7 +90,7 @@ export function Sidebar({ creditBalance = 142, plan = "Indie" }: { creditBalance
               <span className="text-[11px] text-[var(--accent)]">{plan}</span>
             </div>
             <div className="t-display text-[28px] leading-tight mt-1 t-numeric">
-              {creditBalance.toLocaleString()}
+              {Number.isFinite(creditBalance) ? creditBalance.toLocaleString() : "∞"}
             </div>
             <div className="text-[11px] text-[var(--fg-mute)] mt-1 group-hover:text-[var(--fg-dim)] transition-colors">
               Tap to top up →

@@ -33,9 +33,9 @@ export default async function BillingPage() {
 
       <div className="grid grid-cols-12 border-b-2 border-[var(--line-strong)]">
         <div className="col-span-12 md:col-span-7 border-r-0 md:border-r border-[var(--line)] p-5 sm:p-6 md:p-10">
-          <div className="t-mono-xs text-[var(--accent)] mb-2">[ MODULE / 02-BILLING ]</div>
+          <div className="t-eyebrow t-eyebrow-accent mb-2">Account · Billing</div>
           <h1 className="t-display text-[clamp(2rem,6vw,5.5rem)] leading-[0.92] text-balance">
-            BILLING<br />LEDGER
+            Billing<br />ledger
           </h1>
         </div>
         <aside className="col-span-12 md:col-span-5 grid grid-cols-2 border-t md:border-t-0 border-[var(--line)]">
@@ -100,7 +100,7 @@ export default async function BillingPage() {
       {/* History */}
       <section>
         <div className="px-5 sm:px-6 py-3 border-b border-[var(--line)] flex items-center justify-between flex-wrap gap-2">
-          <span className="t-mono-xs text-[var(--accent)]">[ CREDIT LEDGER · APPEND-ONLY ]</span>
+          <span className="t-eyebrow t-eyebrow-accent">Credit ledger · append-only</span>
           <Link href="/docs/billing" className="t-mono-xs text-[var(--fg-mute)] hover:text-[var(--fg)]">DOCS →</Link>
         </div>
 

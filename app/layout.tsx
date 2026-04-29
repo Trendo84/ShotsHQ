@@ -4,6 +4,7 @@ import { Archivo_Black, Geist, JetBrains_Mono, EB_Garamond } from "next/font/goo
 import { ClerkProvider } from "@clerk/nextjs";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { PostHogProvider } from "@/components/providers/PostHogProvider";
+import { WipBanner } from "@/components/WipBanner";
 
 const HAS_CLERK = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
 
@@ -118,6 +119,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" data-theme="tactical" className={`${display.variable} ${sans.variable} ${mono.variable} ${serif.variable}`} suppressHydrationWarning>
       <body>
         <ThemeProvider>
+          <WipBanner />
           <PostHogProvider>{children}</PostHogProvider>
         </ThemeProvider>
       </body>
