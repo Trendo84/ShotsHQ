@@ -15,7 +15,7 @@ export default async function ProjectsPage() {
 
       <div className="grid grid-cols-12 border-b border-[var(--line)]">
         <div className="col-span-12 md:col-span-8 border-r-0 md:border-r border-[var(--line)] p-5 md:p-6">
-          <div className="t-mono-xs text-[var(--accent)] mb-2">[ PROJECTS / INDEX ]</div>
+          <div className="t-eyebrow t-eyebrow-accent mb-2">Operator · Projects</div>
           <h1 className="t-display text-[clamp(1.75rem,4vw,3.5rem)] leading-[0.95] text-balance">
             PROJECT INDEX
           </h1>

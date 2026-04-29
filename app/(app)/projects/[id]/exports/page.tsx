@@ -30,7 +30,7 @@ export default async function ExportsPage({
 
       <div className="grid grid-cols-12 border-b-2 border-[var(--line-strong)]">
         <div className="col-span-12 md:col-span-7 border-r-0 md:border-r border-[var(--line)] p-5 sm:p-6 md:p-10">
-          <div className="t-mono-xs text-[var(--accent)] mb-2">[ MODULE / 03-EXPORTS ]</div>
+          <div className="t-eyebrow t-eyebrow-accent mb-2">Project · Exports</div>
           <h1 className="t-display text-[clamp(2rem,5.5vw,4.5rem)] leading-[0.92] text-balance">
             EXPORT<br />MATRIX
           </h1>
@@ -86,7 +86,7 @@ export default async function ExportsPage({
       {/* Render history */}
       <section>
         <div className="px-5 sm:px-6 py-3 border-y border-[var(--line)] flex items-center justify-between flex-wrap gap-2">
-          <span className="t-mono-xs text-[var(--accent)]">[ RENDER HISTORY ]</span>
+          <span className="t-eyebrow t-eyebrow-accent">Render history</span>
           <span className="t-mono-xs text-[var(--fg-mute)]">0 ENTRIES</span>
         </div>
         <div className="px-5 sm:px-6 py-12 sm:py-16 text-center">

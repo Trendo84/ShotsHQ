@@ -44,14 +44,14 @@ export default function NewProjectPage() {
 
       <div className="grid grid-cols-12 border-b border-[var(--line)]">
         <div className="col-span-12 md:col-span-7 border-r border-[var(--line)] p-6 md:p-12">
-          <div className="t-mono-xs text-[var(--accent)] mb-2">[ INTAKE / 01-PROJECT ]</div>
-          <h1 className="t-display-xl text-[clamp(2.5rem,6vw,5.5rem)] leading-[0.9]">
-            COMMISSION<br />
-            PROJECT
+          <div className="t-eyebrow t-eyebrow-accent mb-2">Step 01 · Project metadata</div>
+          <h1 className="t-display text-[clamp(2.25rem,6vw,5.5rem)] leading-[0.92] text-balance">
+            Commission<br />
+            project.
           </h1>
-          <p className="t-mono-md text-[var(--fg-dim)] mt-4 max-w-xl">
-            FOUR FIELDS, ONE INTAKE. THIS METADATA SEEDS COPY GENERATION,
-            ASO HINTS, AND THE INITIAL EDITOR STATE.
+          <p className="t-prose mt-4 max-w-xl text-[var(--fg-dim)]">
+            Four fields, one intake. This metadata seeds copy generation,
+            ASO hints, and the initial editor state.
           </p>
         </div>
         <div className="col-span-12 md:col-span-5 p-6 md:p-12 flex flex-col justify-between gap-4">
@@ -123,7 +123,7 @@ export default function NewProjectPage() {
           </div>
           <aside className="col-span-12 md:col-span-5 p-6 md:p-10 flex flex-col justify-between gap-6">
             <div className="border border-[var(--line)] p-5">
-              <div className="t-mono-xs text-[var(--accent)] mb-3">[ AI PREVIEW ]</div>
+              <div className="t-eyebrow t-eyebrow-accent mb-3">AI preview</div>
               <div className="t-display text-[24px] leading-[0.9]">
                 {appName || "—"}
               </div>
@@ -146,7 +146,7 @@ export default function NewProjectPage() {
       {step === 2 && (
         <section className="grid grid-cols-12 border-b border-[var(--line)]">
           <div className="col-span-12 md:col-span-8 border-r border-[var(--line)] p-6 md:p-10">
-            <div className="t-mono-xs text-[var(--accent)] mb-2">[ STEP / 02 ]</div>
+            <div className="t-eyebrow t-eyebrow-accent mb-2">Step 02 · Device targets</div>
             <h2 className="t-display text-[clamp(1.75rem,4vw,2.25rem)] leading-[0.9]">DEVICE TARGETS</h2>
             <p className="t-mono-sm text-[var(--fg-mute)] mt-2">
               PICK EVERY DEVICE YOU INTEND TO EXPORT. WE'LL RENDER ALL APPLE-REQUIRED
@@ -159,7 +159,7 @@ export default function NewProjectPage() {
           </div>
           <aside className="col-span-12 md:col-span-4 p-6 md:p-10 flex flex-col justify-between gap-6">
             <div className="border border-[var(--line)] p-5">
-              <div className="t-mono-xs text-[var(--accent)] mb-3">[ MANIFEST ]</div>
+              <div className="t-eyebrow t-eyebrow-accent mb-3">Manifest</div>
               <dl className="dl-rule">
                 <div><dt>NAME</dt><dd className="truncate">{name || "—"}</dd></div>
                 <div><dt>APP</dt><dd className="truncate">{appName || "—"}</dd></div>
@@ -198,7 +198,7 @@ export default function NewProjectPage() {
       {step === 3 && (
         <section className="grid grid-cols-12 border-b border-[var(--line)]">
           <div className="col-span-12 md:col-span-7 border-r border-[var(--line)] p-6 md:p-10">
-            <div className="t-mono-xs text-[var(--accent)] mb-2">[ STEP / 03 ]</div>
+            <div className="t-eyebrow t-eyebrow-accent mb-2">Step 03 · Upload screens</div>
             <h2 className="t-display text-[36px]">UPLOAD SCREENS</h2>
             <p className="t-mono-sm text-[var(--fg-mute)] mt-2">DROP RAW iOS SCREENSHOTS BELOW. STORED DIRECT-TO-R2.</p>
 
@@ -211,7 +211,7 @@ export default function NewProjectPage() {
           </div>
           <aside className="col-span-12 md:col-span-5 p-6 md:p-10 flex flex-col justify-between gap-6">
             <div className="border border-[var(--line)] p-5">
-              <div className="t-mono-xs text-[var(--accent)] mb-3">[ READY TO COMMISSION ]</div>
+              <div className="t-eyebrow t-eyebrow-accent mb-3">Ready to commission</div>
               <p className="t-mono-sm text-[var(--fg-dim)] leading-relaxed">
                 ONCE COMMITTED, THE PROJECT WILL OPEN IN THE EDITOR. AI
                 MODULES ARE OPT-IN AND CHARGED PER OPERATION.

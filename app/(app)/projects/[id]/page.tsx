@@ -94,8 +94,8 @@ export default async function ProjectOverviewPage({
       <section className="grid grid-cols-12 border-t-2 border-[var(--line-strong)]">
         <div className="col-span-12 md:col-span-8 border-r-0 md:border-r border-[var(--line)]">
           <div className="px-5 sm:px-6 py-3 border-b border-[var(--line)] flex items-center justify-between flex-wrap gap-2">
-            <span className="t-mono-xs text-[var(--accent)]">[ SHOT GRID ]</span>
-            <span className="t-mono-xs text-[var(--fg-mute)]">0 / 24 SLOTS</span>
+            <span className="t-eyebrow t-eyebrow-accent">Shot grid</span>
+            <span className="t-mono-xs text-[var(--fg-mute)]">0 / 24 slots</span>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 grid-rule">
             {Array.from({ length: 8 }).map((_, i) => (
@@ -105,7 +105,7 @@ export default async function ProjectOverviewPage({
         </div>
         <aside className="col-span-12 md:col-span-4 border-t md:border-t-0 border-[var(--line)]">
           <div className="px-5 sm:px-6 py-3 border-b border-[var(--line)]">
-            <span className="t-mono-xs text-[var(--accent)]">[ TARGETS ]</span>
+            <span className="t-eyebrow t-eyebrow-accent">Targets</span>
           </div>
           {targets.length === 0 ? (
             <div className="p-5 sm:p-6 t-mono-xs text-[var(--fg-mute)] text-center">

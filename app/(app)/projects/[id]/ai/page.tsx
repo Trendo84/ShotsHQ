@@ -35,9 +35,9 @@ export default function AiPage({ params }: { params: Promise<{ id: string }> }) 
           clearInterval(interval);
           setRunning(false);
           setResult({
-            headline:    "—",
-            subheadline: "Hook this button up to /api/ai/generate-copy",
-            cta:         "—",
+            headline:    "Connect & ship.",
+            subheadline: "Demo result — AI dispatch wires up at launch.",
+            cta:         "Try it now",
           });
           return 100;
         }
@@ -56,16 +56,16 @@ export default function AiPage({ params }: { params: Promise<{ id: string }> }) 
 
       <div className="grid grid-cols-12 border-b-2 border-[var(--line-strong)]">
         <div className="col-span-12 md:col-span-7 border-r border-[var(--line)] p-6 md:p-10">
-          <div className="t-mono-xs text-[var(--accent)] mb-2">[ MODULE / 02-AI ]</div>
-          <h1 className="t-display-xl text-[clamp(2.25rem,5.5vw,4.5rem)] leading-[0.9]">
-            AI<br />MODULES
+          <div className="t-eyebrow t-eyebrow-accent mb-2">Project · AI modules</div>
+          <h1 className="t-display text-[clamp(2.25rem,5.5vw,4.5rem)] leading-[0.92] text-balance">
+            AI<br />modules
           </h1>
         </div>
         <aside className="col-span-12 md:col-span-5 p-5 sm:p-6 md:p-10 grid grid-cols-2 gap-3 content-end border-t md:border-t-0 border-[var(--line)]">
           <div className="border border-[var(--line)] p-3 sm:p-4">
             <div className="t-mono-xs text-[var(--fg-mute)]">MODELS</div>
             <div className="t-display text-[clamp(1.5rem,3vw,2.25rem)] t-numeric mt-1 leading-none">2</div>
-            <div className="t-mono-xs text-[var(--fg-mute)] mt-1">GPT-5 + Flux 2</div>
+            <div className="t-mono-xs text-[var(--fg-mute)] mt-1">copy + image</div>
           </div>
           <div className="border border-[var(--line)] p-3 sm:p-4">
             <div className="t-mono-xs text-[var(--fg-mute)]">QUEUE</div>
@@ -79,10 +79,10 @@ export default function AiPage({ params }: { params: Promise<{ id: string }> }) 
       <section className="grid grid-cols-12 border-b-2 border-[var(--line-strong)]">
         <div className="col-span-12 lg:col-span-7 border-r border-[var(--line)] p-6 md:p-10">
           <div className="flex items-center justify-between mb-4">
-            <div className="t-mono-xs text-[var(--accent)]">[ MODULE / COPY ]</div>
-            <Badge variant="warn">1 CR / GEN</Badge>
+            <div className="t-eyebrow t-eyebrow-accent">Module · Copy</div>
+            <Badge variant="warn">1 cr / gen</Badge>
           </div>
-          <h2 className="t-display text-[36px] mb-4">HEADLINE GENERATOR</h2>
+          <h2 className="t-display text-[clamp(1.5rem,3vw,2.25rem)] leading-[0.95] mb-4">Headline generator</h2>
           <Label>APP CONTEXT</Label>
           <Textarea
             rows={4}
@@ -125,7 +125,7 @@ export default function AiPage({ params }: { params: Promise<{ id: string }> }) 
         </div>
 
         <aside className="col-span-12 lg:col-span-5 p-5 sm:p-6 md:p-10 border-t lg:border-t-0 border-[var(--line)]">
-          <div className="t-mono-xs text-[var(--accent)] mb-3">[ JOB QUEUE ]</div>
+          <div className="t-eyebrow t-eyebrow-accent mb-3">Job queue</div>
           <div className="border border-dashed border-[var(--line-strong)] p-5 sm:p-6 text-center">
             <div className="t-mono-xs text-[var(--fg-mute)] mb-2">QUEUE EMPTY</div>
             <p className="t-mono-sm text-[var(--fg-dim)] leading-relaxed">
