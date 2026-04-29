@@ -20,9 +20,9 @@ export default function PricingPage() {
             </div>
             <div className="col-span-12 md:col-span-5">
               <p className="t-prose-lg max-w-md">
-                Five lanes. Pick the one that matches your launch cadence.
-                Credits never expire; subscriptions cancel from settings,
-                no email friction. Lifetime is capped at 500 seats.
+                Pick the lane that matches your launch cadence. Credits
+                never expire; subscriptions cancel from settings, no
+                email friction.
               </p>
             </div>
           </div>
@@ -44,7 +44,7 @@ export default function PricingPage() {
             </div>
             <div className="col-span-12 md:col-span-6 md:col-start-7 flex items-end">
               <p className="t-prose">
-                Studio and Lifetime plans skip credits entirely — metered
+                Studio subscribers skip credits entirely — usage is metered
                 internally for abuse prevention only.
               </p>
             </div>

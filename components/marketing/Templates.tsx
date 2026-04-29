@@ -1,11 +1,19 @@
+"use client";
+
 import Link from "next/link";
+import { useMemo, useState } from "react";
 
 /**
  * Templates gallery. Each tile is a hand-tuned "screenshot inside a
  * device frame" composition — the actual visual artifact ShotsHQ
  * produces, not a mockup of one. Tile order alternates aspect/density
  * so the grid reads as a portfolio, not a uniform list.
+ *
+ * Full view supports a Free / Pro filter and a bottom CTA. The compact
+ * (homepage) view skips the filter and uses a "Browse all" CTA.
  */
+
+type Filter = "all" | "free" | "pro";
 
 type Template = {
   slug: string;
@@ -278,20 +286,44 @@ const TEMPLATES: Template[] = [
 export const TEMPLATE_COUNT = TEMPLATES.length;
 
 export function Templates({ compact = false }: { compact?: boolean }) {
-  const list = compact ? TEMPLATES.slice(0, 6) : TEMPLATES;
+  const [filter, setFilter] = useState<Filter>("all");
+
+  const filtered = useMemo(() => {
+    if (compact || filter === "all") return TEMPLATES;
+    return TEMPLATES.filter((t) =>
+      filter === "free" ? t.tag === "Free" : t.tag === "Pro",
+    );
+  }, [compact, filter]);
+
+  const list = compact ? filtered.slice(0, 6) : filtered;
+  const freeCount = TEMPLATES.filter((t) => t.tag === "Free").length;
+  const proCount  = TEMPLATES.filter((t) => t.tag === "Pro").length;
+
   return (
     <section className="border-b border-[var(--line)]">
       <div className="max-w-[1480px] mx-auto px-4 md:px-8 py-20 md:py-28">
-        <div className="grid grid-cols-12 gap-8 mb-12 items-end">
+        <div className="grid grid-cols-12 gap-8 mb-10 items-end">
           <h2 className="col-span-12 md:col-span-7 t-display text-[clamp(2.25rem,5.5vw,4.5rem)] leading-[0.95]">
             Start from a<br />
             <span className="text-[var(--accent)]">starter.</span>
           </h2>
           <p className="col-span-12 md:col-span-5 t-prose max-w-md">
             {TEMPLATE_COUNT} curated starting points. Pick one, swap your screens in,
-            ship. Or build a project from blank if you'd rather.
+            ship. Or build a project from blank if you&apos;d rather.
           </p>
         </div>
+
+        {/* Filter tabs — only on the full /templates page */}
+        {!compact && (
+          <div className="flex items-center gap-1 mb-8 flex-wrap">
+            <FilterTab active={filter === "all"}  onClick={() => setFilter("all")}  label="All"   count={TEMPLATES.length} />
+            <FilterTab active={filter === "free"} onClick={() => setFilter("free")} label="Free"  count={freeCount} />
+            <FilterTab active={filter === "pro"}  onClick={() => setFilter("pro")}  label="Pro"   count={proCount} />
+            <span className="ml-auto t-mono-xs text-[var(--fg-mute)] uppercase tracking-[0.16em] hidden sm:inline">
+              Showing {list.length} of {TEMPLATE_COUNT}
+            </span>
+          </div>
+        )}
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
           {list.map((t, i) => (
@@ -299,6 +331,7 @@ export function Templates({ compact = false }: { compact?: boolean }) {
           ))}
         </div>
 
+        {/* Compact (homepage) → "Browse all templates" link to /templates */}
         {compact && (
           <div className="mt-12 flex justify-center">
             <Link
@@ -312,8 +345,70 @@ export function Templates({ compact = false }: { compact?: boolean }) {
             </Link>
           </div>
         )}
+
+        {/* Full /templates page → conversion CTA at the bottom */}
+        {!compact && (
+          <div className="mt-16 lg:mt-20 border border-[var(--line-strong)] bg-[var(--bg-2)] p-8 lg:p-12 grid grid-cols-12 gap-6 items-center">
+            <div className="col-span-12 md:col-span-7">
+              <div className="t-eyebrow t-eyebrow-accent mb-3">Pick one. Customize anything.</div>
+              <h3 className="t-display text-[clamp(1.75rem,4vw,3rem)] leading-[0.95] text-balance">
+                Templates are <span className="text-[var(--accent)]">starting points</span> —
+                you decide where they go.
+              </h3>
+              <p className="t-prose mt-4 max-w-lg">
+                Every template is fully editable in the canvas. Swap copy,
+                palette, device frame, layout — or generate a fresh
+                composition from your brand URL.
+              </p>
+            </div>
+            <div className="col-span-12 md:col-span-5 flex flex-col sm:flex-row md:flex-col gap-3 md:items-end">
+              <Link
+                href="/sign-up"
+                className="group inline-flex items-center gap-3 bg-[var(--accent)] text-[var(--accent-fg)] pl-6 pr-1.5 py-2 transition-transform duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]"
+              >
+                <span className="btn-label">Start free</span>
+                <span className="inline-grid place-items-center w-9 h-9 bg-[var(--accent-fg)] text-[var(--accent)] transition-transform duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0.5 leading-none font-bold">
+                  <span aria-hidden className="-mt-px">→</span>
+                </span>
+              </Link>
+              <Link
+                href="/pricing"
+                className="text-[13px] text-[var(--fg-dim)] hover:text-[var(--fg)] underline underline-offset-4 decoration-[var(--line-strong)] hover:decoration-[var(--accent)] transition-colors px-2 py-2"
+              >
+                See pricing
+              </Link>
+            </div>
+          </div>
+        )}
       </div>
     </section>
+  );
+}
+
+function FilterTab({
+  active, onClick, label, count,
+}: {
+  active:  boolean;
+  onClick: () => void;
+  label:   string;
+  count:   number;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={`inline-flex items-center gap-2 px-3.5 py-2 t-mono-xs uppercase tracking-[0.14em] border transition-colors ${
+        active
+          ? "border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-fg)]"
+          : "border-[var(--line-strong)] text-[var(--fg-mute)] hover:text-[var(--fg)] hover:border-[var(--accent)]"
+      }`}
+    >
+      <span>{label}</span>
+      <span className={active ? "text-[var(--accent-fg)] opacity-75" : "text-[var(--fg-mute)]"}>
+        {count}
+      </span>
+    </button>
   );
 }
 

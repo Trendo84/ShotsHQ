@@ -9,6 +9,7 @@ const ENTRIES: Array<{
   rev: string;
   date: string;
   channel: "STABLE" | "BETA" | "INTERNAL";
+  note?:   string;
   changes: { tag: string; body: string }[];
 }> = [
   {
@@ -54,8 +55,9 @@ const ENTRIES: Array<{
   },
   {
     rev: "REV 2.0",
-    date: "2026-02-29",
+    date: "2026-02-28",
     channel: "INTERNAL",
+    note:    "REV 2.1 and 2.2 were internal-only iterations and not published.",
     changes: [
       { tag: "ADD",   body: "Canvas editor integrated; canvas state persisted to JSONB." },
       { tag: "ADD",   body: "Credit ledger system with idempotency-keyed transactions." },
@@ -127,6 +129,11 @@ export default function ChangelogPage() {
                   </span>
                 </div>
               </header>
+              {entry.note && (
+                <p className="t-mono-xs text-[var(--fg-mute)] mb-4 italic border-l-2 border-[var(--line-strong)] pl-3">
+                  ▸ {entry.note}
+                </p>
+              )}
               <ul className="space-y-2.5">
                 {entry.changes.map((c, i) => (
                   <li key={i} className="flex items-start gap-3">
