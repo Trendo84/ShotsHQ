@@ -45,12 +45,17 @@ export async function compositeFrame(input: CompositeInput): Promise<Buffer> {
     .toBuffer();
 
   // ── 2. Phone frame geometry ─────────────────────────────────────────────
-  const frame      = iphoneFrame();
-  const targetFrameW = input.frameWidth ?? Math.round(W * 0.66);
+  // Best-practice marketing screenshot proportions:
+  //   - Phone ≈ 78% of canvas width (dominant focal point)
+  //   - Phone top at ≈ 17% of canvas height
+  //   - Headline area occupies the top ~15% (above the phone)
+  //   - Phone bottom edge sits ~5% from canvas bottom
+  const frame        = iphoneFrame();
+  const targetFrameW = input.frameWidth ?? Math.round(W * 0.78);
   const scale        = targetFrameW / frame.width;
   const targetFrameH = Math.round(frame.height * scale);
   const frameLeft    = input.framePosition?.x ?? Math.round((W - targetFrameW) / 2);
-  const frameTop     = input.framePosition?.y ?? Math.round(H * 0.27);
+  const frameTop     = input.framePosition?.y ?? Math.round(H * 0.17);
 
   // Render the SVG frame at target size
   const frameOverlay = await sharp(Buffer.from(frame.svg))
@@ -94,12 +99,14 @@ export async function compositeFrame(input: CompositeInput): Promise<Buffer> {
   }
 
   // ── 4. Headline + subhead text band ─────────────────────────────────────
-  const textBand = await renderTextBand(W, Math.round(H * 0.20), input.headline, input.subhead);
+  // Tight headline area in the top 13% (was 20%), positioned just below
+  // the top edge so the phone has room to dominate the lower 80%.
+  const textBand = await renderTextBand(W, Math.round(H * 0.13), input.headline, input.subhead);
 
   // ── 5. Compose ──────────────────────────────────────────────────────────
   const composites: sharp.OverlayOptions[] = [
-    // Headline band sits at top
-    { input: textBand, top: Math.round(H * 0.04), left: 0 },
+    // Headline band sits at the top, snug against the canvas top
+    { input: textBand, top: Math.round(H * 0.025), left: 0 },
     // Screenshot underneath the frame
     { input: screenshotLayer, top: screenY, left: screenX },
     // Frame overlay on top of screenshot (its transparent cutout reveals the screenshot)
@@ -125,27 +132,38 @@ async function renderTextBand(
   headline: string,
   subhead?: string,
 ): Promise<Buffer> {
-  // Headline sized to fit the canvas — auto-shrinks for long headlines.
-  const headlineSize = Math.round(width * 0.085);
-  const subheadSize  = Math.round(width * 0.034);
+  // Headline + subhead sized for a tight 13%-tall band at the top.
+  // Auto-scale headline font down for long strings.
+  const charCount    = headline.length;
+  const baseSize     = width * 0.085;          // ~110px on 1290 canvas
+  // Target: ~12 chars at full size; longer than that, shrink proportionally.
+  const headlineSize = Math.round(charCount > 12 ? baseSize * (12 / charCount) : baseSize);
+  const subheadSize  = Math.round(width * 0.030);
+  const headlineY    = Math.round(headlineSize * 0.95);
+  const subheadY     = headlineY + Math.round(headlineSize * 0.48);
 
   const subheadEl = subhead
-    ? `<text x="${width / 2}" y="${headlineSize + 80}"
-            font-family="-apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif"
-            font-size="${subheadSize}"
-            font-weight="400"
-            fill="#CFCFCF"
-            text-anchor="middle">${escapeXml(subhead)}</text>`
+    ? `<text
+         x="${width / 2}" y="${subheadY}"
+         font-family="-apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif"
+         font-size="${subheadSize}"
+         font-weight="400"
+         fill="#CFCFCF"
+         text-anchor="middle"
+         letter-spacing="0.5"
+       >${escapeXml(subhead)}</text>`
     : "";
 
   const svg = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
-    <text x="${width / 2}" y="${headlineSize}"
-          font-family="'Archivo Black', 'Arial Black', Impact, sans-serif"
-          font-size="${headlineSize}"
-          font-weight="900"
-          fill="#FFFFFF"
-          text-anchor="middle"
-          letter-spacing="-1">${escapeXml(headline)}</text>
+    <text
+      x="${width / 2}" y="${headlineY}"
+      font-family="'Archivo Black', 'Arial Black', Impact, sans-serif"
+      font-size="${headlineSize}"
+      font-weight="900"
+      fill="#FFFFFF"
+      text-anchor="middle"
+      letter-spacing="-1"
+    >${escapeXml(headline)}</text>
     ${subheadEl}
   </svg>`;
 
