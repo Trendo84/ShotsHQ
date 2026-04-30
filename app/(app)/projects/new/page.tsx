@@ -2,13 +2,14 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Topbar } from "@/components/app/Topbar";
 import { Input, Textarea } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { DevicePicker } from "@/components/devices/DevicePicker";
 import { DEFAULT_PROJECT_DEVICES, DEVICES_BY_ID } from "@/lib/devices/catalog";
+import { TEMPLATES_BY_SLUG } from "@/lib/templates/catalog";
 
 const CATEGORIES = [
   "PRODUCTIVITY", "HEALTH & FITNESS", "PHOTO & VIDEO", "MUSIC", "FINANCE",
@@ -45,11 +46,34 @@ const STEP_META: Record<StepNum, { eyebrow: string; title: [string, string]; bod
 
 export default function NewProjectPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Template seeding — see docs/audits/2026-04-30-comet-sonnet-editor.md #1
+  // and lib/templates/catalog.ts. Logged-in users clicking a template card
+  // arrive here with `?template=<slug>`. Anonymous users land here after
+  // sign-up via the same path. We pre-fill the form fields the template
+  // gives us hints for; the user can edit anything before committing.
+  // Pre-fill is a hint, not a lock.
+  const templateSlug = searchParams?.get("template") ?? null;
+  const seededTemplate = templateSlug ? TEMPLATES_BY_SLUG[templateSlug] ?? null : null;
+
   const [step, setStep] = useState<StepNum>(1);
-  const [name, setName] = useState("");
-  const [appName, setAppName] = useState("");
-  const [description, setDescription] = useState("");
-  const [category, setCategory] = useState(CATEGORIES[0]);
+  const [name, setName] = useState(
+    seededTemplate ? `${seededTemplate.slug}-launch` : "",
+  );
+  const [appName, setAppName] = useState(
+    seededTemplate ? seededTemplate.name : "",
+  );
+  const [description, setDescription] = useState(
+    seededTemplate ? seededTemplate.subhead : "",
+  );
+  const [category, setCategory] = useState(
+    // Templates' categories don't always map 1:1 to App Store categories.
+    // If the slug's category fuzzy-matches one of CATEGORIES, use it; else default.
+    seededTemplate
+      ? CATEGORIES.find((c) => seededTemplate.category.toUpperCase().includes(c.split(" ")[0]!)) ?? CATEGORIES[0]
+      : CATEGORIES[0],
+  );
   const [targets, setTargets] = useState<string[]>(DEFAULT_PROJECT_DEVICES);
 
   // Step 3 (raw screenshot upload to R2) is intentionally a preview —

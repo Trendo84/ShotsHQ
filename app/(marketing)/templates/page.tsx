@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { TEMPLATE_COUNT, Templates } from "@/components/marketing/Templates";
+import { Templates } from "@/components/marketing/Templates";
+import { TEMPLATE_COUNT } from "@/lib/templates/catalog";
 
 export const metadata: Metadata = {
   title: "Templates",
