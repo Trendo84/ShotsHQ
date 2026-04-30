@@ -23,6 +23,7 @@ import { Hand, Maximize2, MousePointer2, Save, ZoomIn, ZoomOut } from "lucide-re
 import type { ShotsBackground, ShotsCanvas, TextRole, TextLayer } from "@/lib/canvas/schema";
 import { defaultCanvas } from "@/lib/canvas/defaults";
 import { resolveTextDispatch, textDefaultsFor } from "@/lib/canvas/dispatch";
+import { recalcOffsetOnResize } from "@/lib/editor/viewport";
 
 // ── Fabric is browser-only — dynamically imported inside useEffect ────────────
 type FabricMod = typeof import("fabric");
@@ -126,6 +127,15 @@ const DISPLAY_W = 460; // px — canvas display width
 export const FabricCanvas = forwardRef<FabricCanvasHandle, Props>(
   function FabricCanvas({ projectId, initialJson, onSave, onLayersChange }, ref) {
     const canvasEl   = useRef<HTMLCanvasElement>(null);
+    /**
+     * The wrapper observed by `recalcOffsetOnResize`. This is the
+     * scroll/flex container that surrounds the `<canvas>`; when its
+     * page coords shift (sidebar collapse, window resize, parent
+     * panel reflow, scrollbar appearance), Fabric's `_offset` cache
+     * goes stale and mouse-to-canvas mapping breaks. See
+     * `lib/editor/viewport.ts` for the full rationale.
+     */
+    const workspaceEl = useRef<HTMLDivElement>(null);
     const fc         = useRef<import("fabric").Canvas | null>(null);
     const saveTimer  = useRef<ReturnType<typeof setTimeout> | null>(null);
     const onLayersChangeRef = useRef(onLayersChange);
@@ -292,6 +302,58 @@ export const FabricCanvas = forwardRef<FabricCanvasHandle, Props>(
       });
       canvas.renderAll();
     }, [zoomExtra, baseScale, shots.height]);
+
+    // ── Viewport offset re-sync on container resize ───────────────────────────
+    //
+    // Fabric caches the `<canvas>` page offset at mount and uses the
+    // cache to map mouse events into canvas coords. The cache is never
+    // refreshed automatically. Any DOM reflow that shifts the wrapper's
+    // position (window resize, App Sidebar collapse, parent panel
+    // reflow, scrollbar appearance/disappearance) leaves Fabric thinking
+    // the canvas is still where it was mounted, so clicks land at the
+    // wrong canvas coords. User-visible symptom: "I can't grab the
+    // backdrop." Layers continue to render at the right pixels — only
+    // the input mapping drifts.
+    //
+    // The fix is small: subscribe a ResizeObserver to the workspace
+    // wrapper and call `canvas.calcOffset()` on every fire. We do NOT
+    // touch viewportTransform (preserves any user pan), setZoom
+    // (preserves user zoom), or setDimensions (preserves canvas pixel
+    // size — that's the zoom-sync effect's responsibility above).
+    //
+    // The contract is unit-tested in `tests/editor/viewport-resize.test.ts`.
+    // See docs/audits/2026-05-01-internal-team-editor-viewport.md → #1.
+    //
+    // Dep on `projectId` mirrors the mount effect — when a different
+    // project re-mounts the canvas, this effect re-runs against the new
+    // canvas instance. We poll briefly for `fc.current` because the
+    // mount effect's async chain (await loadFabric) may not have
+    // populated it yet on first run.
+
+    useEffect(() => {
+      const wrapper = workspaceEl.current;
+      if (!wrapper) return;
+
+      let disposed   = false;
+      let disconnect: (() => void) | null = null;
+
+      const tryAttach = () => {
+        if (disposed) return;
+        const canvas = fc.current;
+        if (!canvas) {
+          // Fabric hasn't finished its async mount yet — retry next tick.
+          setTimeout(tryAttach, 0);
+          return;
+        }
+        disconnect = recalcOffsetOnResize(canvas, wrapper);
+      };
+      tryAttach();
+
+      return () => {
+        disposed = true;
+        if (disconnect) disconnect();
+      };
+    }, [projectId]);
 
     // ── Imperative handle ─────────────────────────────────────────────────────
 
@@ -486,9 +548,24 @@ export const FabricCanvas = forwardRef<FabricCanvasHandle, Props>(
             <ZoomIn size={12} />
           </button>
           <button
-            onClick={() => setZoomExtra(1)}
+            onClick={() => {
+              // "Fit to view" — reset zoom AND pan in one action so the
+              // button is honest about both behaviors. Previously this
+              // only reset zoomExtra; if the user had panned the canvas
+              // and clicked Fit, the pan stayed and the button felt like
+              // it didn't fully work. The viewportTransform reset matches
+              // Fabric's identity matrix at the current baseScale.
+              setZoomExtra(1);
+              const canvas = fc.current;
+              if (canvas) {
+                canvas.setViewportTransform([baseScale, 0, 0, baseScale, 0, 0]);
+                canvas.calcOffset();
+                canvas.renderAll();
+              }
+            }}
             className="p-1.5 border border-[var(--line)] text-[var(--fg-dim)] hover:text-[var(--fg)] hover:bg-[var(--bg)]"
-            aria-label="Fit canvas"
+            title="Fit to view (reset zoom + pan)"
+            aria-label="Fit to view (reset zoom + pan)"
           >
             <Maximize2 size={12} />
           </button>
@@ -503,8 +580,12 @@ export const FabricCanvas = forwardRef<FabricCanvasHandle, Props>(
           </button>
         </div>
 
-        {/* Canvas workspace */}
-        <div className="flex-1 overflow-auto flex items-start justify-center p-8 relative">
+        {/* Canvas workspace — observed by ResizeObserver above to keep
+           Fabric's mouse-coord mapping in sync with DOM offset. */}
+        <div
+          ref={workspaceEl}
+          className="flex-1 overflow-auto flex items-start justify-center p-8 relative"
+        >
           {/* Dot grid */}
           <div
             aria-hidden
