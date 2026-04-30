@@ -17,6 +17,10 @@ export default function robots(): MetadataRoute.Robots {
           "/projects/",
           "/billing",
           "/billing/",
+          // Stripe redirect lands here with a `?cs=cs_live_…` session ID
+          // in the URL — explicitly disallow so a shared link can't leak
+          // the checkout token to crawlers / referrer logs.
+          "/billing/success",
           "/settings",
           "/settings/",
           "/api/",

@@ -160,8 +160,14 @@ function BackgroundPanel({ onSetBackground }: { onSetBackground?: (bg: ShotsBack
       </div>
       <div className="mt-5 border-t border-[var(--line)] pt-4">
         <div className="t-mono-xs text-[var(--fg-mute)] mb-2">AI GENERATE</div>
-        <button className="btn btn-accent w-full text-[10px] py-2">
-          ▸ FLUX 2 BACKDROP · 2 CR
+        <button
+          type="button"
+          disabled
+          title="Flux 2 backdrop · coming soon"
+          aria-label="Flux 2 AI backdrop — coming soon"
+          className="btn btn-accent w-full text-[10px] py-2 opacity-50 cursor-not-allowed"
+        >
+          ▸ FLUX 2 BACKDROP · SOON
         </button>
       </div>
     </>
@@ -315,9 +321,12 @@ function LayersPanel() {
       </ul>
       <button
         type="button"
-        className="mt-3 w-full border border-dashed border-[var(--line-strong)] hover:border-[var(--accent)] hover:text-[var(--accent)] text-[var(--fg-dim)] py-2 t-mono-xs uppercase tracking-[0.14em] transition-colors"
+        disabled
+        title="Layer kinds beyond text · coming soon"
+        aria-label="Add layer — coming soon"
+        className="mt-3 w-full border border-dashed border-[var(--line-strong)] text-[var(--fg-mute)] py-2 t-mono-xs uppercase tracking-[0.14em] opacity-50 cursor-not-allowed"
       >
-        + Add Layer
+        + Add Layer · soon
       </button>
     </>
   );
@@ -336,12 +345,16 @@ function AIPanel() {
         ].map((b) => (
           <button
             key={b.label}
+            type="button"
+            disabled
+            title={`${b.label.toLowerCase()} · coming soon`}
+            aria-label={`${b.label} — coming soon`}
             className={cn(
-              "w-full text-left border p-3 transition-colors hover:border-[var(--accent)]",
+              "w-full text-left border p-3 opacity-50 cursor-not-allowed",
               b.variant === "accent" ? "border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-fg)]" : "border-[var(--line)]",
             )}
           >
-            <div className="t-mono-sm">{b.label} &gt;&gt;</div>
+            <div className="t-mono-sm">{b.label} · SOON</div>
             <div className="t-mono-xs opacity-70 mt-1">{b.sub}</div>
           </button>
         ))}

@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, EyeOff } from "lucide-react";
+import { Check, Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { Input, Textarea } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -82,9 +82,12 @@ export function ProfileForm({ email, handle }: { email: string; handle: string }
         <Button
           type="submit"
           variant="accent"
-          className="text-[12px] tracking-[0.04em] normal-case"
+          disabled
+          title="Profile save · coming soon"
+          aria-label="Save profile — coming soon"
+          className="text-[12px] tracking-[0.04em] normal-case opacity-50 cursor-not-allowed"
         >
-          Save profile
+          Save profile · soon
         </Button>
       </div>
     </form>
@@ -93,7 +96,21 @@ export function ProfileForm({ email, handle }: { email: string; handle: string }
 
 // ── Studio API section ───────────────────────────────────────────────────────
 
+const PLACEHOLDER_API_KEY = "sk_live_•••••••••••••••••••••••";
+
 export function StudioApiForm({ enabled }: { enabled: boolean }) {
+  const [copied, setCopied] = useState(false);
+
+  async function handleCopy() {
+    try {
+      await navigator.clipboard.writeText(PLACEHOLDER_API_KEY);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard API unavailable; silently no-op */
+    }
+  }
+
   if (!enabled) {
     return (
       <div className="border border-dashed border-[var(--line-strong)] p-5">
@@ -122,11 +139,29 @@ export function StudioApiForm({ enabled }: { enabled: boolean }) {
             name="apiKey"
             readOnly
             autoComplete="off"
-            defaultValue="sk_live_•••••••••••••••••••••••"
+            defaultValue={PLACEHOLDER_API_KEY}
             className="flex-1 min-w-0"
           />
-          <Button type="button" variant="ghost" className="text-[11px] tracking-[0.04em] normal-case">Copy</Button>
-          <Button type="button" variant="destructive" className="text-[11px] tracking-[0.04em] normal-case">Rotate</Button>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={handleCopy}
+            aria-label={copied ? "API key copied to clipboard" : "Copy API key to clipboard"}
+            className="text-[11px] tracking-[0.04em] normal-case inline-flex items-center gap-1.5"
+          >
+            {copied ? <Check size={12} /> : null}
+            {copied ? "Copied" : "Copy"}
+          </Button>
+          <Button
+            type="button"
+            variant="destructive"
+            disabled
+            title="Key rotation — coming soon"
+            aria-label="Rotate API key — coming soon"
+            className="text-[11px] tracking-[0.04em] normal-case opacity-60 cursor-not-allowed"
+          >
+            Rotate
+          </Button>
         </div>
         <p className="t-mono-xs text-[var(--fg-mute)] mt-1.5">
           ▸ Shown only once on creation. Lost it? Rotate to issue a new one.
@@ -243,9 +278,12 @@ export function AscForm() {
         <Button
           type="submit"
           variant="accent"
-          className="text-[12px] tracking-[0.04em] normal-case"
+          disabled
+          title="ASC credential verification · coming soon"
+          aria-label="Verify and save App Store Connect credentials — coming soon"
+          className="text-[12px] tracking-[0.04em] normal-case opacity-50 cursor-not-allowed"
         >
-          Verify and save
+          Verify and save · soon
         </Button>
       </div>
     </form>

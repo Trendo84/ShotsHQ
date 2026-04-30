@@ -30,7 +30,7 @@ export default async function ProjectOverviewPage({
 
   return (
     <>
-      <Topbar section="PROJECT" breadcrumb={["OPERATOR", "PROJECTS", project.name]} />
+      <Topbar section="Project" breadcrumb={["Operator", "Projects", project.name]} />
 
       <div className="grid grid-cols-12 border-b-2 border-[var(--line-strong)]">
         <div className="col-span-12 md:col-span-7 border-r-0 md:border-r border-[var(--line)] p-5 sm:p-6 md:p-10">

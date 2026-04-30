@@ -19,35 +19,48 @@ export function EditorTopbar({ projectId, projectName }: { projectId: string; pr
       </div>
       <div className="px-3 py-3 border-r border-[var(--line)] flex items-center gap-2 text-[var(--fg-mute)]">
         <button
-          className="p-1.5 hover:text-[var(--accent)] hover:bg-[var(--bg-2)] transition-colors"
-          title="Undo (⌘Z)"
-          aria-label="Undo"
+          type="button"
+          disabled
+          className="p-1.5 transition-colors opacity-40 cursor-not-allowed"
+          title="Undo · coming soon"
+          aria-label="Undo — coming soon"
         >
           <Undo2 size={14} />
         </button>
         <button
-          className="p-1.5 hover:text-[var(--accent)] hover:bg-[var(--bg-2)] transition-colors"
-          title="Redo (⌘⇧Z)"
-          aria-label="Redo"
+          type="button"
+          disabled
+          className="p-1.5 transition-colors opacity-40 cursor-not-allowed"
+          title="Redo · coming soon"
+          aria-label="Redo — coming soon"
         >
           <Redo2 size={14} />
         </button>
       </div>
-      <div className="flex-1 px-4 text-[12px] text-[var(--signal)] flex items-center gap-2">
-        <span className="block w-1.5 h-1.5 rounded-full bg-[var(--signal)] pulse-soft" />
-        Autosaved
+      <div className="flex-1 px-4 text-[12px] text-[var(--fg-mute)] flex items-center gap-2">
+        <span className="block w-1.5 h-1.5 rounded-full bg-[var(--fg-mute)]" aria-hidden />
+        Draft · not yet saved
       </div>
       <div className="px-2 py-2 flex items-center gap-2 border-l border-[var(--line)]">
-        <Button variant="ghost" size="sm" className="text-[11px] tracking-[0.04em] normal-case">
+        <Button
+          variant="ghost"
+          size="sm"
+          disabled
+          title="Save · coming soon"
+          aria-label="Save — coming soon"
+          className="text-[11px] tracking-[0.04em] normal-case opacity-50 cursor-not-allowed"
+        >
           <Save size={12} /> Save
         </Button>
         <Link
           href={`/projects/${projectId}/exports`}
-          className="group inline-flex items-center gap-2 bg-[var(--accent)] text-[var(--accent-fg)] pl-3 pr-1 py-1 transition-transform duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98]"
+          title="Exports preview · server render coming soon"
+          aria-label="Open exports preview — server render coming soon"
+          className="group inline-flex items-center gap-2 border border-[var(--line-strong)] text-[var(--fg)] pl-3 pr-1 py-1 transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
         >
           <Download size={12} />
-          <span className="btn-label-sm">Export</span>
-          <span className="inline-grid place-items-center w-7 h-7 bg-[var(--accent-fg)] text-[var(--accent)] transition-transform group-hover:translate-x-0.5 font-bold">
+          <span className="btn-label-sm">Exports · preview</span>
+          <span className="inline-grid place-items-center w-7 h-7 border-l border-[var(--line-strong)] group-hover:border-[var(--accent)] transition-colors font-bold">
             →
           </span>
         </Link>

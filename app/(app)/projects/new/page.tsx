@@ -25,22 +25,18 @@ export default function NewProjectPage() {
   const [category, setCategory] = useState(CATEGORIES[0]);
   const [targets, setTargets] = useState<string[]>(DEFAULT_PROJECT_DEVICES);
 
-  const [submitting, setSubmitting] = useState(false);
-
-  async function submit(e?: React.FormEvent) {
-    e?.preventDefault();
-    if (submitting) return;
-    setSubmitting(true);
-    // Stub: in production this POSTs to /api/projects then redirects.
-    // Uses requestAnimationFrame so the spinner has a frame to paint.
-    requestAnimationFrame(() => {
-      router.push(`/projects/p_new`);
-    });
-  }
+  // Submit is intentionally disabled until /api/projects + R2 upload land.
+  // Routing to a hardcoded /projects/p_new previously produced a 404, so the
+  // commit button is shown disabled with a "coming soon" tooltip until the
+  // backend is wired. The wizard preview still functions for tour/demos.
+  const submitting = false;
+  const submitEnabled = false;
+  // `router` retained for future POST /api/projects redirect.
+  void router;
 
   return (
     <>
-      <Topbar section="NEW PROJECT" breadcrumb={["OPERATOR", "PROJECTS", "NEW"]} />
+      <Topbar section="New project" breadcrumb={["Operator", "Projects", "New"]} />
 
       <div className="grid grid-cols-12 border-b border-[var(--line)]">
         <div className="col-span-12 md:col-span-7 border-r border-[var(--line)] p-6 md:p-12">
@@ -219,8 +215,14 @@ export default function NewProjectPage() {
             </div>
             <div className="flex justify-between">
               <Button variant="ghost" onClick={() => setStep(2)}>&lt;&lt; BACK</Button>
-              <Button variant="accent" onClick={() => submit()} disabled={submitting}>
-                {submitting ? "COMMITTING…" : "COMMIT >>"}
+              <Button
+                variant="accent"
+                disabled
+                title="Project commit · coming soon"
+                aria-label="Commit project — coming soon"
+                className="opacity-50 cursor-not-allowed"
+              >
+                {submitting ? "COMMITTING…" : submitEnabled ? "COMMIT >>" : "COMMIT · SOON"}
               </Button>
             </div>
           </aside>

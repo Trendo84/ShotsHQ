@@ -52,7 +52,7 @@ export default function AiPage({ params }: { params: Promise<{ id: string }> }) 
 
   return (
     <>
-      <Topbar section="AI PANEL" breadcrumb={["OPERATOR", "PROJECTS", "AI"]} />
+      <Topbar section="AI panel" breadcrumb={["Operator", "Projects", "AI"]} />
 
       <div className="grid grid-cols-12 border-b-2 border-[var(--line-strong)]">
         <div className="col-span-12 md:col-span-7 border-r border-[var(--line)] p-6 md:p-10">

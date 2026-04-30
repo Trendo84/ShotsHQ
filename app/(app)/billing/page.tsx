@@ -29,7 +29,7 @@ export default async function BillingPage() {
 
   return (
     <>
-      <Topbar section="BILLING" breadcrumb={["OPERATOR", "BILLING"]} />
+      <Topbar section="Billing" breadcrumb={["Operator", "Billing"]} />
 
       <div className="grid grid-cols-12 border-b-2 border-[var(--line-strong)]">
         <div className="col-span-12 md:col-span-7 border-r-0 md:border-r border-[var(--line)] p-5 sm:p-6 md:p-10">
@@ -83,13 +83,14 @@ export default async function BillingPage() {
                 <div className="t-mono-xs text-[var(--fg-mute)] mt-0.5">{p.desc}</div>
                 <button
                   type="button"
-                  className={`w-full mt-3 text-[10px] py-2 transition-colors ${
-                    p.accent
-                      ? "btn btn-accent"
-                      : "btn"
+                  disabled
+                  title="Stripe checkout · coming soon"
+                  aria-label={`Purchase ${p.name} — coming soon`}
+                  className={`w-full mt-3 text-[10px] py-2 transition-colors opacity-50 cursor-not-allowed ${
+                    p.accent ? "btn btn-accent" : "btn"
                   }`}
                 >
-                  PURCHASE &gt;&gt;
+                  PURCHASE · SOON
                 </button>
               </div>
             </article>

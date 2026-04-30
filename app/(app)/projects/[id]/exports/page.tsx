@@ -26,7 +26,7 @@ export default async function ExportsPage({
 
   return (
     <>
-      <Topbar section="EXPORTS" breadcrumb={["OPERATOR", "PROJECTS", project.name, "EXPORTS"]} />
+      <Topbar section="Exports" breadcrumb={["Operator", "Projects", project.name, "Exports"]} />
 
       <div className="grid grid-cols-12 border-b-2 border-[var(--line-strong)]">
         <div className="col-span-12 md:col-span-7 border-r-0 md:border-r border-[var(--line)] p-5 sm:p-6 md:p-10">
@@ -41,8 +41,24 @@ export default async function ExportsPage({
             canvas never produces final assets.
           </p>
           <div className="flex gap-2">
-            <button className="btn btn-accent flex-1"><RotateCw size={12} /> RENDER NOW</button>
-            <button className="btn flex-1"><Upload size={12} /> PUSH ASC</button>
+            <button
+              type="button"
+              disabled
+              title="Server render · coming soon"
+              aria-label="Render now — coming soon"
+              className="btn btn-accent flex-1 opacity-50 cursor-not-allowed"
+            >
+              <RotateCw size={12} /> RENDER · SOON
+            </button>
+            <button
+              type="button"
+              disabled
+              title="App Store Connect upload · coming soon"
+              aria-label="Push to App Store Connect — coming soon"
+              className="btn flex-1 opacity-50 cursor-not-allowed"
+            >
+              <Upload size={12} /> PUSH ASC · SOON
+            </button>
           </div>
         </aside>
       </div>
@@ -73,10 +89,13 @@ export default async function ExportsPage({
                 <div><dt>BUNDLE</dt><dd className="t-mono-xs">— KB</dd></div>
               </dl>
               <button
-                disabled={!enabled}
-                className="btn w-full disabled:opacity-50 disabled:cursor-not-allowed"
+                type="button"
+                disabled
+                title={enabled ? "Available after render · coming soon" : "Add this device to your project first"}
+                aria-label={`Download ${t.label} bundle — coming soon`}
+                className="btn w-full opacity-50 cursor-not-allowed"
               >
-                <Download size={12} /> DOWNLOAD ZIP
+                <Download size={12} /> DOWNLOAD · SOON
               </button>
             </article>
           );

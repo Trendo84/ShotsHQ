@@ -11,7 +11,7 @@ export default async function ProjectsPage() {
 
   return (
     <>
-      <Topbar section="PROJECTS" breadcrumb={["OPERATOR", "PROJECTS"]} />
+      <Topbar section="Projects" breadcrumb={["Operator", "Projects"]} />
 
       <div className="grid grid-cols-12 border-b border-[var(--line)]">
         <div className="col-span-12 md:col-span-8 border-r-0 md:border-r border-[var(--line)] p-5 md:p-6">

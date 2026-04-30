@@ -28,18 +28,19 @@ const SOFTWARE_APP = {
   url: APP_URL,
   description:
     "AI-powered App Store screenshot generation for indie iOS developers. Polished, localized, conversion-optimized listing images in minutes.",
+  // Pricing range mirrors the visible Pricing page:
+  // - low:  $0 (Free tier)
+  // - high: $149 (Lifetime SKU). Bump if a higher tier ships.
   offers: {
     "@type": "AggregateOffer",
     priceCurrency: "USD",
     lowPrice: "0",
-    highPrice: "499",
+    highPrice: "149",
     offerCount: "5",
   },
-  aggregateRating: {
-    "@type": "AggregateRating",
-    ratingValue: "4.9",
-    reviewCount: "126",
-  },
+  // NOTE: aggregateRating intentionally omitted until we have real,
+  // verifiable reviews. Inventing it violates Google's structured-data
+  // policy and risks rich-results de-listing.
   publisher: { "@id": `${APP_URL}/#organization` },
 };
 

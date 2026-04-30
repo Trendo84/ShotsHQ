@@ -217,14 +217,14 @@ export const FabricCanvas = forwardRef<FabricCanvasHandle, Props>(
           <ToolBtn
             active={tool === "select"}
             onClick={() => { setTool("select"); if (fc.current) fc.current.defaultCursor = "default"; }}
-            label="Select (V)"
+            label="Select"
           >
             <MousePointer2 size={13} />
           </ToolBtn>
           <ToolBtn
             active={tool === "pan"}
             onClick={() => { setTool("pan"); if (fc.current) fc.current.defaultCursor = "grab"; }}
-            label="Pan (H)"
+            label="Pan"
           >
             <Hand size={13} />
           </ToolBtn>

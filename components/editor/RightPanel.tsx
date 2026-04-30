@@ -14,7 +14,15 @@ export function RightPanel() {
     <aside className="w-[260px] border-l border-[var(--line)] flex flex-col bg-[var(--bg)]">
       <div className="border-b border-[var(--line)] px-4 py-3 flex items-center justify-between">
         <span className="t-mono-xs text-[var(--accent)]">[ FRAMES · {FRAMES.length} ]</span>
-        <button className="t-mono-xs text-[var(--fg-mute)] hover:text-[var(--accent)]">+ ADD</button>
+        <button
+          type="button"
+          disabled
+          title="Add frame · coming soon"
+          aria-label="Add frame — coming soon"
+          className="t-mono-xs text-[var(--fg-mute)] opacity-50 cursor-not-allowed"
+        >
+          + ADD
+        </button>
       </div>
       <div className="flex-1 overflow-y-auto p-3 space-y-2">
         {FRAMES.map((f) => (
