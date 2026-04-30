@@ -96,8 +96,8 @@ Optional sections (use when relevant):
 | **Designed, not tracked** | This folder. Status: "Captured YYYY-MM-DD · Not yet opened on GitHub". | Nothing. Markdown is the source of truth. |
 | **Open issue** | GitHub. File still exists. | Update Status line to point at the GitHub URL. Update in-code TODO refs from file paths to issue numbers. |
 | **In progress** | GitHub. File still exists. | Don't keep editing the markdown — discussion lives on GitHub. The file is now a snapshot of original design. |
-| **Shipped** | GitHub closed. | Delete the file (or move to `docs/issues/shipped/` if you want an ADR archive). Remove in-code TODO refs. Update CLAUDE.md if architectural invariants changed. |
-| **Superseded** | File still exists, marked superseded. | Status line: `Superseded by <new-file>.md on YYYY-MM-DD`. Don't delete — the rationale is still useful for "why we changed direction". |
+| **Shipped** | File stays in place, status line updated to point at the implementing commit. | Status line: `Shipped in vX.Y · superseded by <commit-sha>` (e.g. `Shipped in v1.1 · superseded by 9238463`). Remove in-code TODO refs. Update CLAUDE.md if architectural invariants changed. **Don't delete the file** — the markdown becomes the permanent design record of what was decided and why, which survives long after the GitHub issue archive and even the implementing commit's diff stops being readable. Same logic as ADRs being immutable once accepted: you supersede, you don't edit. |
+| **Superseded** | File still exists, marked superseded by another design. | Status line: `Superseded by <new-file>.md on YYYY-MM-DD`. Don't delete — the rationale is still useful for "why we changed direction". |
 
 ## In-code TODO refs
 
@@ -146,6 +146,22 @@ the what.
 
 ## Anti-patterns
 
+- **Don't scatter inline `// TODO` comments for non-trivial follow-ups.**
+  Anything matching the "When to add a file here" criteria above
+  belongs in `docs/issues/*.md`, with the in-code comment pointing at
+  the file. Inline TODOs accrete invisibly, never get found again, and
+  rot in place as the surrounding code changes around them. Files in
+  this folder show up in `git log`, get reviewed in PRs, and surface
+  when someone greps for `v1.1`. Discipline lives at the boundary —
+  the boundary is "is this two lines of context, or twenty?"
+- **Don't open a GitHub issue without first writing the markdown.**
+  The issue body is the markdown. Drafting in this folder forces the
+  required sections (Status / Why / What / Touch points / Tests / Done
+  when), gets reviewed in a PR, and produces a permanent design record
+  in git regardless of what happens to the GitHub issue. Skipping the
+  file step yields one-paragraph issue bodies that nobody reviews and
+  that can't survive the issue tracker being deprecated, archived, or
+  forked.
 - **Don't open a real GitHub issue prematurely.** Open it only when:
   (a) you're starting work on it, (b) someone external needs to
   comment, or (c) you want it on a project board. Until then, the
@@ -157,6 +173,9 @@ the what.
 - **Don't write a one-paragraph file.** If the issue is small enough
   for one paragraph, it's small enough to be a `// TODO` line in
   code.
+- **Don't edit a file after the work ships.** Mark it superseded
+  (see Lifecycle above), don't rewrite history. Same logic as ADRs:
+  immutable once accepted; you supersede, you don't edit.
 - **Don't paste secrets, internal user data, or unverified
   third-party info into these files.** They're public (on GitHub
   once the repo is). Same hygiene as a public commit message.
