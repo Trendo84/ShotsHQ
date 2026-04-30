@@ -219,8 +219,8 @@ export function AiModulesClient({
         <aside className="col-span-12 md:col-span-5 p-5 sm:p-6 md:p-10 grid grid-cols-2 gap-3 content-end border-t md:border-t-0 border-[var(--line)]">
           <div className="border border-[var(--line)] p-3 sm:p-4">
             <div className="t-mono-xs text-[var(--fg-mute)]">MODELS</div>
-            <div className="t-display text-[clamp(1.5rem,3vw,2.25rem)] t-numeric mt-1 leading-none">3</div>
-            <div className="t-mono-xs text-[var(--fg-mute)] mt-1">copy · image · translate</div>
+            <div className="t-display text-[clamp(1.5rem,3vw,2.25rem)] t-numeric mt-1 leading-none">4</div>
+            <div className="t-mono-xs text-[var(--fg-mute)] mt-1">copy · backdrop · set · translate</div>
           </div>
           <div className="border border-[var(--line)] p-3 sm:p-4">
             <div className="t-mono-xs text-[var(--fg-mute)]">QUEUE</div>
@@ -305,12 +305,54 @@ export function AiModulesClient({
         </aside>
       </section>
 
-      {/* ── Backdrop module ───────────────────────────────────────────────── */}
-      <section id="backdrop" className="grid grid-cols-12 border-b-2 border-[var(--line-strong)]">
+      {/* ── Backdrop module (placeholder for v1.1) ──────────────────────────
+         Distinct from Template set below. AI Backdrop = Flux 2 single-frame
+         scene regen (2 cr / frame), in-canvas operation. Template Set =
+         gpt-image-1 6-frame composition (8 cr / set), whole-carousel
+         operation. Disambiguated per audit triage of
+         docs/audits/2026-04-30-comet-sonnet-editor.md #3.
+         The dispatch wiring lands when ai-background gets its own
+         Trigger.dev task — until then this section is locked. */}
+      <section id="ai-backdrop" className="grid grid-cols-12 border-b-2 border-[var(--line-strong)]">
         <div className="col-span-12 lg:col-span-7 border-r border-[var(--line)] p-6 md:p-10">
           <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
-            <div className="t-eyebrow t-eyebrow-accent">Module · Backdrop</div>
-            <Badge variant="warn">8 cr / gen</Badge>
+            <div className="t-eyebrow t-eyebrow-accent">Module · AI backdrop</div>
+            <Badge variant="warn">2 cr / frame</Badge>
+          </div>
+          <h2 className="t-display t-h-3 mb-4">Backdrop · Flux 2</h2>
+          <p className="t-prose text-[var(--fg-dim)] leading-relaxed">
+            Single-frame backdrop regen. Flux 2 swaps the surrounding scene
+            around your screenshot — your UI stays pixel-untouched. Use
+            this when you want to re-vibe a frame you already like; use
+            Template set below when you want a fresh 6-frame carousel from
+            scratch.
+          </p>
+          <Button
+            variant="accent"
+            disabled
+            title="Single-frame Flux 2 dispatch · coming soon (v1.1)"
+            aria-label="Dispatch Flux 2 backdrop — coming in v1.1"
+            className="mt-5 opacity-50 cursor-not-allowed"
+          >
+            Dispatch · Flux 2 · 2 cr · soon
+          </Button>
+        </div>
+        <aside className="col-span-12 lg:col-span-5 p-5 sm:p-6 md:p-10 border-t lg:border-t-0 border-[var(--line)]">
+          <div className="t-eyebrow t-eyebrow-accent mb-3">When to pick which</div>
+          <ul className="space-y-2 t-mono-sm text-[var(--fg-dim)] leading-relaxed">
+            <li>▸ <span className="text-[var(--fg)]">AI backdrop (this)</span> — already have a frame composition, want a new vibe behind it.</li>
+            <li>▸ <span className="text-[var(--fg)]">Template set (below)</span> — empty canvas, want six cohesive frames from app metadata.</li>
+            <li>▸ Stack them: dispatch a template set first, then re-backdrop individual frames you want to differentiate.</li>
+          </ul>
+        </aside>
+      </section>
+
+      {/* ── Template set module ─────────────────────────────────────────── */}
+      <section id="template-set" className="grid grid-cols-12 border-b-2 border-[var(--line-strong)]">
+        <div className="col-span-12 lg:col-span-7 border-r border-[var(--line)] p-6 md:p-10">
+          <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
+            <div className="t-eyebrow t-eyebrow-accent">Module · Template set</div>
+            <Badge variant="warn">8 cr / set</Badge>
           </div>
           <h2 className="t-display t-h-3 mb-4">Template set · gpt-image-1</h2>
           <Label className="block mb-2">Style</Label>

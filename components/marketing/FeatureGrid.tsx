@@ -9,6 +9,16 @@ type Feature = {
   visual?: ReactNode;
 };
 
+// Six modules — two AI Backdrop products are now distinct cards (was
+// one collapsed "Backdrops" entry that hid the Template Set product).
+// See audit finding docs/audits/2026-04-30-comet-sonnet-editor.md #3.
+//
+// Trade made to keep the 2×3 grid: dropped the "Direct upload" card.
+// Direct ASC upload is a sub-feature of exports, not a standalone
+// module — it doesn't dispatch through the AI panel like the other
+// five do, and the exports page already surfaces it with its own
+// "Push to ASC · soon" CTA. If you want it back as a module card,
+// revert this commit's FEATURES array changes (one block).
 const FEATURES: Feature[] = [
   {
     title:  "AI copy",
@@ -17,9 +27,15 @@ const FEATURES: Feature[] = [
     visual: <CopyVisual />,
   },
   {
-    title:  "Backdrops",
-    body:   "Same screenshot, fresh palette. AI swaps the surrounding scene around your app — your UI stays untouched.",
-    spec:   "2 cr / gen",
+    title:  "AI backdrop",
+    body:   "Same screenshot, fresh palette. Flux 2 swaps the surrounding scene around your app — your UI stays untouched.",
+    spec:   "2 cr / frame",
+    visual: <BackdropsVisual />,
+  },
+  {
+    title:  "AI template set",
+    body:   "Six-frame App Store carousel from your app metadata. gpt-image-1 generates all six in one cohesive composition.",
+    spec:   "8 cr / set",
     visual: <BackdropsVisual />,
   },
   {
@@ -39,12 +55,6 @@ const FEATURES: Feature[] = [
     body:   "iPhone 6.9″ / 6.7″ / iPad 13″ M4. Crisp masters, dynamic-island accurate, every safe area honoured.",
     spec:   "Free",
     visual: <DevicesVisual />,
-  },
-  {
-    title:  "Direct upload",
-    body:   "Push generated assets to App Store Connect. Per-locale, per-device, zero filename gymnastics.",
-    spec:   "Free",
-    visual: <UploadVisual />,
   },
 ];
 
@@ -327,6 +337,12 @@ function DeviceSilhouette({
   );
 }
 
+// Retained but currently unrendered — the "Direct upload" feature card
+// was dropped from FEATURES to make room for AI Backdrop + AI Template
+// Set as distinct cards (see audit triage for #3). Function stays so a
+// revert is one-block — restore the FEATURES entry and this renders
+// again. eslint-disable-next-line unused — intentional dead code.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function UploadVisual() {
   // Project asset → upload arrow → App Store icon
   return (
