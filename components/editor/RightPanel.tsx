@@ -44,9 +44,9 @@ export function RightPanel() {
           disabled
           title="Multi-frame · per-frame backdrops + layer sets · coming in v1.1"
           aria-label="Add frame — coming in v1.1"
-          className="t-mono-xs text-[var(--fg-mute)] opacity-50 cursor-not-allowed"
+          className="t-mono-xs text-[var(--fg-mute)]/70 opacity-60 cursor-not-allowed text-[10px]"
         >
-          + ADD · SOON
+          + ADD <span className="opacity-70">· soon</span>
         </button>
       </div>
 

@@ -328,13 +328,13 @@ export function AiModulesClient({
             scratch.
           </p>
           <Button
-            variant="accent"
+            variant="ghost"
             disabled
             title="Single-frame Flux 2 dispatch · coming soon (v1.1)"
             aria-label="Dispatch Flux 2 backdrop — coming in v1.1"
-            className="mt-5 opacity-50 cursor-not-allowed"
+            className="mt-5 opacity-40 cursor-not-allowed"
           >
-            Dispatch · Flux 2 · 2 cr · soon
+            Dispatch · Flux 2 · 2 cr <span className="text-[var(--fg-mute)]/70 ml-1">· soon</span>
           </Button>
         </div>
         <aside className="col-span-12 lg:col-span-5 p-5 sm:p-6 md:p-10 border-t lg:border-t-0 border-[var(--line)]">

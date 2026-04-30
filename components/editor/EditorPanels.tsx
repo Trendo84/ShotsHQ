@@ -188,7 +188,7 @@ function BackgroundPanel({ onSetBackground }: { onSetBackground?: (bg: ShotsBack
           disabled
           title="Flux 2 backdrop · coming soon"
           aria-label="Flux 2 AI backdrop — coming soon"
-          className="btn btn-accent w-full text-[10px] py-2 opacity-50 cursor-not-allowed"
+          className="btn w-full text-[10px] py-2 opacity-40 cursor-not-allowed"
         >
           ▸ FLUX 2 BACKDROP · SOON
         </button>
@@ -354,7 +354,7 @@ function LayersPanel({
         disabled
         title="Layer kinds beyond text · coming soon"
         aria-label="Add layer — coming soon"
-        className="mt-3 w-full border border-dashed border-[var(--line-strong)] text-[var(--fg-mute)] py-2 t-mono-xs uppercase tracking-[0.14em] opacity-50 cursor-not-allowed"
+        className="mt-3 w-full border border-dashed border-[var(--line-strong)] text-[var(--fg-mute)]/70 py-2 t-mono-xs uppercase tracking-[0.14em] opacity-40 cursor-not-allowed"
       >
         + Add Layer · soon
       </button>
@@ -379,12 +379,9 @@ function AIPanel() {
             disabled
             title={`${b.label.toLowerCase()} · coming soon`}
             aria-label={`${b.label} — coming soon`}
-            className={cn(
-              "w-full text-left border p-3 opacity-50 cursor-not-allowed",
-              b.variant === "accent" ? "border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-fg)]" : "border-[var(--line)]",
-            )}
+            className="w-full text-left border border-[var(--line)] p-3 opacity-40 cursor-not-allowed"
           >
-            <div className="t-mono-sm">{b.label} · SOON</div>
+            <div className="t-mono-sm">{b.label} <span className="text-[var(--fg-mute)]/70">· soon</span></div>
             <div className="t-mono-xs opacity-70 mt-1">{b.sub}</div>
           </button>
         ))}

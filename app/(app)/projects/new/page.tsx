@@ -313,9 +313,9 @@ export default function NewProjectPage() {
             <div
               aria-disabled
               title="Direct upload · coming soon"
-              className="mt-6 border-2 border-dashed border-[var(--line-strong)] p-8 sm:p-12 text-center min-h-[240px] sm:min-h-[280px] flex flex-col items-center justify-center opacity-60 cursor-not-allowed"
+              className="mt-6 border-2 border-dashed border-[var(--line)] p-8 sm:p-12 text-center min-h-[240px] sm:min-h-[280px] flex flex-col items-center justify-center opacity-50 cursor-not-allowed"
             >
-              <div className="t-display text-[28px] sm:text-[32px]">Drop here · soon</div>
+              <div className="t-display text-[28px] sm:text-[32px]">Drop here <span className="text-[var(--fg-mute)]/70">· soon</span></div>
               <div className="t-mono-sm text-[var(--fg-mute)] mt-2">
                 .PNG · 1290×2796 · 1320×2868 · 2064×2752
               </div>

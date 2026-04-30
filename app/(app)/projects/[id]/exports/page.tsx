@@ -41,24 +41,29 @@ export default async function ExportsPage({
             Server-side <code>sharp</code> render. Streaming to R2. Client
             canvas never produces final assets.
           </p>
+          {/* SOON-quieting per audit triage of #5: drop accent variants on
+             disabled CTAs (was lying about importance), reduce opacity to
+             0.4, render the trailing "soon" in muted text via a wrapper
+             span. Information preserved (titles + aria-labels intact),
+             visual density drops noticeably. */}
           <div className="flex gap-2">
             <button
               type="button"
               disabled
               title="Server render · coming soon"
               aria-label="Render now — coming soon"
-              className="btn btn-accent flex-1 opacity-50 cursor-not-allowed"
+              className="btn flex-1 opacity-40 cursor-not-allowed"
             >
-              <RotateCw size={12} /> Render · soon
+              <RotateCw size={12} /> Render <span className="text-[var(--fg-mute)]/70 ml-1">· soon</span>
             </button>
             <button
               type="button"
               disabled
               title="App Store Connect upload · coming soon"
               aria-label="Push to App Store Connect — coming soon"
-              className="btn flex-1 opacity-50 cursor-not-allowed"
+              className="btn flex-1 opacity-40 cursor-not-allowed"
             >
-              <Upload size={12} /> Push to ASC · soon
+              <Upload size={12} /> Push to ASC <span className="text-[var(--fg-mute)]/70 ml-1">· soon</span>
             </button>
           </div>
         </aside>
@@ -92,9 +97,9 @@ export default async function ExportsPage({
                 disabled
                 title={enabled ? "Available after render · coming soon" : "Add this device to your project first"}
                 aria-label={`Download ${t.label} bundle — coming soon`}
-                className="btn w-full opacity-50 cursor-not-allowed"
+                className="btn w-full opacity-40 cursor-not-allowed"
               >
-                <Download size={12} /> Download · soon
+                <Download size={12} /> Download <span className="text-[var(--fg-mute)]/70 ml-1">· soon</span>
               </button>
             </article>
           );

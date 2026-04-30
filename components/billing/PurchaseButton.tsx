@@ -47,17 +47,20 @@ export function PurchaseButton({
 
   // No plan mapping → render "soon" treatment (matches pre-Stripe state).
   if (!plan) {
+    // SOON-quieting per audit triage of #5: drop the `btn-accent` variant
+    // on the disabled state regardless of the `accent` prop — accent on
+    // a disabled CTA was lying about importance. The plain `btn` outline
+    // at opacity-40 reads as "this is here but not active right now"
+    // without the marketing volume.
     return (
       <button
         type="button"
         disabled
         title={`${packName} · coming soon`}
         aria-label={`${packName} — coming soon`}
-        className={`w-full mt-3 text-[10px] py-2 transition-colors opacity-50 cursor-not-allowed ${
-          accent ? "btn btn-accent" : "btn"
-        }`}
+        className="w-full mt-3 text-[10px] py-2 transition-colors btn opacity-40 cursor-not-allowed"
       >
-        Purchase · soon
+        Purchase <span className="text-[var(--fg-mute)]/70 ml-1">· soon</span>
       </button>
     );
   }
