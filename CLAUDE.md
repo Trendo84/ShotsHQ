@@ -61,6 +61,16 @@ be trusted for authorization.
   Use `Response.json()`, not `NextResponse`.
 - **Forms:** React Hook Form + Zod resolver. Server actions for mutations
   where possible; route handlers when you need client SDK calls.
+- **Out-of-scope follow-ups:** Capture as `docs/issues/<milestone>-<title>.md`
+  files (e.g. `docs/issues/v1.1-multi-frame-canvas.md`), NOT as inline
+  `// TODO` comments scattered through the code. Each file is a
+  ready-to-paste GitHub issue body with required sections (Status,
+  Why, What, Touch points, Tests, Done when). In-code TODO comments
+  reference the file path. When you fire `gh issue create`, swap the
+  in-code refs to live issue URLs. See `docs/issues/CONVENTIONS.md`
+  for the full pattern + rationale. The point: design context survives
+  context resets when it lives in git, and an issue is one
+  `git remote remove origin` away from orphaned.
 
 ## Copy & casing system
 

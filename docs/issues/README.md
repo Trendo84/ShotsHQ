@@ -4,6 +4,11 @@ Markdown drafts for follow-up GitHub issues that don't have a tracker
 yet. Each file is **ready to paste** into a new issue body — title goes
 in the GitHub form, body is the file's contents below the H1.
 
+**Adding a new file?** Read [CONVENTIONS.md](./CONVENTIONS.md) first.
+It documents naming, required sections, lifecycle, and the rationale
+behind the whole pattern. New entries that don't match the
+conventions should either match them or update them.
+
 ## Why these exist as files
 
 The plan that produced these followed a strict scope discipline: the
