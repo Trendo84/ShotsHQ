@@ -16,8 +16,8 @@ import { useState } from "react";
  *
  * TODO(v1.1): drive FRAMES from real per-frame state. Each frame should own
  * its own background + layers array; switching frames in this rail loads
- * that frame into the canvas. Tracking issue:
- *   https://github.com/Trendo84/ShotsHQ/issues/<frames-schema-v1.1>
+ * that frame into the canvas. Tracked in `docs/issues/v1.1-multi-frame-canvas.md`
+ * — paste into a real GitHub issue when the project tracker is set up.
  *
  * Rendering notes:
  *   - The "+ ADD" button stays disabled with a "Multi-frame coming soon"

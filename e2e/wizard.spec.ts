@@ -66,4 +66,5 @@ test.describe("New project wizard navigation", () => {
 });
 
 // TODO(v1.1): extend with editor save round-trip, AI dispatch happy path,
-// Stripe checkout smoke. Tracking: v1.1 test-suite milestone.
+// Stripe checkout smoke. Tracked in `docs/issues/v1.1-playwright-auth-bypass.md`
+// — that issue is the prerequisite (unblocks the two skipped specs above).
