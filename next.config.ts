@@ -2,29 +2,42 @@ import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
 
 /**
- * Production-build safety check — refuse to build a production deployment
- * with a Clerk dev key (`pk_test_*`). The Clerk widget renders a visible
- * "Development mode" banner on every page when a test key is in use,
- * which leaks staging/dev posture to public visitors and is a known
- * pre-launch gotcha with Vercel env-var swaps.
+ * Clerk live-key guard.
  *
- * Bypass: set `SKIP_CLERK_LIVE_CHECK=1` for staging or for a deliberate
- * pre-deploy where the live key is intentionally absent.
+ * Pre-launch (default): we just WARN if a `pk_test_*` key is shipped to a
+ * Vercel production deployment. Builds still pass. The WIP banner is up,
+ * the site is openly under construction, and a hard block here would slow
+ * iteration to a crawl while the env-var swap and Clerk production-instance
+ * DNS dance are still TBD.
  *
- * The check only fires on Vercel production environments — local
- * `next build` and Vercel preview deploys are unaffected.
+ * Launch (strict): set `STRICT_LAUNCH_CHECKS=1` in Vercel → Settings →
+ * Environment Variables → Production. With that flag set, this guard
+ * upgrades from warning to hard build failure — preventing any future
+ * regression where a dev key sneaks back into production.
+ *
+ * Launch ritual:
+ *   1. Configure Clerk production instance (DNS records, OAuth providers).
+ *   2. Swap NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY (pk_test_* → pk_live_*).
+ *   3. Swap CLERK_SECRET_KEY (sk_test_* → sk_live_*).
+ *   4. Set STRICT_LAUNCH_CHECKS=1.
+ *   5. Remove WipBanner from app/layout.tsx and redeploy.
  */
-if (
+const usingClerkDevKey =
   process.env.VERCEL_ENV === "production" &&
-  process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?.startsWith("pk_test_") &&
-  !process.env.SKIP_CLERK_LIVE_CHECK
-) {
-  throw new Error(
-    "[next.config] Refusing to build production with a Clerk dev key. " +
-    "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY starts with 'pk_test_'. " +
-    "Swap to a 'pk_live_*' key in Vercel → Settings → Environment Variables, " +
-    "or set SKIP_CLERK_LIVE_CHECK=1 to bypass.",
-  );
+  process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?.startsWith("pk_test_");
+
+if (usingClerkDevKey) {
+  const message =
+    "[next.config] Clerk DEV key (pk_test_*) detected on a Vercel " +
+    "production deployment. The Clerk widget will render 'Development " +
+    "mode' to every visitor. Swap to pk_live_* before lifting the WIP banner. " +
+    "Set STRICT_LAUNCH_CHECKS=1 to upgrade this warning to a hard build failure.";
+
+  if (process.env.STRICT_LAUNCH_CHECKS === "1") {
+    throw new Error(message);
+  }
+  // eslint-disable-next-line no-console
+  console.warn(`\n\x1b[33m⚠ ${message}\x1b[0m\n`);
 }
 
 const nextConfig: NextConfig = {

@@ -49,7 +49,9 @@ export function MarketingHeader() {
       <div className="grid grid-cols-12 items-stretch">
         <Link href="/" className="col-span-7 md:col-span-3 border-r border-[var(--line)] px-4 md:px-6 py-3 flex items-center gap-3 group">
           <span className="block w-2.5 h-2.5 bg-[var(--accent)] group-hover:animate-pulse" />
-          <span className="t-display text-[clamp(1rem,4vw,1.25rem)] tracking-[-0.04em] leading-none">SHOTSHQ</span>
+          <span className="t-display text-[clamp(1rem,4vw,1.25rem)] tracking-[-0.04em] leading-none">
+            SHOTS<span className="text-[var(--accent)]">HQ</span>
+          </span>
           <sup className="t-mono-xs text-[var(--fg-mute)] hidden sm:inline">®</sup>
         </Link>
 

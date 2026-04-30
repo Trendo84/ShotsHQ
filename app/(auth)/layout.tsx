@@ -8,7 +8,9 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         <div className="px-6 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3 group">
             <span className="block w-2.5 h-2.5 bg-[var(--accent)]" />
-            <span className="t-display text-[18px] tracking-[-0.04em] leading-none normal-case">ShotsHQ</span>
+            <span className="t-display text-[18px] tracking-[-0.04em] leading-none normal-case">
+              Shots<span className="text-[var(--accent)]">HQ</span>
+            </span>
             <sup className="t-mono-xs text-[var(--fg-mute)]">®</sup>
           </Link>
           <ThemeSwitcher compact />

@@ -135,7 +135,9 @@ export async function GET(req: Request) {
             />
             App Store · Web hero · OG · GitHub
           </span>
-          <span style={{ color: palette.fg }}>SHOTSHQ ®</span>
+          <span style={{ color: palette.fg }}>
+            SHOTS<span style={{ color: palette.accent }}>HQ</span> ®
+          </span>
         </div>
       </div>
     ),

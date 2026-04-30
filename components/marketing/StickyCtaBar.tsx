@@ -47,7 +47,9 @@ export function StickyCtaBar() {
           aria-label="ShotsHQ home"
         >
           <span className="block w-2 h-2 bg-[var(--accent)] shrink-0" />
-          <span className="t-display text-[15px] tracking-[-0.04em] leading-none">SHOTSHQ</span>
+          <span className="t-display text-[15px] tracking-[-0.04em] leading-none">
+            SHOTS<span className="text-[var(--accent)]">HQ</span>
+          </span>
           <sup className="t-mono-xs text-[var(--fg-mute)] hidden md:inline">®</sup>
           <span className="t-mono-xs text-[var(--fg-mute)] tracking-[0.16em] uppercase ml-2 truncate">
             · Free forever
@@ -61,7 +63,9 @@ export function StickyCtaBar() {
           aria-label="ShotsHQ home"
         >
           <span className="block w-2 h-2 bg-[var(--accent)] shrink-0" />
-          <span className="t-display text-[14px] tracking-[-0.04em] leading-none">SHOTSHQ</span>
+          <span className="t-display text-[14px] tracking-[-0.04em] leading-none">
+            SHOTS<span className="text-[var(--accent)]">HQ</span>
+          </span>
         </Link>
 
         <div className="flex items-center gap-2 shrink-0">

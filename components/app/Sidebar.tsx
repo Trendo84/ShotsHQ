@@ -44,7 +44,7 @@ export function Sidebar({ creditBalance = 0, plan = "Free" }: { creditBalance?: 
           <span className="block w-2 h-2 bg-[var(--accent)] flex-none" />
           {expandedMd && (
             <span className="t-display text-[16px] tracking-[-0.04em] truncate normal-case hidden md:inline">
-              ShotsHQ
+              Shots<span className="text-[var(--accent)]">HQ</span>
             </span>
           )}
         </Link>

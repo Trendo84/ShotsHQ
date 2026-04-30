@@ -40,7 +40,9 @@ export function MarketingFooter() {
           <div className="col-span-12 md:col-span-6">
             <Link href="/" className="flex items-center gap-2.5 mb-5">
               <span className="block w-2.5 h-2.5 bg-[var(--accent)]" />
-              <span className="t-display text-[22px] tracking-[-0.04em] normal-case">ShotsHQ</span>
+              <span className="t-display text-[22px] tracking-[-0.04em] normal-case">
+                Shots<span className="text-[var(--accent)]">HQ</span>
+              </span>
               <sup className="t-mono-xs text-[var(--fg-mute)]">®</sup>
             </Link>
             <p className="t-prose max-w-md mb-5">
