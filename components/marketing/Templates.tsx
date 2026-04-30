@@ -413,11 +413,17 @@ function FilterTab({
 }
 
 function TemplateCard({ t, dense: _dense = false }: { t: Template; dense?: boolean }) {
+  // Belt-and-suspenders cursor + interaction affordance:
+  // Inline `cursor: pointer` defeats any Tailwind purge edge case, browser
+  // default `<a>` style under SSR-before-hydration, or parent CSS reset
+  // that could neutralize `cursor-pointer`. Verified shipping in
+  // production traffic where the cards were reading as inert.
   return (
     <Link
       href={`/sign-up?template=${t.slug}`}
       aria-label={`Use the ${t.name} template`}
-      className="group relative border border-[var(--line)] bg-[var(--bg)] hover:border-[var(--accent)] transition-colors flex flex-col cursor-pointer focus-visible:outline-none focus-visible:border-[var(--accent)] focus-visible:ring-1 focus-visible:ring-[var(--accent)]"
+      style={{ cursor: "pointer" }}
+      className="group relative border border-[var(--line)] bg-[var(--bg)] hover:border-[var(--accent)] hover:-translate-y-0.5 hover:shadow-[6px_6px_0_var(--accent)] transition-all duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] flex flex-col cursor-pointer focus-visible:outline-none focus-visible:border-[var(--accent)] focus-visible:ring-1 focus-visible:ring-[var(--accent)] focus-visible:-translate-y-0.5"
     >
       <div className="aspect-[3/4] relative overflow-hidden flex items-center justify-center px-3 py-3" style={{ background: t.bg, color: t.fg }}>
         {/* Decorative texture per template */}
@@ -447,7 +453,9 @@ function TemplateCard({ t, dense: _dense = false }: { t: Template; dense?: boole
       </div>
       <div className="p-4 flex items-start justify-between gap-3 border-t border-[var(--line)]">
         <div className="min-w-0">
-          <div className="text-[14px] font-medium text-[var(--fg)] truncate">{t.name}</div>
+          <div className="text-[14px] font-medium text-[var(--fg)] truncate group-hover:text-[var(--accent)] transition-colors">
+            {t.name}
+          </div>
           <div className="text-[12px] text-[var(--fg-mute)] truncate">{t.category}</div>
         </div>
         <span
@@ -461,18 +469,22 @@ function TemplateCard({ t, dense: _dense = false }: { t: Template; dense?: boole
         </span>
       </div>
 
-      {/* Hover overlay — clear interaction affordance */}
+      {/* Idle "Use →" pill — always visible at idle so the card reads as
+          interactive even on touch devices and pre-hover. Becomes a
+          stronger filled accent on hover/focus. */}
       <span
         aria-hidden
-        className="absolute inset-0 bg-[var(--accent)]/0 group-hover:bg-[var(--accent)]/10 transition-colors duration-200 pointer-events-none"
-      />
-      <span
-        aria-hidden
-        className="absolute bottom-3 right-3 inline-flex items-center gap-2 px-3 py-1.5 bg-[var(--accent)] text-[var(--accent-fg)] t-mono-xs uppercase tracking-[0.14em] opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] pointer-events-none"
+        className="absolute bottom-3 right-3 inline-flex items-center gap-1.5 px-2.5 py-1 border border-[var(--line-strong)] bg-[var(--bg)]/85 backdrop-blur-[2px] t-mono-xs uppercase tracking-[0.14em] text-[var(--fg-dim)] group-hover:bg-[var(--accent)] group-hover:text-[var(--accent-fg)] group-hover:border-[var(--accent)] group-focus-visible:bg-[var(--accent)] group-focus-visible:text-[var(--accent-fg)] group-focus-visible:border-[var(--accent)] transition-all duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] pointer-events-none"
       >
-        Use template
+        Use
         <span className="font-bold">→</span>
       </span>
+
+      {/* Tinted hover overlay — clear interaction affordance */}
+      <span
+        aria-hidden
+        className="absolute inset-0 bg-[var(--accent)]/0 group-hover:bg-[var(--accent)]/[0.06] group-focus-visible:bg-[var(--accent)]/[0.06] transition-colors duration-200 pointer-events-none"
+      />
     </Link>
   );
 }

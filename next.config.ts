@@ -1,6 +1,32 @@
 import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
 
+/**
+ * Production-build safety check — refuse to build a production deployment
+ * with a Clerk dev key (`pk_test_*`). The Clerk widget renders a visible
+ * "Development mode" banner on every page when a test key is in use,
+ * which leaks staging/dev posture to public visitors and is a known
+ * pre-launch gotcha with Vercel env-var swaps.
+ *
+ * Bypass: set `SKIP_CLERK_LIVE_CHECK=1` for staging or for a deliberate
+ * pre-deploy where the live key is intentionally absent.
+ *
+ * The check only fires on Vercel production environments — local
+ * `next build` and Vercel preview deploys are unaffected.
+ */
+if (
+  process.env.VERCEL_ENV === "production" &&
+  process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?.startsWith("pk_test_") &&
+  !process.env.SKIP_CLERK_LIVE_CHECK
+) {
+  throw new Error(
+    "[next.config] Refusing to build production with a Clerk dev key. " +
+    "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY starts with 'pk_test_'. " +
+    "Swap to a 'pk_live_*' key in Vercel → Settings → Environment Variables, " +
+    "or set SKIP_CLERK_LIVE_CHECK=1 to bypass.",
+  );
+}
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   images: {
