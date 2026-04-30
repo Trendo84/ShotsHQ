@@ -40,6 +40,29 @@ if (usingClerkDevKey) {
   console.warn(`\n\x1b[33m⚠ ${message}\x1b[0m\n`);
 }
 
+/**
+ * E2E auth-bypass guard — refuse to ship NEXT_PUBLIC_E2E=1 to production.
+ *
+ * The bypass at proxy.ts + lib/auth/clerk.ts is gated by both a NODE_ENV
+ * check AND the env flag, but defense-in-depth: this hard fail makes it
+ * impossible to even build a production deployment with the flag set.
+ * No carve-out, no bypass — there's no legitimate reason for that flag
+ * in production.
+ *
+ * See: docs/issues/v1.1-playwright-auth-bypass.md
+ */
+if (
+  process.env.VERCEL_ENV === "production" &&
+  process.env.NEXT_PUBLIC_E2E === "1"
+) {
+  throw new Error(
+    "[next.config] NEXT_PUBLIC_E2E=1 detected on a Vercel production " +
+    "deployment. This flag disables auth via the synthetic E2E user — " +
+    "shipping it to production would expose the entire app auth-less. " +
+    "Unset it in Vercel → Settings → Environment Variables → Production.",
+  );
+}
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   images: {

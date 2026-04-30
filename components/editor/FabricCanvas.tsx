@@ -255,7 +255,15 @@ export const FabricCanvas = forwardRef<FabricCanvasHandle, Props>(
         });
 
         // Layer-state broadcast — fires on every structural change.
+        // ORDER MATTERS: the patchMeta handler above runs first (Fabric
+        // dispatches in registration order), so this broadcast carries the
+        // already-flipped `system: false` meta. Without binding to
+        // text:changed, the LayersPanel showed a stale DEFAULT badge until
+        // the next object:modified fired (e.g. user clicks outside the
+        // textbox). Now the panel refreshes per keystroke as the user edits
+        // a system layer and the badge clears immediately.
         const broadcast = () => emitLayers();
+        canvas.on("text:changed",    broadcast);
         canvas.on("object:added",    broadcast);
         canvas.on("object:removed",  broadcast);
         canvas.on("object:modified", broadcast);
