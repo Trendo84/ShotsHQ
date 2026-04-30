@@ -13,6 +13,7 @@ import { NextRequest } from "next/server";
 import { z } from "zod";
 import { requireUser } from "@/lib/auth/clerk";
 import { aiLimiter, limit } from "@/lib/utils/ratelimit";
+import { logError } from "@/lib/observability/log";
 import { extractBrand } from "@/lib/brand/extract";
 
 export const runtime     = "nodejs";
@@ -44,7 +45,7 @@ export async function POST(req: NextRequest) {
     const profile = await extractBrand(parsed.data.url);
     return Response.json({ ok: true, data: profile });
   } catch (err) {
-    console.error("[brand.extract] failed", err);
+    logError("[brand.extract] failed", err);
     const message = err instanceof Error ? err.message : "extraction_failed";
     return Response.json({ ok: false, error: message }, { status: 502 });
   }

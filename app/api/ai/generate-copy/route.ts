@@ -7,6 +7,7 @@ import { isStudioOrLifetime } from "@/lib/auth/permissions";
 import { getBalance } from "@/lib/db/queries/credits";
 import { aiLimiter, limit } from "@/lib/utils/ratelimit";
 import { CREDIT_COST } from "@/lib/utils/credits";
+import { logError } from "@/lib/observability/log";
 
 export const runtime = "nodejs";
 
@@ -50,7 +51,7 @@ export async function POST(req: NextRequest) {
     });
     return Response.json({ ok: true, data: { runId: handle.id } });
   } catch (err) {
-    console.error("[ai.generate-copy] dispatch failed", err);
+    logError("[ai.generate-copy] dispatch failed", err, { userId: user.id });
     return Response.json({ ok: false, error: "dispatch_failed" }, { status: 500 });
   }
 }

@@ -24,6 +24,7 @@ import { isStudioOrLifetime } from "@/lib/auth/permissions";
 import { getBalance } from "@/lib/db/queries/credits";
 import { aiLimiter, limit } from "@/lib/utils/ratelimit";
 import { CREDIT_COST } from "@/lib/utils/credits";
+import { logError } from "@/lib/observability/log";
 import type { TemplateSetStyle } from "@/lib/ai/prompts/template-set";
 
 export const runtime = "nodejs";
@@ -102,7 +103,7 @@ export async function POST(req: NextRequest) {
     });
     return Response.json({ ok: true, data: { runId: handle.id, idempotencyKey } });
   } catch (err) {
-    console.error("[ai.template-set] dispatch failed", err);
+    logError("[ai.template-set] dispatch failed", err, { userId: user.id });
     return Response.json({ ok: false, error: "dispatch_failed" }, { status: 500 });
   }
 }

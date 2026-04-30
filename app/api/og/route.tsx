@@ -3,6 +3,30 @@ import { ImageResponse } from "next/og";
 export const runtime = "edge";
 
 /**
+ * Brand fonts for the OG image. Edge runtime can't resolve `next/font`
+ * (which is build-time only) — we fetch the .woff/.ttf binaries from
+ * Google Fonts at request time and pass them to ImageResponse.
+ *
+ * Vercel's edge cache (`force-cache`) keeps the font payload memoized
+ * across cold starts, so the fetch is effectively free after warm-up.
+ *
+ * URLs are pinned to Google Fonts' static `gstatic` CDN so we don't
+ * have to parse the @font-face CSS shim.
+ */
+const FONT_ARCHIVO_BLACK_URL =
+  "https://fonts.gstatic.com/s/archivoblack/v22/HTxqL289NzCGg4MzN6KJ7eW6CYyF_g.ttf";
+const FONT_JETBRAINS_MONO_URL =
+  "https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbY2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKxjPVmUsaaDhw.ttf";
+
+async function loadFont(url: string): Promise<ArrayBuffer> {
+  const res = await fetch(url, { cache: "force-cache" });
+  if (!res.ok) {
+    throw new Error(`OG font fetch failed: ${res.status} for ${url}`);
+  }
+  return await res.arrayBuffer();
+}
+
+/**
  * Programmatic Open Graph image. Used as the social card for every
  * marketing route via the layout's openGraph.images / twitter.images
  * config. Shape is tuned to look like the brand: thick wordmark,
@@ -24,6 +48,12 @@ export async function GET(req: Request) {
     ? { bg: "#F4F4F0", fg: "#0A0A0A", dim: "#2E2E2E", accent: "#E61919", line: "#0A0A0A" }
     : { bg: "#0A0A0A", fg: "#EAEAEA", dim: "#9A9A9A", accent: "#E61919", line: "#2A2A2A" };
 
+  // Load fonts in parallel. Cached by Vercel's edge after first request.
+  const [archivoBlack, jetbrainsMono] = await Promise.all([
+    loadFont(FONT_ARCHIVO_BLACK_URL),
+    loadFont(FONT_JETBRAINS_MONO_URL),
+  ]);
+
   return new ImageResponse(
     (
       <div
@@ -34,7 +64,7 @@ export async function GET(req: Request) {
           flexDirection: "column",
           background: palette.bg,
           color: palette.fg,
-          fontFamily: "monospace",
+          fontFamily: "JetBrainsMono, monospace",
           padding: "60px 70px",
           position: "relative",
         }}
@@ -81,12 +111,13 @@ export async function GET(req: Request) {
           style={{
             display: "flex",
             flexDirection: "column",
-            fontSize: 96,
+            fontFamily: "ArchivoBlack",
+            fontSize: 104,
             fontWeight: 900,
-            lineHeight: 0.95,
-            letterSpacing: "-0.04em",
+            lineHeight: 0.92,
+            letterSpacing: "-0.045em",
             textTransform: "uppercase",
-            maxWidth: "85%",
+            maxWidth: "92%",
           }}
         >
           {title.split("\n").map((line, i) => (
@@ -135,12 +166,20 @@ export async function GET(req: Request) {
             />
             App Store · Web hero · OG · GitHub
           </span>
-          <span style={{ color: palette.fg }}>
-            SHOTS<span style={{ color: palette.accent }}>HQ</span> ®
+          <span style={{ color: palette.fg, fontFamily: "ArchivoBlack", letterSpacing: "0.02em" }}>
+            SHOTS<span style={{ color: palette.accent }}>HQ</span>
+            <span style={{ marginLeft: 8, fontFamily: "JetBrainsMono", color: palette.dim }}>®</span>
           </span>
         </div>
       </div>
     ),
-    { width: 1200, height: 630 },
+    {
+      width: 1200,
+      height: 630,
+      fonts: [
+        { name: "ArchivoBlack",  data: archivoBlack,  style: "normal", weight: 900 },
+        { name: "JetBrainsMono", data: jetbrainsMono, style: "normal", weight: 500 },
+      ],
+    },
   );
 }

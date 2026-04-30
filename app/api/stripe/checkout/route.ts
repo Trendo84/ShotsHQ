@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { z } from "zod";
 import { requireUser } from "@/lib/auth/clerk";
 import { createCheckoutSession, type CheckoutPlan } from "@/lib/stripe/checkout";
+import { logError } from "@/lib/observability/log";
 
 export const runtime = "nodejs";
 
@@ -29,7 +30,7 @@ export async function POST(req: NextRequest) {
     });
     return Response.json({ ok: true, data: { url: session.url } });
   } catch (err) {
-    console.error("[stripe.checkout] failed", err);
+    logError("[stripe.checkout] failed", err, { userId: user.id, plan: parsed.data.plan });
     return Response.json({ ok: false, error: "checkout_failed" }, { status: 500 });
   }
 }

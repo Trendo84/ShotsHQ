@@ -32,10 +32,12 @@ export function StickyCtaBar() {
     <div
       aria-hidden={!visible}
       className={`
+        hidden md:block
         fixed bottom-0 left-0 right-0 z-40
         border-t border-[var(--line-strong)]
-        bg-[var(--bg)]/95 backdrop-blur-md
-        transition-transform duration-[400ms] ease-[cubic-bezier(0.32,0.72,0,1)]
+        bg-[var(--bg)]/92 backdrop-blur-xl
+        shadow-[0_-12px_32px_-12px_rgba(0,0,0,0.55)]
+        transition-transform duration-[420ms] ease-[cubic-bezier(0.32,0.72,0,1)]
         ${visible ? "translate-y-0" : "translate-y-full"}
       `}
     >
@@ -79,10 +81,15 @@ export function StickyCtaBar() {
           <Link
             href="/sign-up"
             tabIndex={visible ? 0 : -1}
-            className="group inline-flex items-center gap-2 bg-[var(--accent)] text-[var(--accent-fg)] pl-4 pr-1 py-1.5 transition-transform duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98]"
+            className="group relative inline-flex items-center gap-2 bg-[var(--accent)] text-[var(--accent-fg)] pl-4 pr-1 py-1.5 overflow-hidden transition-all duration-[280ms] ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.97] hover:shadow-[0_8px_24px_-8px_var(--accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]"
           >
-            <span className="t-mono-xs uppercase tracking-[0.14em] font-semibold">Start free</span>
-            <span className="inline-grid place-items-center w-7 h-7 bg-[var(--accent-fg)] text-[var(--accent)] transition-transform duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0.5 leading-none font-bold text-[12px]">
+            {/* Shimmer sweep on hover — pure transform, GPU-only */}
+            <span
+              aria-hidden
+              className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-[var(--accent-fg)]/12 to-transparent transition-transform duration-[700ms] ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-full pointer-events-none"
+            />
+            <span className="relative t-mono-xs uppercase tracking-[0.14em] font-semibold">Start free</span>
+            <span className="relative inline-grid place-items-center w-7 h-7 bg-[var(--accent-fg)] text-[var(--accent)] transition-all duration-[280ms] ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-1 group-hover:-translate-y-px leading-none font-bold text-[12px]">
               →
             </span>
           </Link>

@@ -3,6 +3,7 @@ import { Webhook } from "svix";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
+import { logError } from "@/lib/observability/log";
 
 export const runtime = "nodejs";
 
@@ -26,7 +27,7 @@ export async function POST(req: NextRequest) {
     // svix is provided transitively by @clerk/nextjs.
     event = new Webhook(secret).verify(raw, { "svix-id": id, "svix-timestamp": timestamp, "svix-signature": sig }) as ClerkEvent;
   } catch (err) {
-    console.error("[clerk.webhook] verify failed", err);
+    logError("[clerk.webhook] verify failed", err);
     return new Response("invalid signature", { status: 400 });
   }
 
@@ -45,7 +46,7 @@ export async function POST(req: NextRequest) {
     }
     return Response.json({ ok: true });
   } catch (err) {
-    console.error("[clerk.webhook] handler failed", err);
+    logError("[clerk.webhook] handler failed", err, { type: event.type });
     return new Response("handler failed", { status: 500 });
   }
 }

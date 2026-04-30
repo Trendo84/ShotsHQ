@@ -21,6 +21,7 @@ import { requireUser } from "@/lib/auth/clerk";
 import { createProject } from "@/lib/db/queries/projects";
 import { apiLimiter, limit } from "@/lib/utils/ratelimit";
 import { DEVICES_BY_ID } from "@/lib/devices/catalog";
+import { logError } from "@/lib/observability/log";
 
 export const runtime = "nodejs";
 
@@ -75,7 +76,7 @@ export async function POST(req: NextRequest) {
     });
     return Response.json({ ok: true, data: { id: project.id } }, { status: 201 });
   } catch (err) {
-    console.error("[projects.create] insert failed", err);
+    logError("[projects.create] insert failed", err, { userId: user.id });
     return Response.json({ ok: false, error: "create_failed" }, { status: 500 });
   }
 }

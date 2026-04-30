@@ -337,6 +337,14 @@ body::after {
 @keyframes blink { 0%,49% { opacity: 1; } 50%,100% { opacity: 0; } }
 .blink { animation: blink 1.05s step-end infinite; }
 
+/* Indeterminate progress shimmer — used in the AI run panel where we
+   don't get a real percentage from the upstream task. Pure transform,
+   no width animation, so it's GPU-only and battery-cheap. */
+@keyframes ai-shimmer {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(400%); }
+}
+
 /* Slower pulse for live-ops. */
 @keyframes pulse-soft {
   0%, 100% { opacity: 1; }

@@ -5,6 +5,7 @@ import {
   handleSubscriptionUpdated,
   handleInvoicePaid,
 } from "@/lib/stripe/webhook-handlers";
+import { logError } from "@/lib/observability/log";
 
 export const runtime = "nodejs";
 
@@ -20,7 +21,7 @@ export async function POST(req: NextRequest) {
   try {
     event = stripe.webhooks.constructEvent(raw, sig, secret);
   } catch (err) {
-    console.error("[stripe.webhook] verify failed", err);
+    logError("[stripe.webhook] verify failed", err);
     return new Response("invalid signature", { status: 400 });
   }
 
@@ -43,7 +44,7 @@ export async function POST(req: NextRequest) {
     }
     return Response.json({ ok: true, received: event.type });
   } catch (err) {
-    console.error("[stripe.webhook] handler failed", { type: event.type, err });
+    logError("[stripe.webhook] handler failed", err, { type: event.type });
     // Return 500 so Stripe retries. Handlers are idempotent.
     return new Response("handler failed", { status: 500 });
   }
