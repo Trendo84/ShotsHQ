@@ -1,37 +1,55 @@
 import Link from "next/link";
 
+const PLANS = [
+  { id: "free",     label: "Free",         price: "$0",   note: "unlimited editor",   accent: false },
+  { id: "indie",    label: "Indie pack",   price: "$19",  note: "100 cr · don't expire", accent: false },
+  { id: "pro",      label: "Pro pack",     price: "$49",  note: "300 cr · best value", accent: true  },
+  { id: "studio",   label: "Studio",       price: "$29 / mo", note: "unmetered AI",   accent: false },
+];
+
 export function CTA() {
   return (
     <section className="relative overflow-hidden border-t border-[var(--line)]">
-      {/* dot-grid backdrop removed — the bold type carries the section on its own */}
       <div className="relative z-10 max-w-[1480px] mx-auto px-4 md:px-8 py-16 md:py-24">
         <div className="grid grid-cols-12 gap-8 items-end">
 
-          {/* Headline — anchors the section */}
-          <h2 className="col-span-12 md:col-span-7 t-display text-[clamp(2.75rem,7.5vw,6.5rem)] leading-[0.92] text-balance">
-            Stop designing.<br />
-            <span className="text-[var(--accent)]">Start shipping.</span>
+          {/* Headline — varied cadence (no period-period) per UX audit P2 #7 */}
+          <h2 className="col-span-12 md:col-span-7 t-display text-[clamp(2.5rem,7vw,6rem)] leading-[0.92] text-balance">
+            The next time you ship,
+            <br />
+            <span className="text-[var(--accent)]">do the screenshots last.</span>
           </h2>
 
-          {/* Right column — price anchors + CTA + reassurance */}
+          {/* Right column — full plan set + CTA + reassurance */}
           <div className="col-span-12 md:col-span-5 flex flex-col gap-5">
-            {/* Price anchors — fills the previously-empty right column */}
             <ul className="grid grid-cols-2 gap-px bg-[var(--line)] border border-[var(--line)]">
-              <li className="bg-[var(--bg)] p-4">
-                <div className="t-mono-xs text-[var(--fg-mute)] mb-1">FREE</div>
-                <div className="t-display text-[clamp(1.5rem,3vw,2rem)] leading-none t-numeric">$0</div>
-                <div className="t-mono-xs text-[var(--fg-mute)] mt-2">unlimited editor</div>
-              </li>
-              <li className="bg-[var(--bg)] p-4">
-                <div className="t-mono-xs text-[var(--accent)] mb-1">INDIE PACK</div>
-                <div className="t-display text-[clamp(1.5rem,3vw,2rem)] leading-none t-numeric">$19</div>
-                <div className="t-mono-xs text-[var(--fg-mute)] mt-2">100 cr · never expire</div>
-              </li>
+              {PLANS.map((p) => (
+                <li
+                  key={p.id}
+                  className={`bg-[var(--bg)] p-4 ${
+                    p.accent ? "shadow-[inset_0_-2px_0_var(--accent)]" : ""
+                  }`}
+                >
+                  <div
+                    className={`t-mono-xs mb-1 uppercase tracking-[0.16em] ${
+                      p.accent ? "text-[var(--accent)]" : "text-[var(--fg-mute)]"
+                    }`}
+                  >
+                    {p.label}
+                  </div>
+                  <div className="t-display text-[clamp(1.25rem,2.5vw,1.75rem)] leading-none t-numeric">
+                    {p.price}
+                  </div>
+                  <div className="t-mono-xs text-[var(--fg-mute)] mt-2 truncate">
+                    {p.note}
+                  </div>
+                </li>
+              ))}
             </ul>
 
             <p className="t-prose max-w-sm">
-              Free forever, no card. Watermark on free exports — removed
-              with any pack or Studio plan.
+              Free forever, no card. Credits never expire. Watermark only
+              on free exports — removed with any pack or Studio plan.
             </p>
 
             <div className="flex items-center gap-4 flex-wrap">
@@ -44,8 +62,11 @@ export function CTA() {
                   →
                 </span>
               </Link>
-              <Link href="/pricing" className="text-[13px] text-[var(--fg-dim)] hover:text-[var(--fg)] underline underline-offset-4 decoration-[var(--line-strong)] hover:decoration-[var(--accent)]">
-                Plan breakdown
+              <Link
+                href="/pricing"
+                className="text-[13px] text-[var(--fg-dim)] hover:text-[var(--fg)] underline underline-offset-4 decoration-[var(--line-strong)] hover:decoration-[var(--accent)]"
+              >
+                See full pricing
               </Link>
             </div>
           </div>

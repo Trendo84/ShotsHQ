@@ -2,7 +2,6 @@ import type { ReactNode } from "react";
 import { Reveal } from "@/components/Reveal";
 
 type Feature = {
-  code:   string;
   title:  string;
   body:   string;
   spec:   string;
@@ -12,42 +11,36 @@ type Feature = {
 
 const FEATURES: Feature[] = [
   {
-    code:   "01",
     title:  "AI copy",
     body:   "Frontier-class language model writes headlines, subheadlines, and CTAs. Fixed-length, never malformed.",
     spec:   "1 cr / gen",
     visual: <CopyVisual />,
   },
   {
-    code:   "02",
     title:  "Backdrops",
     body:   "Same screenshot, fresh palette. AI swaps the surrounding scene around your app — your UI stays untouched.",
     spec:   "2 cr / gen",
     visual: <BackdropsVisual />,
   },
   {
-    code:   "03",
     title:  "Restyle",
     body:   "Drop in a reference photo. The AI lifts its palette, mood, and lighting — then re-skins your whole pack to match it.",
     spec:   "3 cr / gen",
     visual: <RestyleVisual />,
   },
   {
-    code:   "04",
     title:  "41 locales",
     body:   "Every language in parallel. RTL and CJK auto-relayout, glyph-aware kerning, no clipped text — anywhere.",
     spec:   "1 cr / loc",
     visual: <LocalesVisual />,
   },
   {
-    code:   "05",
     title:  "Device frames",
     body:   "iPhone 6.9″ / 6.7″ / iPad 13″ M4. Crisp masters, dynamic-island accurate, every safe area honoured.",
     spec:   "Free",
     visual: <DevicesVisual />,
   },
   {
-    code:   "06",
     title:  "Direct upload",
     body:   "Push generated assets to App Store Connect. Per-locale, per-device, zero filename gymnastics.",
     spec:   "Free",
@@ -60,10 +53,12 @@ export function FeatureGrid() {
     <section className="border-b border-[var(--line)]">
       <div className="max-w-[1480px] mx-auto px-4 md:px-8 py-14 md:py-20">
         <Reveal as="div" className="grid grid-cols-12 gap-8 mb-14 items-end">
-          <h2 className="col-span-12 md:col-span-7 t-display text-[clamp(2rem,5.5vw,4.5rem)] leading-[0.95] text-balance">
-            Six modules.<br />
-            No junk drawer.
-          </h2>
+          <div className="col-span-12 md:col-span-7">
+            <div className="t-eyebrow t-eyebrow-accent mb-3">Modules</div>
+            <h2 className="t-display text-[clamp(2rem,5.5vw,4.5rem)] leading-[0.95] text-balance">
+              Pay only for what you actually run.
+            </h2>
+          </div>
           <p className="col-span-12 md:col-span-5 t-prose max-w-md">
             Each module deploys independently, bills independently, refunds on
             failure. Studio subscribers skip the meter entirely.
@@ -73,14 +68,13 @@ export function FeatureGrid() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-[var(--line)] border border-[var(--line)]">
           {FEATURES.map((f, i) => (
             <Reveal
-              key={f.code}
+              key={f.title}
               as="article"
               delay={Math.min(i * 50, 250)}
               y={16}
               className="bg-[var(--bg)] p-7 min-h-[280px] flex flex-col"
             >
-              <header className="flex items-start justify-between mb-5">
-                <span className="t-eyebrow t-numeric">{f.code}</span>
+              <header className="flex items-center justify-end mb-5">
                 <span className="t-eyebrow text-[var(--accent)] bg-[color-mix(in_srgb,var(--accent)_10%,transparent)] border border-[var(--accent)] px-1.5 py-0.5 normal-case tracking-[0.05em]">
                   {f.spec}
                 </span>

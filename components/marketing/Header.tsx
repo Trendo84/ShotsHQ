@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Menu, X } from "lucide-react";
-import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import { cn } from "@/lib/utils/cn";
 
 const NAV = [
@@ -81,8 +80,11 @@ export function MarketingHeader() {
           })}
         </nav>
 
+        {/* Theme toggle removed from public marketing per UX audit P2 #9 —
+           ShotsHQ ships one opinionated look on the public surface. The
+           toggle lives inside the app for users who want to adjust their
+           working theme. */}
         <div className="col-span-5 md:col-span-3 flex items-center justify-end gap-2 px-3 py-2">
-          <ThemeSwitcher compact className="hidden md:inline-flex" />
           <Link
             href="/sign-in"
             className="hidden md:inline-flex items-center text-[13px] text-[var(--fg-dim)] hover:text-[var(--fg)] hover:border-[var(--accent)] px-3 py-1.5 border border-[var(--line-strong)] transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]"
@@ -110,9 +112,6 @@ export function MarketingHeader() {
           open ? "max-h-96" : "max-h-0",
         )}
       >
-        <div className="px-4 py-2">
-          <ThemeSwitcher compact />
-        </div>
         {NAV.map((n) => {
           const active = isActive(n.href);
           return (

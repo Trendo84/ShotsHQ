@@ -1,7 +1,4 @@
-"use client";
-
 import Link from "next/link";
-import { useEffect, useState } from "react";
 
 const COLS: Array<{ title: string; items: { label: string; href: string }[] }> = [
   {
@@ -25,13 +22,6 @@ const COLS: Array<{ title: string; items: { label: string; href: string }[] }> =
 ];
 
 export function MarketingFooter() {
-  const [now, setNow] = useState("--:--");
-  useEffect(() => {
-    const tick = () => setNow(new Date().toISOString().slice(11, 16));
-    tick();
-    const id = setInterval(tick, 30_000);
-    return () => clearInterval(id);
-  }, []);
 
   return (
     <footer className="border-t border-[var(--line-strong)]">
@@ -101,17 +91,11 @@ export function MarketingFooter() {
 
         <div className="mt-14 pt-5 border-t border-[var(--line)] grid grid-cols-12 gap-3 items-center text-[var(--fg-mute)]">
           <span className="col-span-12 md:col-span-6 t-eyebrow normal-case tracking-[0.06em] text-[12px]">
-            © 2026 ShotsHQ™ — built in public
+            © 2026 ShotsHQ™ · built in public
           </span>
           <span className="col-span-12 md:col-span-6 flex items-center gap-3 md:justify-end t-eyebrow normal-case tracking-[0.06em] text-[12px]">
-            <span>v2.6</span>
-            <span className="opacity-40">·</span>
-            <span className="text-[var(--fg-mute)]">Server time</span>
-            <span className="t-numeric">{now} UTC</span>
-            <span className="opacity-40">·</span>
-            <Link href="/docs/status" className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
-              <span className="block w-1.5 h-1.5 bg-[var(--signal)] pulse-soft" />
-              <span className="text-[var(--signal)]">all systems</span>
+            <Link href="/changelog" className="hover:text-[var(--fg)] transition-colors">
+              v2.6
             </Link>
           </span>
         </div>

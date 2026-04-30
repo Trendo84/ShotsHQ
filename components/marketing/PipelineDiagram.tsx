@@ -139,22 +139,20 @@ export function PipelineDiagram() {
     <section className="border-b border-[var(--line)]">
       <div className="max-w-[1480px] mx-auto px-4 md:px-8 py-14 md:py-20">
 
-        {/* Header */}
+        {/* Header — varied cadence: descriptive headline (was period-period
+           "Seven stages. One pipeline.") and the supporting line leads with
+           the strongest claim (refunds-on-failure) per UX audit pass 2. */}
         <div className="grid grid-cols-12 gap-8 mb-14 items-end">
           <div className="col-span-12 md:col-span-7">
-            <div className="t-mono-xs uppercase tracking-[0.16em] text-[var(--fg-mute)] mb-3 flex items-center gap-2">
-              <span className="block w-1.5 h-1.5 rounded-full bg-[var(--accent)] animate-pulse" />
-              Live trace · cycles below
-            </div>
+            <div className="t-eyebrow t-eyebrow-accent mb-3">The pipeline</div>
             <h2 className="t-display text-[clamp(2rem,5.5vw,4.5rem)] leading-[0.95] text-balance">
-              Seven stages.<br />
-              <span className="text-[var(--accent)]">One pipeline.</span>
+              How a raw screenshot becomes <span className="text-[var(--accent)]">a finished listing</span>.
             </h2>
           </div>
           <p className="col-span-12 md:col-span-5 t-prose max-w-md">
-            Every stage is independently observable, retryable, and refunds
-            credits on failure — including partial failures inside a locale
-            fan-out.
+            Every stage refunds credits if it fails — even a single locale
+            inside the 41-way translate fan-out. Independently observable,
+            independently retryable.
           </p>
         </div>
 

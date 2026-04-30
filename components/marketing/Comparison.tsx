@@ -4,13 +4,17 @@ import { Reveal } from "@/components/Reveal";
 
 type Cell = string | "yes" | "no";
 
+// Row order leads with sale-closers per UX audit pass 2 (P1 #4):
+// refunds-on-failure first, ASC upload second, locales pushed to row 3.
+// These three are the genuinely uncopyable features incumbents can't ship
+// without rebuilding their billing + integration layer.
 const ROWS: Array<{ label: string; shots: Cell; others: Cell }> = [
-  { label: "Locales supported",                      shots: "41",                others: "6 (avg.)" },
   { label: "Refunds credits on AI failure",          shots: "Automatic",         others: "Manual support ticket" },
+  { label: "Direct App Store Connect upload",        shots: "yes",               others: "no" },
+  { label: "Locales supported",                      shots: "41",                others: "6 (avg.)" },
   { label: "AI headline copy",                       shots: "Frontier LLM",      others: "Manual" },
   { label: "AI background generation",               shots: "Best-in-class image model", others: "Stock only" },
   { label: "Device frames (6.9″ / 6.7″ / iPad 13″)", shots: "yes",               others: "Partial" },
-  { label: "Direct App Store Connect upload",        shots: "yes",               others: "no" },
   { label: "Free tier exports",                      shots: "Watermarked",       others: "Watermarked or paywalled" },
   { label: "Project versioning",                     shots: "Cloud (Postgres)",  others: "Browser only" },
   { label: "Pricing model",                          shots: "Credits + Studio plan", others: "Monthly only" },
@@ -58,12 +62,13 @@ export function Comparison() {
             draggable={false}
           />
           <h2 className="t-display text-[clamp(2rem,5vw,4rem)] leading-[0.95] min-w-0">
-            How we stack up.
+            How we compare to incumbent screenshot tools.
           </h2>
         </Reveal>
         <p className="t-mono-sm text-[var(--fg-mute)] mb-10 max-w-2xl">
-          ▸ Versus AppLaunchpad · Previewed · AppMockUp.
-          {" "}Subscription traps, deceptive paywalls, editor lag.
+          The features that took us months to build and would take an
+          incumbent a billing-system rewrite to copy. The table below
+          does the rest of the talking.
         </p>
 
         <div className="border border-[var(--line)] max-w-full md:max-w-4xl overflow-x-auto">

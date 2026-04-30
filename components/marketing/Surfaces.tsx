@@ -101,8 +101,7 @@ export function Surfaces() {
           <div className="col-span-12 md:col-span-7">
             <div className="t-eyebrow t-eyebrow-accent mb-3">One project · every channel</div>
             <h2 className="t-display text-[clamp(2rem,5.5vw,4.5rem)] leading-[0.95] text-balance">
-              Six surfaces.<br />
-              <span className="text-[var(--accent)]">One render.</span>
+              Render once, fan out to <span className="text-[var(--accent)]">every channel a launch needs</span>.
             </h2>
           </div>
           <p className="col-span-12 md:col-span-5 t-prose max-w-md">

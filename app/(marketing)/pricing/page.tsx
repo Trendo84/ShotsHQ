@@ -35,7 +35,9 @@ export default function PricingPage() {
             <div className="col-span-12 md:col-span-7">
               <div className="t-eyebrow t-eyebrow-accent mb-3">Pricing</div>
               <h1 className="t-display text-[clamp(2.5rem,7vw,6rem)] leading-[0.92] text-balance">
-                <span className="whitespace-nowrap">Plans &amp; packs.</span>
+                Pay for what you ship,
+                <br />
+                <span className="text-[var(--accent)]">not what you don&apos;t.</span>
               </h1>
             </div>
             <div className="col-span-12 md:col-span-5">

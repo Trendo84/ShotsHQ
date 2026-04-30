@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { HeroBeforeAfterSlider } from "@/components/marketing/HeroBeforeAfterSlider";
-import { HeroRotatingTitle } from "@/components/marketing/HeroRotatingTitle";
+import { HeroRotatingTitle, HeroSurfaceRotator } from "@/components/marketing/HeroRotatingTitle";
 
 export function Hero() {
   return (
@@ -49,6 +49,7 @@ export function Hero() {
               Ship everything else.
             </p>
 
+            {/* CTA row — primary + secondary on their own line */}
             <div className="flex flex-wrap gap-3 items-center">
               <Link
                 href="/sign-up"
@@ -65,24 +66,20 @@ export function Hero() {
               >
                 See pricing
               </Link>
-              <span className="t-mono-xs text-[var(--fg-mute)]">
-                No card · Free tier exports include a watermark
-              </span>
             </div>
 
-            {/* Trust chip — built-in-public signal, not "pre-launch" */}
-            <div className="flex items-center gap-2 t-mono-xs text-[var(--fg-mute)] flex-wrap">
-              <span className="inline-flex items-center gap-1.5 border border-[var(--signal)] text-[var(--signal)] px-2 py-1 uppercase tracking-[0.16em]">
-                <span className="block w-1.5 h-1.5 rounded-full bg-[var(--signal)]" />
-                Built in public
-              </span>
-              <span className="hidden sm:inline">
-                · Indie dev solo studio · See{" "}
-                <Link href="/changelog" className="text-[var(--fg)] underline underline-offset-2 decoration-[var(--line-strong)] hover:decoration-[var(--accent)]">
-                  changelog
-                </Link>
-              </span>
-            </div>
+            {/* Trust microcopy — own row beneath the buttons. The
+               built-in-public chip + "indie dev solo studio" line moved
+               below the fold (lives in Footer / About) per UX audit
+               P3 #12 — eight elements above-the-fold was overload. */}
+            <p className="t-mono-xs text-[var(--fg-mute)] -mt-2 sm:-mt-3">
+              No card · Free tier exports include a watermark
+            </p>
+
+            {/* Quiet "also exports" rotator — under the fold of the
+               hero column on desktop, last row before the visual on
+               mobile. Power-user discovery without H1 contention. */}
+            <HeroSurfaceRotator />
           </div>
 
           {/* Interactive before / after — drag to compare */}

@@ -304,8 +304,9 @@ export function Templates({ compact = false }: { compact?: boolean }) {
       <div className="max-w-[1480px] mx-auto px-4 md:px-8 py-14 md:py-20">
         <div className="grid grid-cols-12 gap-8 mb-10 items-end">
           <h2 className="col-span-12 md:col-span-7 t-display text-[clamp(2.25rem,5.5vw,4.5rem)] leading-[0.95]">
-            Start from a<br />
-            <span className="text-[var(--accent)]">starter.</span>
+            Don&apos;t want to start from blank?
+            <br />
+            <span className="text-[var(--accent)]">{TEMPLATE_COUNT}&nbsp;templates to remix.</span>
           </h2>
           <p className="col-span-12 md:col-span-5 t-prose max-w-md">
             {TEMPLATE_COUNT}&nbsp;curated starting points. Pick one, swap your
@@ -432,9 +433,31 @@ function TemplateCard({ t, dense: _dense = false }: { t: Template; dense?: boole
         {/* Phone surface */}
         <div className="relative z-10 aspect-[9/19.5] h-[88%] flex flex-col" style={{ background: t.bg, color: t.fg }}>
           <div className="relative h-3.5 flex items-center justify-between px-2 text-[5px] font-semibold tabular-nums">
-            <span style={{ opacity: 0.85 }}>9:41</span>
+            <span style={{ opacity: 0.85, letterSpacing: "0.02em" }}>9:41</span>
             <span className="absolute left-1/2 -translate-x-1/2 top-0.5 h-1.5 w-4 rounded-full bg-black" aria-hidden />
-            <span style={{ opacity: 0.85 }}>5G</span>
+            <span className="inline-flex items-center gap-[1.5px]" aria-hidden>
+              {/* Cell signal — 4 ascending bars */}
+              <span className="flex items-end gap-[0.5px]">
+                <span className="block w-[1px] h-[2px]" style={{ background: t.fg, opacity: 0.85 }} />
+                <span className="block w-[1px] h-[3px]" style={{ background: t.fg, opacity: 0.85 }} />
+                <span className="block w-[1px] h-[4px]" style={{ background: t.fg, opacity: 0.85 }} />
+                <span className="block w-[1px] h-[5px]" style={{ background: t.fg, opacity: 0.6 }} />
+              </span>
+              <span style={{ opacity: 0.85, marginLeft: 1, letterSpacing: "0.04em" }}>5G</span>
+              {/* Battery */}
+              <span
+                className="block ml-[2px]"
+                style={{
+                  width: 6,
+                  height: 3,
+                  border: `0.5px solid ${t.fg}`,
+                  opacity: 0.85,
+                  position: "relative",
+                }}
+              >
+                <span className="block absolute inset-[0.5px]" style={{ background: t.fg, width: "75%" }} />
+              </span>
+            </span>
           </div>
           <div className="flex-1 flex flex-col justify-center px-2.5 gap-1.5">
             <span className="hidden sm:inline text-[5px] uppercase tracking-[0.18em] font-semibold" style={{ color: t.accent }}>
