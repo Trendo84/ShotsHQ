@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Download, RotateCw, Upload } from "lucide-react";
 import { requireUser } from "@/lib/auth/clerk";
 import { getProject } from "@/lib/db/queries/projects";
+import { deriveBadgeState, badgeLabel, type BadgeState } from "@/lib/exports/badge";
 
 const TARGETS = [
   { id: "iphone_69", label: "iPhone 6.9″", dim: "1290 × 2796" },
@@ -76,9 +77,7 @@ export default async function ExportsPage({
             >
               <header className="flex justify-between items-start gap-3">
                 <span className="t-mono-xs text-[var(--fg-mute)] truncate">{t.id.toUpperCase()}</span>
-                {enabled
-                  ? <Badge variant="live">READY</Badge>
-                  : <Badge>NOT TARGETED</Badge>}
+                <DeviceBadge targeted={enabled} />
               </header>
               <div className="min-w-0">
                 <div className="t-display text-[clamp(1.5rem,2.8vw,1.75rem)] leading-tight truncate">{t.label}</div>
@@ -123,3 +122,35 @@ export default async function ExportsPage({
     </>
   );
 }
+
+/**
+ * Renders the device-tile status badge with state-appropriate variant.
+ * Logic in `lib/exports/badge.ts`; this is the presentation layer.
+ *
+ * Frame counts are stubbed as 0 / 0 today (the multi-frame schema lands
+ * in v1.1 — see docs/issues/v1.1-multi-frame-canvas.md). Once frame
+ * data is wired, pass `framesRendered` + `framesTotal` from the loaded
+ * project data and the badge will progress through the four states
+ * automatically. Until then every targeted device sits in the
+ * `waiting` state and renders "READY · WAITING FOR FRAMES".
+ */
+function DeviceBadge({
+  targeted,
+  framesRendered = 0,
+  framesTotal    = 0,
+}: {
+  targeted:        boolean;
+  framesRendered?: number;
+  framesTotal?:    number;
+}) {
+  const state = deriveBadgeState({ targeted, framesRendered, framesTotal });
+  const variant: React.ComponentProps<typeof Badge>["variant"] =
+    state.kind === "complete"      ? "live" :
+    state.kind === "in-progress"   ? "warn" :
+    state.kind === "waiting"       ? "live" :
+                                     "default";
+  return <Badge variant={variant}>{badgeLabel(state)}</Badge>;
+}
+
+// Suppress unused-type warning when frame data isn't wired.
+export type { BadgeState };
