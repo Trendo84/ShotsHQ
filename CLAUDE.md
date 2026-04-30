@@ -62,6 +62,24 @@ be trusted for authorization.
 - **Forms:** React Hook Form + Zod resolver. Server actions for mutations
   where possible; route handlers when you need client SDK calls.
 
+## Copy & casing system
+
+The site uses three casing levels. Don't mix them inside a single
+component — that's the audit-pass-2 critique that triggered this
+section. When in doubt: sentence case wins.
+
+| Level | Use for | Examples |
+|---|---|---|
+| `ALL CAPS` (≤12px only) | Eyebrow tags, micro-labels, status pills, telemetry metadata | `LIVE`, `BETA`, `SOON`, `01 INTAKE`, `1 CR / GEN`, `NEXT >>` |
+| `Title Case` | Component / feature names, plan names, button labels | `Start free`, `Indie pack`, `Headline generator`, `Pipeline` |
+| `sentence case` | Section headings, body copy, microcopy under buttons | `How a raw screenshot becomes a finished listing.`, `No card · Free tier exports include a watermark` |
+
+Heuristics:
+- If it's smaller than 12px, ALL CAPS reads as a label, not copy.
+- If it's a sentence, lowercase the rest. `"Stop designing. Start shipping."` → `"Stop designing. Start shipping."` (sentence case despite the period-period rhythm).
+- If it's a button people press, Title Case the verb. `"Start free"` not `"START FREE"` (the eyebrow tag inside a button can be ALL CAPS, but the visible label is Title Case).
+- Brand names stay as the brand wrote them: `App Store Connect`, `GitHub`, `OpenAI`, `Trigger.dev`.
+
 ## Visual system
 
 The dual-theme system in `app/globals.css` defines tokens for both

@@ -2,65 +2,115 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Changelog",
-  description: "Every release, dated and signed. No vague 'bug fixes and improvements.'",
+  description:
+    "Every milestone in building ShotsHQ in public. Pre-launch — real ship dates, honest status.",
 };
 
+/**
+ * Changelog — pre-launch edition.
+ *
+ * The build-in-public site is held to a strict honesty rule: nothing
+ * goes on this page that isn't actually in the deployed code or has a
+ * verifiable PR. Speculative work belongs on the Roadmap below, not in
+ * release notes.
+ *
+ * Channels:
+ *   PRE-LAUNCH — wired in code, gated by the WIP banner on shotshq.com
+ *   PREVIEW    — endpoint or UI exists but needs operator config
+ *                (Stripe price IDs, Clerk live key, etc.)
+ *   INTERNAL   — landed in the repo but not surfaced in the UI
+ */
+
+type Channel = "PRE-LAUNCH" | "PREVIEW" | "INTERNAL";
+
 const ENTRIES: Array<{
-  rev: string;
-  date: string;
-  channel: "STABLE" | "BETA" | "INTERNAL";
+  rev:     string;
+  date:    string;
+  channel: Channel;
   note?:   string;
-  changes: { tag: string; body: string }[];
+  changes: { tag: "ADD" | "FIX" | "PERF" | "REM"; body: string }[];
 }> = [
   {
-    rev: "REV 2.6",
-    date: "2026-04-25",
-    channel: "STABLE",
+    rev:     "v0.7",
+    date:    "2026-04-30",
+    channel: "PRE-LAUNCH",
+    note:    "AI dispatch is real now — Copy + Backdrop both call live models behind a Trigger.dev task that owns the credit ledger transaction.",
     changes: [
-      { tag: "ADD",   body: "Structured AI headline schema with CTA suggestion field." },
-      { tag: "ADD",   body: "Brand-extraction endpoint — paste any URL, get a brand profile that drives AI output." },
-      { tag: "FIX",   body: "Editor autosave debounce raised to 500ms; prior 200ms thrashed the database." },
-      { tag: "FIX",   body: "Billing meter idempotency now reuses ledger key — replay-safe." },
+      { tag: "ADD",  body: "AI Copy module wired end-to-end: GPT-5 via Vercel AI SDK + Zod, dispatched as a Trigger.dev task, polled for completion." },
+      { tag: "ADD",  body: "AI Backdrop module wired end-to-end: gpt-image-1 6-frame composition, six art-direction presets (minimal-light, tactical-dark, warm-organic, playful-gradient, tech-minimal, editorial), result lands in Cloudflare R2." },
+      { tag: "ADD",  body: "Status passthrough at /api/ai/runs/[runId] so the editor can poll any dispatched task." },
+      { tag: "ADD",  body: "Sentry observability helper (lib/observability/log.ts) replaces every console.error in the API surface." },
+      { tag: "ADD",  body: "OG image fonts: Archivo Black + JetBrains Mono fetched from Google's CDN at edge runtime, rendered into every social card." },
+      { tag: "FIX",  body: "Editor save path is now single-source — FabricCanvas's status bar is the only save UI; redundant disabled topbar Save removed." },
+      { tag: "REM",  body: "Polotno scaffolding deleted (PolotnoProvider, PolotnoCanvas) — Fabric.js v7 is the locked canvas." },
     ],
   },
   {
-    rev: "REV 2.5",
-    date: "2026-04-11",
-    channel: "STABLE",
+    rev:     "v0.6",
+    date:    "2026-04-30",
+    channel: "PREVIEW",
+    note:    "Purchase + project-create flows are functional in code but require Stripe price IDs and Trigger.dev secrets in Vercel before traffic can hit them.",
     changes: [
-      { tag: "ADD",   body: "Direct upload to App Store Connect via JWT-signed API." },
-      { tag: "ADD",   body: "iPad 13″ M4 master frame asset (2064 × 2752)." },
-      { tag: "PERF",  body: "Server render pipeline now streams to storage; p50 dropped from 4.8s to 3.2s." },
+      { tag: "ADD",  body: "Stripe Checkout: /api/stripe/checkout POST + new PurchaseButton client island. Surfaces inline errors when Stripe price IDs aren't configured." },
+      { tag: "ADD",  body: "/api/projects POST creates real DB rows; new-project wizard COMMIT button now routes into the editor instead of 404-ing." },
+      { tag: "ADD",  body: "/api/ai/template-set migrated from synchronous route handler to a Trigger.dev task — closes the credit-ledger invariant violation flagged in audit pass 3." },
+      { tag: "FIX",  body: "Mobile horizontal scroll: html { overflow-x: clip } global guard + dropped whitespace-nowrap on the hero headline that overflowed below 375px." },
     ],
   },
   {
-    rev: "REV 2.4",
-    date: "2026-03-28",
-    channel: "STABLE",
+    rev:     "v0.5",
+    date:    "2026-04-29",
+    channel: "PRE-LAUNCH",
+    note:    "Pre-launch hygiene + the work-in-progress banner. Site goes from 'looking ready' to 'visibly building'.",
     changes: [
-      { tag: "ADD",   body: "AI background regeneration with subject lift and brand-aware palette." },
-      { tag: "ADD",   body: "41-locale fan-out via parallel batch processing." },
-      { tag: "FIX",   body: "Arabic / Hebrew layouts now mirror correctly across all device frames." },
+      { tag: "ADD",  body: "Hazard-stripe WIP banner above every page — local-storage dismissable, version-keyed so we can re-arm it for major changes." },
+      { tag: "ADD",  body: "Build-time Clerk live-key guard in next.config.ts: warns by default, fails the Vercel build when STRICT_LAUNCH_CHECKS=1." },
+      { tag: "FIX",  body: "Wordmark lockup splits SHOTS / HQ across six surfaces — Header, Footer, sticky CTA bar, auth chrome, sidebar, OG route." },
+      { tag: "FIX",  body: "Every unwired CTA in the logged-in app surfaces is now visibly disabled with 'coming soon' tooltips. No more silent no-ops." },
     ],
   },
   {
-    rev: "REV 2.3",
-    date: "2026-03-14",
-    channel: "BETA",
+    rev:     "v0.4",
+    date:    "2026-04-28",
+    channel: "PRE-LAUNCH",
+    note:    "Conversion audit pass — anti-AI-slop sweep, brand-respectful motion, and the /tools/web-hero landing.",
     changes: [
-      { tag: "ADD",   body: "Studio Monthly subscription with metered usage." },
-      { tag: "ADD",   body: "Public beta opened on Product Hunt + Indie Hackers." },
-      { tag: "REM",   body: "Removed deprecated billing calls; meter events only." },
+      { tag: "ADD",  body: "/tools/web-hero designer landing for the surface that ships outside App Store." },
+      { tag: "ADD",  body: "Scroll-reveal motion across marketing surfaces — IntersectionObserver-based, GPU-only transform + opacity, prefers-reduced-motion honored." },
+      { tag: "FIX",  body: "Tactical theme contrast: --fg-mute calibrated to 6.2:1 against #0A0A0A (was failing WCAG AA at 4.04:1)." },
+      { tag: "FIX",  body: "Hero backdrop banding: quality bumped to 95, AVIF format priority, fractalNoise dither overlay to break 8-bit gradient banding." },
     ],
   },
   {
-    rev: "REV 2.0",
-    date: "2026-02-28",
+    rev:     "v0.3",
+    date:    "2026-04-25",
     channel: "INTERNAL",
-    note:    "REV 2.1 and 2.2 were internal-only iterations and not published.",
+    note:    "Brand-extraction pipeline: paste a URL, the model reads the site's palette, typography, and voice and seeds it into the project.",
     changes: [
-      { tag: "ADD",   body: "Canvas editor integrated; canvas state persisted to JSONB." },
-      { tag: "ADD",   body: "Credit ledger system with idempotency-keyed transactions." },
+      { tag: "ADD",  body: "/api/brand/extract endpoint backed by gpt-5 with Zod-validated BrandProfile schema." },
+      { tag: "ADD",  body: "Surface system: every project ships App Store + Web hero + OG card + Discord banner + Product Hunt gallery + GitHub social card from one canvas." },
+      { tag: "PERF", body: "Pipeline diagram tracer animation: pure transform/opacity, runs at 60fps on iOS Safari without GPU thermal throttling." },
+    ],
+  },
+  {
+    rev:     "v0.2",
+    date:    "2026-04-15",
+    channel: "INTERNAL",
+    note:    "Canvas + credit ledger landed. Trigger.dev task graph for the long-running AI work.",
+    changes: [
+      { tag: "ADD",  body: "Fabric.js v7 canvas integrated, state persisted to JSONB. (Polotno was evaluated and rejected — $899/mo not viable for v1.)" },
+      { tag: "ADD",  body: "Credit ledger: append-only, idempotency-keyed, Stripe meter event reuses the same key." },
+      { tag: "ADD",  body: "Trigger.dev v3 tasks: ai-generate-copy, ai-restyle, batch-translate, render-screenshot, upload-to-app-store. Each task is the transaction boundary for debit + AI + meter." },
+    ],
+  },
+  {
+    rev:     "v0.1",
+    date:    "2026-04-01",
+    channel: "INTERNAL",
+    note:    "Initial scaffold. Auth, DB, storage, payments wired before the first feature commit.",
+    changes: [
+      { tag: "ADD",  body: "Next.js 16 App Router + Clerk auth + Neon Postgres (Drizzle) + Cloudflare R2 + Stripe Billing + sharp render pipeline." },
+      { tag: "ADD",  body: "Dual theme system (Tactical / Swiss) keyed off CSS variables for instant runtime switching inside the app." },
     ],
   },
 ];
@@ -72,6 +122,40 @@ const TAG_COLORS: Record<string, string> = {
   REM:  "text-[var(--fg-mute)] border-[var(--fg-mute)]",
 };
 
+const CHANNEL_COLORS: Record<Channel, string> = {
+  "PRE-LAUNCH": "text-[var(--signal)] border-[var(--signal)]",
+  PREVIEW:      "text-[var(--accent)] border-[var(--accent)]",
+  INTERNAL:     "text-[var(--fg-mute)] border-[var(--line-strong)]",
+};
+
+const ROADMAP: { title: string; detail: string; eta: string }[] = [
+  {
+    title: "Stripe checkout live to traffic",
+    detail: "Price IDs configured in Vercel, end-to-end test with a real card. Publishes the existing PurchaseButton flow.",
+    eta:    "This week",
+  },
+  {
+    title: "Clerk production keys + DNS",
+    detail: "Custom-domain DNS for the Clerk prod instance, OAuth providers configured, pk_live_/sk_live_ rotated in Vercel, STRICT_LAUNCH_CHECKS=1.",
+    eta:    "This week",
+  },
+  {
+    title: "Translate module UI",
+    detail: "batch-translate task already exists; the 41-locale picker dispatches in parallel.",
+    eta:    "Next week",
+  },
+  {
+    title: "Real per-template visual previews",
+    detail: "Replace the 21 stylized placeholders on /templates with actual rendered previews of each template's typography and palette.",
+    eta:    "Next week",
+  },
+  {
+    title: "Lift WIP banner",
+    detail: "Once Stripe + Clerk are live and the translate UI ships, the yellow hazard banner comes off and the site enters public beta.",
+    eta:    "TBD — gated on the items above",
+  },
+];
+
 export default function ChangelogPage() {
   return (
     <>
@@ -81,14 +165,14 @@ export default function ChangelogPage() {
             <div className="col-span-12 md:col-span-7">
               <div className="t-eyebrow t-eyebrow-accent mb-3">Release log</div>
               <h1 className="t-display text-[clamp(2.5rem,7vw,6rem)] leading-[0.92]">
-                Changelog.
+                Build log, in public.
               </h1>
             </div>
             <div className="col-span-12 md:col-span-5">
               <p className="t-prose-lg max-w-md">
-                Every shipped revision, dated and categorized. No vague
-                "bug fixes and improvements". New builds deploy every other
-                Friday unless there's a fire.
+                Pre-launch — every entry below is shipped code or a
+                signed PR. Anything we&apos;d like to ship but haven&apos;t
+                yet lives in the roadmap section at the bottom.
               </p>
             </div>
           </div>
@@ -101,43 +185,57 @@ export default function ChangelogPage() {
           <ul className="space-y-2.5 border-l border-[var(--line)] pl-4">
             {ENTRIES.map((e) => (
               <li key={e.rev} className="flex items-baseline justify-between gap-3">
-                <a href={`#${e.rev.replace(/\s/g, "-")}`} className="text-[14px] text-[var(--fg)] hover:text-[var(--accent)] transition-colors">
+                <a
+                  href={`#${e.rev.replace(/[\s.]/g, "-")}`}
+                  className="text-[14px] text-[var(--fg)] hover:text-[var(--accent)] transition-colors"
+                >
                   {e.rev}
                 </a>
                 <span className="text-[12px] text-[var(--fg-mute)] t-numeric">{e.date}</span>
               </li>
             ))}
+            <li className="pt-2 mt-2 border-t border-[var(--line)]">
+              <a
+                href="#roadmap"
+                className="text-[14px] text-[var(--accent)] hover:text-[var(--fg)] transition-colors"
+              >
+                Roadmap
+              </a>
+            </li>
           </ul>
         </aside>
 
         <div className="col-span-12 lg:col-span-9 space-y-16">
           {ENTRIES.map((entry) => (
-            <article
-              key={entry.rev}
-              id={entry.rev.replace(/\s/g, "-")}
-            >
+            <article key={entry.rev} id={entry.rev.replace(/[\s.]/g, "-")}>
               <header className="flex items-baseline justify-between flex-wrap gap-3 mb-6 pb-3 border-b border-[var(--line)]">
-                <div className="flex items-baseline gap-4">
-                  <h2 className="t-display text-[32px] leading-none normal-case tracking-[-0.02em]">{entry.rev}</h2>
+                <div className="flex items-baseline gap-4 flex-wrap">
+                  <h2 className="t-display text-[28px] sm:text-[32px] leading-none normal-case tracking-[-0.02em]">
+                    {entry.rev}
+                  </h2>
                   <span className="text-[13px] text-[var(--fg-mute)] t-numeric">{entry.date}</span>
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className="t-eyebrow">{entry.channel.toLowerCase()}</span>
-                  <span className="flex items-center gap-1.5 text-[12px] text-[var(--signal)]">
-                    <span className="block w-1.5 h-1.5 rounded-full bg-[var(--signal)]" />
-                    deployed
-                  </span>
-                </div>
+                <span
+                  className={`text-[10px] font-semibold tracking-[0.14em] uppercase border px-2 py-0.5 ${
+                    CHANNEL_COLORS[entry.channel]
+                  }`}
+                >
+                  {entry.channel}
+                </span>
               </header>
               {entry.note && (
-                <p className="t-mono-xs text-[var(--fg-mute)] mb-4 italic border-l-2 border-[var(--line-strong)] pl-3">
-                  ▸ {entry.note}
+                <p className="t-mono-xs text-[var(--fg-dim)] mb-5 italic border-l-2 border-[var(--line-strong)] pl-3 leading-relaxed">
+                  {entry.note}
                 </p>
               )}
               <ul className="space-y-2.5">
                 {entry.changes.map((c, i) => (
                   <li key={i} className="flex items-start gap-3">
-                    <span className={`inline-block min-w-[42px] text-center text-[10px] font-semibold tracking-[0.08em] uppercase border px-1.5 py-0.5 mt-0.5 ${TAG_COLORS[c.tag] ?? ""}`}>
+                    <span
+                      className={`inline-block min-w-[42px] text-center text-[10px] font-semibold tracking-[0.08em] uppercase border px-1.5 py-0.5 mt-0.5 ${
+                        TAG_COLORS[c.tag] ?? ""
+                      }`}
+                    >
                       {c.tag.toLowerCase()}
                     </span>
                     <span className="text-[14.5px] text-[var(--fg-dim)] leading-relaxed">{c.body}</span>
@@ -146,6 +244,38 @@ export default function ChangelogPage() {
               </ul>
             </article>
           ))}
+
+          {/* ── Roadmap ─────────────────────────────────────────────────── */}
+          <article id="roadmap" className="pt-6 border-t-2 border-[var(--line-strong)]">
+            <header className="flex items-baseline justify-between flex-wrap gap-3 mb-6">
+              <div className="flex items-baseline gap-4 flex-wrap">
+                <h2 className="t-display text-[28px] sm:text-[32px] leading-none normal-case tracking-[-0.02em]">
+                  Roadmap
+                </h2>
+                <span className="text-[13px] text-[var(--fg-mute)]">Next ship targets</span>
+              </div>
+              <span className="text-[10px] font-semibold tracking-[0.14em] uppercase border px-2 py-0.5 text-[var(--fg-mute)] border-[var(--line-strong)]">
+                Not shipped
+              </span>
+            </header>
+            <ul className="space-y-4">
+              {ROADMAP.map((r) => (
+                <li key={r.title} className="grid grid-cols-12 gap-3 sm:gap-4 border-b border-[var(--line)] pb-4 last:border-b-0">
+                  <div className="col-span-12 sm:col-span-3 md:col-span-2 t-mono-xs text-[var(--fg-mute)] uppercase tracking-[0.14em] pt-1">
+                    {r.eta}
+                  </div>
+                  <div className="col-span-12 sm:col-span-9 md:col-span-10">
+                    <div className="text-[15px] text-[var(--fg)] font-medium leading-snug">
+                      {r.title}
+                    </div>
+                    <p className="text-[13px] text-[var(--fg-dim)] mt-1 leading-relaxed">
+                      {r.detail}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </article>
         </div>
       </div>
     </>

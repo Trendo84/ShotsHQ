@@ -24,7 +24,7 @@ const INTERVAL_MS = 3200;
 
 export function HeroRotatingTitle() {
   return (
-    <h1 className="t-display text-[clamp(1.75rem,7vw,5.5rem)] leading-[0.92] break-words">
+    <h1 className="t-display t-h-1 break-words">
       Ship App Store
       <br />
       <span className="text-[var(--accent)]">screenshots</span>

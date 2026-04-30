@@ -13,8 +13,9 @@ export function CTA() {
       <div className="relative z-10 max-w-[1480px] mx-auto px-4 md:px-8 py-16 md:py-24">
         <div className="grid grid-cols-12 gap-8 items-end">
 
-          {/* Headline — varied cadence (no period-period) per UX audit P2 #7 */}
-          <h2 className="col-span-12 md:col-span-7 t-display text-[clamp(2.5rem,7vw,6rem)] leading-[0.92] text-balance">
+          {/* Headline — varied cadence (no period-period) per UX audit P2 #7.
+              Tier-1 size matches the hero H1 — these two anchor the page. */}
+          <h2 className="col-span-12 md:col-span-7 t-display t-h-1 text-balance">
             The next time you ship,
             <br />
             <span className="text-[var(--accent)]">do the screenshots last.</span>

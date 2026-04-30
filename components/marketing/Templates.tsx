@@ -303,7 +303,7 @@ export function Templates({ compact = false }: { compact?: boolean }) {
     <section className="border-b border-[var(--line)]">
       <div className="max-w-[1480px] mx-auto px-4 md:px-8 py-14 md:py-20">
         <div className="grid grid-cols-12 gap-8 mb-10 items-end">
-          <h2 className="col-span-12 md:col-span-7 t-display text-[clamp(2.25rem,5.5vw,4.5rem)] leading-[0.95]">
+          <h2 className="col-span-12 md:col-span-7 t-display t-h-3">
             Don&apos;t want to start from blank?
             <br />
             <span className="text-[var(--accent)]">{TEMPLATE_COUNT}&nbsp;templates to remix.</span>

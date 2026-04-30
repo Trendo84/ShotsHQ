@@ -61,7 +61,7 @@ export function Comparison() {
             className="hidden sm:block w-[72px] h-[72px] md:w-[96px] md:h-[96px] shrink-0 select-none comparison-trophy"
             draggable={false}
           />
-          <h2 className="t-display text-[clamp(2rem,5vw,4rem)] leading-[0.95] min-w-0">
+          <h2 className="t-display t-h-3 min-w-0">
             How we compare to incumbent screenshot tools.
           </h2>
         </Reveal>

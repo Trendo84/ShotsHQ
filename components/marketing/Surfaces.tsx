@@ -100,7 +100,7 @@ export function Surfaces() {
         <Reveal as="div" className="grid grid-cols-12 gap-8 mb-12 items-end">
           <div className="col-span-12 md:col-span-7">
             <div className="t-eyebrow t-eyebrow-accent mb-3">One project · every channel</div>
-            <h2 className="t-display text-[clamp(2rem,5.5vw,4.5rem)] leading-[0.95] text-balance">
+            <h2 className="t-display t-h-2 text-balance">
               Render once, fan out to <span className="text-[var(--accent)]">every channel a launch needs</span>.
             </h2>
           </div>
@@ -190,17 +190,40 @@ export function Surfaces() {
 }
 
 function StatusPill({ status }: { status: Status }) {
-  const cfg = {
-    Live: { fg: "var(--signal)", border: "var(--signal)" },
-    Beta: { fg: "var(--accent)", border: "var(--accent)" },
-    Soon: { fg: "var(--fg-mute)", border: "var(--line-strong)" },
-  }[status];
+  // Three weights so the eye can rank them at a glance:
+  //   Live  → solid fill, signal green               (strongest, "ship now")
+  //   Beta  → outline accent + dot pulse             (medium, "available with caveats")
+  //   Soon  → muted outline, no fill, no dot         (quietest, "not yet")
+  // This matches the pill weights used by Linear / Notion changelogs and
+  // tracks the casing system: ALL CAPS at 10px, never larger.
+  const base =
+    "surface-pill inline-flex items-center gap-1.5 t-mono-xs uppercase tracking-[0.14em] font-semibold px-2 py-0.5 shrink-0 transition-colors";
+
+  if (status === "Live") {
+    return (
+      <span
+        className={`${base} bg-[var(--signal)] text-[var(--bg)] border border-[var(--signal)]`}
+      >
+        <span className="block w-1.5 h-1.5 rounded-full bg-[var(--bg)] pulse-soft" aria-hidden />
+        LIVE
+      </span>
+    );
+  }
+  if (status === "Beta") {
+    return (
+      <span
+        className={`${base} text-[var(--accent)] border border-[var(--accent)] bg-[color-mix(in_srgb,var(--accent)_10%,transparent)]`}
+      >
+        <span className="block w-1.5 h-1.5 rounded-full bg-[var(--accent)]" aria-hidden />
+        BETA
+      </span>
+    );
+  }
   return (
     <span
-      className="surface-pill t-mono-xs uppercase tracking-[0.14em] font-semibold px-1.5 py-0.5 shrink-0 transition-colors"
-      style={{ color: cfg.fg, border: `1px solid ${cfg.border}` }}
+      className={`${base} text-[var(--fg-mute)] border border-[var(--line-strong)] opacity-80`}
     >
-      {status}
+      SOON
     </span>
   );
 }
