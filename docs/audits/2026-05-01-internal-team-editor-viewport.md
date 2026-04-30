@@ -1,6 +1,6 @@
 # Internal-team: editor viewport audit · 2026-05-01
 
-> **Status:** Captured 2026-05-01 · Triaged 2026-05-01 (commits in flight)
+> **Status:** Captured 2026-05-01 · Triaged 2026-05-01 · Closed 2026-05-01 (commits 79023eb, this-commit).
 
 ## Source
 
@@ -126,11 +126,8 @@ The fix kills the whole bug class, not just the tab-switch symptom.
 
 | # | Outcome | Where |
 |---|---|---|
-| 1 | **Fixed in commit `<viewport-fix>`** — ResizeObserver via `lib/editor/viewport.ts` helper + 6-assertion call-count contract test in `tests/editor/viewport-resize.test.ts`. "Fit canvas" button extended to also reset pan and renamed "Fit to view (reset zoom + pan)" for honesty. | this session |
-| 2 | **Fixed in commit `<silhouettes>`** — 4 SVG silhouettes in `components/devices/silhouettes/` + `pickSilhouette(device)` helper + DeviceTile rewires + `tests/devices/silhouette-pick.test.ts` decision-tree test. No catalog changes. | this session |
-
-(Commit SHAs filled in once commits land — see Status header for
-final-state tracking.)
+| 1 | **Fixed in commit `79023eb`** — ResizeObserver via `lib/editor/viewport.ts` helper + 7-assertion call-count contract test in `tests/editor/viewport-resize.test.ts` (the +1 over the original spec is an SSR-safety check for `typeof ResizeObserver === "undefined"`). "Fit canvas" button extended to also reset pan and renamed "Fit to view (reset zoom + pan)" for honesty. | this session |
+| 2 | **Fixed in this commit** — 4 SVG silhouettes in `components/devices/silhouettes/` + `pickSilhouette(device)` helper with TypeScript exhaustiveness guard + DeviceTile rewires + `tests/devices/silhouette-pick.test.ts` decision-tree test (6 specs). No catalog changes — `topCutout` field already encodes the silhouette family. | this session |
 
 ## Workflow notes
 

@@ -1,12 +1,30 @@
 "use client";
 
 import { type Device, aspectRatio } from "@/lib/devices/catalog";
+import { pickSilhouette } from "@/components/devices/silhouettes";
 
 /**
- * Pure-CSS device silhouette. We don't load PNG frames here — that's
- * for the renderer. This component is for picker UI, project cards,
- * editor thumbnails. It should look like the device but be fast,
- * theme-aware, and accessible.
+ * Pure-CSS device tile with an SVG silhouette inside.
+ *
+ * Picker UI surface — used in `/projects/new` Step 01 + the editor's
+ * Device Frame tool tab + project cards + thumbnails. NOT the
+ * export-render bezel (that's `lib/render/iphone-frame.ts`, separate
+ * concern).
+ *
+ * Silhouette family is picked by `pickSilhouette(device)` from the
+ * catalog's `(family, topCutout)` pair. Four families cover the full
+ * catalog: iPhone Dynamic Island, iPhone notch, iPhone home button,
+ * iPad flat. See `components/devices/silhouettes/index.ts` for the
+ * decision tree + `tests/devices/silhouette-pick.test.ts` for the
+ * contract test.
+ *
+ * Selected state: scale-105 + accent ring around the chassis +
+ * accent fill on the silhouette's cutout (Dynamic Island / notch /
+ * home button / iPad camera). Unselected uses theme-neutral strokes
+ * via `currentColor` so both Tactical and Swiss themes inherit
+ * automatically.
+ *
+ * See docs/audits/2026-05-01-internal-team-editor-viewport.md → #2.
  */
 export function DeviceTile({
   device,
@@ -28,8 +46,7 @@ export function DeviceTile({
     lg: "w-32",
   }[size];
 
-  const isiPad = device.family === "ipad";
-  const cornerRadius = isiPad ? "0" : "0"; // rigid 90° per brand
+  const Silhouette = pickSilhouette(device);
 
   return (
     <div className={`flex flex-col items-center gap-2 ${className}`}>
@@ -39,7 +56,8 @@ export function DeviceTile({
         }`}
         style={{ aspectRatio: aspectRatio(device) }}
       >
-        {/* Device shell */}
+        {/* Chassis fill — sits behind the silhouette so the swatch
+           color shows through the SVG's transparent strokes. */}
         <div
           className="absolute inset-0 transition-shadow"
           style={{
@@ -47,61 +65,31 @@ export function DeviceTile({
             boxShadow: selected
               ? `0 0 0 2px var(--accent), 0 8px 24px -8px rgba(0,0,0,0.5)`
               : `0 0 0 1px color-mix(in srgb, var(--fg) 30%, transparent), 0 4px 12px -4px rgba(0,0,0,0.4)`,
-            borderRadius: cornerRadius,
+            // Rigid 90° corners per brand — silhouette inherits.
+            borderRadius: 0,
           }}
         />
-        {/* Screen inset */}
+
+        {/* Silhouette overlay — fills the chassis. The silhouette
+           components use `currentColor` for strokes so they inherit
+           the picker's text color. We pick a stroke color that reads
+           against the device's swatch: dark strokes on light
+           swatches, light strokes on dark swatches.
+
+           The CSS variable `--fg` already adapts to the theme
+           background, so using it via the parent's text color gives
+           Tactical (light fg on dark) and Swiss (dark fg on light)
+           the right read. The `mix-blend-difference` on the
+           silhouette layer would also work but creates an extra
+           compositing layer and reads "designy" rather than
+           "schematic". A `text-[var(--fg)]` parent + `currentColor`
+           SVG strokes is simpler. */}
         <div
-          className="absolute"
-          style={{
-            inset: isiPad ? "6%" : "4%",
-            background: "var(--bg)",
-            border: "1px solid color-mix(in srgb, var(--fg) 12%, transparent)",
-          }}
+          className="absolute inset-0 text-[var(--fg)]"
+          style={{ opacity: 0.85 }}
+          aria-hidden
         >
-          {/* Top cutout */}
-          {device.topCutout === "island" && (
-            <span
-              className="absolute left-1/2 -translate-x-1/2"
-              style={{
-                top: "3%",
-                width: "30%",
-                height: "5%",
-                background: "#000",
-                borderRadius: 9999,
-              }}
-              aria-hidden
-            />
-          )}
-          {device.topCutout === "notch" && (
-            <span
-              className="absolute left-1/2 -translate-x-1/2"
-              style={{
-                top: 0,
-                width: "40%",
-                height: "5%",
-                background: "#000",
-                borderBottomLeftRadius: 6,
-                borderBottomRightRadius: 6,
-              }}
-              aria-hidden
-            />
-          )}
-          {/* Home indicator */}
-          {!isiPad && (
-            <span
-              className="absolute left-1/2 -translate-x-1/2"
-              style={{
-                bottom: "2%",
-                width: "30%",
-                height: "1.5%",
-                background: "var(--fg)",
-                opacity: 0.5,
-                borderRadius: 9999,
-              }}
-              aria-hidden
-            />
-          )}
+          <Silhouette selected={selected} />
         </div>
       </div>
       {showName && (
