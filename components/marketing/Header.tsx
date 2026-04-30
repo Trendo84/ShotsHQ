@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Menu, X } from "lucide-react";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import { cn } from "@/lib/utils/cn";
@@ -17,6 +17,7 @@ const NAV = [
 export function MarketingHeader() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const toggleRef = useRef<HTMLButtonElement | null>(null);
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
 
@@ -27,6 +28,13 @@ export function MarketingHeader() {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
+
+  // Focus management: when menu closes, return focus to the toggle so
+  // keyboard users don't lose their place.
+  useEffect(() => {
+    if (!open && toggleRef.current === document.activeElement) return;
+    if (!open) toggleRef.current?.focus({ preventScroll: true });
   }, [open]);
 
   return (
@@ -80,13 +88,21 @@ export function MarketingHeader() {
             Sign in
           </Link>
           <Link href="/sign-up" className="btn btn-accent text-[11px] tracking-[0.06em] py-2 px-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]">Start free</Link>
-          <button onClick={() => setOpen(!open)} className="md:hidden p-2 text-[var(--fg)]" aria-label="Toggle menu" aria-expanded={open}>
+          <button
+            ref={toggleRef}
+            onClick={() => setOpen(!open)}
+            className="md:hidden p-2 text-[var(--fg)]"
+            aria-label={open ? "Close menu" : "Open menu"}
+            aria-expanded={open}
+            aria-controls="mobile-menu"
+          >
             {open ? <X size={18} /> : <Menu size={18} />}
           </button>
         </div>
       </div>
 
       <div
+        id="mobile-menu"
         className={cn(
           "md:hidden overflow-hidden transition-[max-height] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] border-t border-[var(--line)]",
           open ? "max-h-96" : "max-h-0",

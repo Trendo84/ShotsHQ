@@ -200,6 +200,31 @@ body::after {
 }
 .t-eyebrow-accent { color: var(--accent); }
 
+/* ── Swiss differentiation ─────────────────────────────────────────────────
+   Swiss is the editorial archetype. Kickers swap to italic serif (EB Garamond)
+   for a print-magazine feel. Tactical keeps mono-uppercase. Display headings
+   stay heavy in both — Archivo Black is brand-locked. */
+[data-theme="swiss"] .t-eyebrow {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 14px;
+  letter-spacing: 0;
+  text-transform: none;
+  font-weight: 400;
+}
+[data-theme="swiss"] .t-eyebrow-accent {
+  color: var(--accent);
+}
+/* Section bodies in Swiss feel less screen / more print. Slightly more
+   generous leading and a hair smaller display tracking. */
+[data-theme="swiss"] .t-prose,
+[data-theme="swiss"] .t-prose-lg {
+  line-height: 1.65;
+}
+[data-theme="swiss"] .t-display {
+  letter-spacing: -0.045em;
+}
+
 .t-serif-disrupt {
   font-family: var(--font-serif);
   font-style: italic;
