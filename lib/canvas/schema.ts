@@ -38,6 +38,22 @@ export type TextLayer = {
   width:      number;
   visible:    boolean;
   locked:     boolean;
+  /**
+   * Marks default placeholder content seeded by `defaultCanvas()` or by
+   * applying a starter template. The collision-resolver in
+   * `lib/canvas/dispatch.ts` REPLACES system layers when the user
+   * dispatches a new layer of the same role — so clicking "Headline" in
+   * the Text panel doesn't pile a duplicate on top of the placeholder.
+   *
+   * Flips to `false` (or absent) on first user edit (`text:changed`),
+   * after which the layer is treated as user-authored and won't be
+   * replaced by future dispatches.
+   *
+   * Optional + undefined-safe so existing persisted projects (no flag
+   * present) behave as `system: false` — backwards compatible, no JSONB
+   * migration required.
+   */
+  system?:    boolean;
 };
 
 export type AppScreenshotLayer = {

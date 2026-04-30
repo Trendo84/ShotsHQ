@@ -16,9 +16,36 @@ const CATEGORIES = [
   "BUSINESS", "WEATHER", "NAVIGATION", "REFERENCE",
 ];
 
+/**
+ * Per-step header content. The top section of /projects/new used to be
+ * hardcoded "Step 01 · Project metadata" / "Commission project." regardless
+ * of which step the user was on — which made step 02 feel "missing"
+ * (the visual anchor never updated, so users scrolled past the device
+ * picker without realizing they'd advanced). This map drives the header
+ * dynamically off `step`.
+ */
+type StepNum = 1 | 2 | 3;
+const STEP_META: Record<StepNum, { eyebrow: string; title: [string, string]; body: string }> = {
+  1: {
+    eyebrow: "Step 01 · Project metadata",
+    title:   ["Commission", "project."],
+    body:    "Four fields, one intake. This metadata seeds copy generation, ASO hints, and the initial editor state.",
+  },
+  2: {
+    eyebrow: "Step 02 · Device targets",
+    title:   ["Pick the", "devices."],
+    body:    "Every device you target gets all Apple-required screenshot dimensions rendered automatically.",
+  },
+  3: {
+    eyebrow: "Step 03 · Upload screens",
+    title:   ["Drop your", "screens."],
+    body:    "Raw iOS screenshots stored direct-to-R2. You'll add them from inside the editor in v1 — commit now to open the editor.",
+  },
+};
+
 export default function NewProjectPage() {
   const router = useRouter();
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState<StepNum>(1);
   const [name, setName] = useState("");
   const [appName, setAppName] = useState("");
   const [description, setDescription] = useState("");
@@ -80,28 +107,46 @@ export default function NewProjectPage() {
 
       <div className="grid grid-cols-12 border-b border-[var(--line)]">
         <div className="col-span-12 md:col-span-7 border-r border-[var(--line)] p-6 md:p-12">
-          <div className="t-eyebrow t-eyebrow-accent mb-2">Step 01 · Project metadata</div>
-          <h1 className="t-display text-[clamp(2.25rem,6vw,5.5rem)] leading-[0.92] text-balance">
-            Commission<br />
-            project.
+          <div className="t-eyebrow t-eyebrow-accent mb-2">{STEP_META[step].eyebrow}</div>
+          <h1 className="t-display t-h-1 text-balance">
+            {STEP_META[step].title[0]}<br />
+            <span className="text-[var(--accent)]">{STEP_META[step].title[1]}</span>
           </h1>
           <p className="t-prose mt-4 max-w-xl text-[var(--fg-dim)]">
-            Four fields, one intake. This metadata seeds copy generation,
-            ASO hints, and the initial editor state.
+            {STEP_META[step].body}
           </p>
         </div>
         <div className="col-span-12 md:col-span-5 p-6 md:p-12 flex flex-col justify-between gap-4">
+          {/* Right-rail step list — clickable so users can navigate back. */}
           <ol className="space-y-3">
-            {[
-              { n: "01", label: "PROJECT METADATA", active: step === 1 },
-              { n: "02", label: "STORE TARGETS",    active: step === 2 },
-              { n: "03", label: "UPLOAD SCREENS",   active: step === 3 },
-            ].map((s) => (
-              <li key={s.n} className={`flex items-center justify-between border ${s.active ? "border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-fg)]" : "border-[var(--line)]"} px-3 py-2`}>
-                <span className="t-mono-xs">{s.n} · {s.label}</span>
-                {s.active ? <span className="text-[var(--accent-fg)]">▸</span> : <span className="text-[var(--fg-mute)]">·</span>}
-              </li>
-            ))}
+            {([
+              { n: 1, code: "01", label: "PROJECT METADATA" },
+              { n: 2, code: "02", label: "STORE TARGETS"    },
+              { n: 3, code: "03", label: "UPLOAD SCREENS"   },
+            ] as const).map((s) => {
+              const active = step === s.n;
+              return (
+                <li key={s.code}>
+                  <button
+                    type="button"
+                    onClick={() => setStep(s.n)}
+                    aria-current={active ? "step" : undefined}
+                    className={`w-full flex items-center justify-between border px-3 py-2 transition-colors text-left focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)] ${
+                      active
+                        ? "border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-fg)]"
+                        : "border-[var(--line)] hover:border-[var(--accent)] hover:text-[var(--fg)]"
+                    }`}
+                  >
+                    <span className="t-mono-xs">{s.code} · {s.label}</span>
+                    {active ? (
+                      <span className="text-[var(--accent-fg)]">▸</span>
+                    ) : (
+                      <span className="text-[var(--fg-mute)]">·</span>
+                    )}
+                  </button>
+                </li>
+              );
+            })}
           </ol>
           <div className="t-mono-xs text-[var(--fg-mute)]">
             EST · 90 SEC · 0 CR COMMITTED

@@ -1,4 +1,5 @@
 import type { ShotsCanvas, DeviceId } from "./schema";
+import { TEXT_LAYOUT } from "./dispatch";
 
 const DEVICE_DIMS: Record<DeviceId, { width: number; height: number }> = {
   iphone_69: { width: 1290, height: 2796 },
@@ -6,9 +7,16 @@ const DEVICE_DIMS: Record<DeviceId, { width: number; height: number }> = {
   ipad_13:   { width: 2064, height: 2752 },
 };
 
-/** Build a starter canvas for a new project. */
+/**
+ * Build a starter canvas for a new project. Layer positions come from
+ * `TEXT_LAYOUT` in `dispatch.ts` — the same source the editor's
+ * `addTextLayer` flow reads, so the two paths can never drift apart.
+ */
 export function defaultCanvas(device: DeviceId = "iphone_69"): ShotsCanvas {
   const { width: w, height: h } = DEVICE_DIMS[device];
+  const eyeb  = TEXT_LAYOUT.eyebrow;
+  const head  = TEXT_LAYOUT.headline;
+  const sub   = TEXT_LAYOUT.subheadline;
   return {
     version:    "1",
     device,
@@ -26,11 +34,12 @@ export function defaultCanvas(device: DeviceId = "iphone_69"): ShotsCanvas {
         fontWeight: "400",
         color:      "#FF2A2A",
         align:      "center",
-        x:          Math.round(w * 0.1),
-        y:          Math.round(h * 0.07),
-        width:      Math.round(w * 0.8),
+        x:          Math.round(w * eyeb.x),
+        y:          Math.round(h * eyeb.y),
+        width:      Math.round(w * eyeb.width),
         visible:    true,
         locked:     false,
+        system:     true,
       },
       {
         id:         "headline",
@@ -42,11 +51,12 @@ export function defaultCanvas(device: DeviceId = "iphone_69"): ShotsCanvas {
         fontWeight: "900",
         color:      "#FFFFFF",
         align:      "center",
-        x:          Math.round(w * 0.05),
-        y:          Math.round(h * 0.12),
-        width:      Math.round(w * 0.9),
+        x:          Math.round(w * head.x),
+        y:          Math.round(h * head.y),
+        width:      Math.round(w * head.width),
         visible:    true,
         locked:     false,
+        system:     true,
       },
       {
         id:         "subheadline",
@@ -58,11 +68,12 @@ export function defaultCanvas(device: DeviceId = "iphone_69"): ShotsCanvas {
         fontWeight: "400",
         color:      "#B5B5B5",
         align:      "center",
-        x:          Math.round(w * 0.1),
-        y:          Math.round(h * 0.30),
-        width:      Math.round(w * 0.8),
+        x:          Math.round(w * sub.x),
+        y:          Math.round(h * sub.y),
+        width:      Math.round(w * sub.width),
         visible:    true,
         locked:     false,
+        system:     true,
       },
     ],
   };

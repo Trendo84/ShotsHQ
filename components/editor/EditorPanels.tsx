@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils/cn";
 import { CURRENT_DEVICES, groupByFamily } from "@/lib/devices/catalog";
 import { DeviceTile } from "@/components/devices/DeviceTile";
 import type { ShotsBackground, TextRole } from "@/lib/canvas/schema";
+import type { LayerSummary } from "./FabricCanvas";
 
 const PANELS = [
   { id: "frame",      label: "DEVICE FRAME", icon: Smartphone, code: "01" },
@@ -16,11 +17,25 @@ const PANELS = [
 ];
 
 type LeftPanelProps = {
-  onAddText?:      (role: TextRole) => void;
-  onSetBackground?: (bg: ShotsBackground) => void;
+  onAddText?:        (role: TextRole) => void;
+  onSetBackground?:  (bg: ShotsBackground) => void;
+  /** Live ordered layer list from the Fabric canvas — top of stack first. */
+  layers?:           LayerSummary[];
+  onMoveLayer?:      (id: string, dir: -1 | 1) => void;
+  onToggleVisible?:  (id: string) => void;
+  onToggleLocked?:   (id: string) => void;
+  onDeleteLayer?:    (id: string) => void;
 };
 
-export function LeftPanel({ onAddText, onSetBackground }: LeftPanelProps = {}) {
+export function LeftPanel({
+  onAddText,
+  onSetBackground,
+  layers,
+  onMoveLayer,
+  onToggleVisible,
+  onToggleLocked,
+  onDeleteLayer,
+}: LeftPanelProps = {}) {
   const [active, setActive] = useState<string>("frame");
   return (
     <aside className="w-[280px] border-r border-[var(--line)] flex flex-col bg-[var(--bg)]">
@@ -50,7 +65,15 @@ export function LeftPanel({ onAddText, onSetBackground }: LeftPanelProps = {}) {
         {active === "frame"      && <FramePanel />}
         {active === "background" && <BackgroundPanel onSetBackground={onSetBackground} />}
         {active === "text"       && <TextPanel onAddText={onAddText} />}
-        {active === "layers"     && <LayersPanel />}
+        {active === "layers"     && (
+          <LayersPanel
+            layers={layers ?? []}
+            onMove={onMoveLayer}
+            onToggleVisible={onToggleVisible}
+            onToggleLocked={onToggleLocked}
+            onDelete={onDeleteLayer}
+          />
+        )}
         {active === "ai"         && <AIPanel />}
       </div>
     </aside>
@@ -204,49 +227,47 @@ function TextPanel({ onAddText }: { onAddText?: (role: TextRole) => void }) {
   );
 }
 
-type LayerKind = "TXT" | "IMG" | "FRM" | "BG" | "GRD";
-type Layer = { id: string; type: LayerKind; label: string; visible: boolean; locked: boolean };
+/**
+ * LayersPanel — reads real Fabric canvas state via the `layers` prop and
+ * dispatches mutations through callbacks. Replaces the previous mock
+ * INITIAL_LAYERS that never reflected the actual render.
+ *
+ * Layer order mirrors `canvas.getObjects()` reversed: top-of-stack first
+ * (matching natural top-to-bottom reading order in the panel).
+ */
+type LayerLabelType = "TXT" | "BG";
 
-const INITIAL_LAYERS: Layer[] = [
-  { id: "l1", type: "TXT", label: "Headline",         visible: true, locked: false },
-  { id: "l2", type: "TXT", label: "Subheadline",      visible: true, locked: false },
-  { id: "l3", type: "IMG", label: "Hero shot",        visible: true, locked: false },
-  { id: "l4", type: "FRM", label: "Device frame",     visible: true, locked: true  },
-  { id: "l5", type: "BG",  label: "Backdrop",         visible: true, locked: true  },
-  { id: "l6", type: "GRD", label: "Halftone overlay", visible: true, locked: false },
-];
+function layerType(kind: LayerSummary["kind"]): LayerLabelType {
+  return kind === "background" ? "BG" : "TXT";
+}
 
-function LayersPanel() {
-  const [layers, setLayers] = useState<Layer[]>(INITIAL_LAYERS);
-  const [selected, setSelected] = useState<string | null>("l1");
-
-  function move(id: string, dir: -1 | 1) {
-    setLayers((cur) => {
-      const idx = cur.findIndex((l) => l.id === id);
-      if (idx < 0) return cur;
-      const next = idx + dir;
-      if (next < 0 || next >= cur.length) return cur;
-      const copy = [...cur];
-      [copy[idx], copy[next]] = [copy[next]!, copy[idx]!];
-      return copy;
-    });
-  }
-
-  function toggle(id: string, key: "visible" | "locked") {
-    setLayers((cur) => cur.map((l) => (l.id === id ? { ...l, [key]: !l[key] } : l)));
-  }
-
-  function remove(id: string) {
-    setLayers((cur) => cur.filter((l) => l.id !== id));
-    if (selected === id) setSelected(null);
-  }
+function LayersPanel({
+  layers,
+  onMove,
+  onToggleVisible,
+  onToggleLocked,
+  onDelete,
+}: {
+  layers:          LayerSummary[];
+  onMove?:         (id: string, dir: -1 | 1) => void;
+  onToggleVisible?: (id: string) => void;
+  onToggleLocked?: (id: string) => void;
+  onDelete?:       (id: string) => void;
+}) {
+  const [selected, setSelected] = useState<string | null>(null);
 
   return (
     <>
       <h3 className="t-mono-xs text-[var(--accent)] mb-3">[ LAYERS · {layers.length} ]</h3>
+      {layers.length === 0 && (
+        <p className="t-mono-xs text-[var(--fg-mute)] leading-relaxed">
+          Canvas is empty. Add a backdrop or a text layer from the panels above.
+        </p>
+      )}
       <ul className="font-mono text-[11px] space-y-px">
         {layers.map((l, i) => {
           const isSel = selected === l.id;
+          const isBg  = l.kind === "background";
           return (
             <li
               key={l.id}
@@ -260,7 +281,7 @@ function LayersPanel() {
             >
               <button
                 type="button"
-                onClick={() => toggle(l.id, "visible")}
+                onClick={() => onToggleVisible?.(l.id)}
                 aria-label={l.visible ? "Hide layer" : "Show layer"}
                 className="text-[var(--fg-dim)] hover:text-[var(--fg)] w-4 shrink-0"
                 title={l.visible ? "Hide" : "Show"}
@@ -272,14 +293,22 @@ function LayersPanel() {
                 onClick={() => setSelected(l.id)}
                 className="flex-1 text-left flex items-center gap-2 min-w-0"
               >
-                <span className="text-[var(--accent)] shrink-0">[{l.type}]</span>
+                <span className="text-[var(--accent)] shrink-0">[{layerType(l.kind)}]</span>
                 <span className="text-[var(--fg)] truncate">{l.label}</span>
+                {l.system && (
+                  <span
+                    className="t-mono-xs text-[var(--fg-mute)] uppercase tracking-[0.14em] shrink-0 text-[9px]"
+                    title="Placeholder — replaced when you add this role"
+                  >
+                    DEFAULT
+                  </span>
+                )}
               </button>
               <div className="flex items-center gap-px shrink-0">
                 <button
                   type="button"
-                  onClick={() => move(l.id, -1)}
-                  disabled={i === 0}
+                  onClick={() => onMove?.(l.id, -1)}
+                  disabled={i === 0 || isBg}
                   aria-label="Move layer up"
                   className="text-[var(--fg-mute)] hover:text-[var(--fg)] px-1 disabled:opacity-30 disabled:cursor-not-allowed"
                 >
@@ -287,8 +316,8 @@ function LayersPanel() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => move(l.id, 1)}
-                  disabled={i === layers.length - 1}
+                  onClick={() => onMove?.(l.id, 1)}
+                  disabled={i === layers.length - 1 || isBg}
                   aria-label="Move layer down"
                   className="text-[var(--fg-mute)] hover:text-[var(--fg)] px-1 disabled:opacity-30 disabled:cursor-not-allowed"
                 >
@@ -296,17 +325,18 @@ function LayersPanel() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => toggle(l.id, "locked")}
+                  onClick={() => onToggleLocked?.(l.id)}
+                  disabled={isBg}
                   aria-label={l.locked ? "Unlock layer" : "Lock layer"}
-                  className="text-[var(--fg-mute)] hover:text-[var(--fg)] px-1"
-                  title={l.locked ? "Unlock" : "Lock"}
+                  className="text-[var(--fg-mute)] hover:text-[var(--fg)] px-1 disabled:opacity-30 disabled:cursor-not-allowed"
+                  title={isBg ? "Backdrop is locked" : l.locked ? "Unlock" : "Lock"}
                 >
                   {l.locked ? "⊠" : "⊡"}
                 </button>
-                {!l.locked && (
+                {!l.locked && !isBg && (
                   <button
                     type="button"
-                    onClick={() => remove(l.id)}
+                    onClick={() => onDelete?.(l.id)}
                     aria-label="Delete layer"
                     className="text-[var(--fg-mute)] hover:text-[var(--accent)] px-1"
                     title="Delete"

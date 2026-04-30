@@ -80,6 +80,46 @@ Heuristics:
 - If it's a button people press, Title Case the verb. `"Start free"` not `"START FREE"` (the eyebrow tag inside a button can be ALL CAPS, but the visible label is Title Case).
 - Brand names stay as the brand wrote them: `App Store Connect`, `GitHub`, `OpenAI`, `Trigger.dev`.
 
+## Editor canvas model
+
+**The editor canvas IS the device screen.** Width × height matches Apple's
+App Store screenshot dimensions exactly:
+
+| Device | Canvas dimensions |
+|---|---|
+| iPhone 6.9″ | 1290 × 2796 |
+| iPhone 6.7″ | 1320 × 2868 |
+| iPad 13″    | 2064 × 2752 |
+
+The backdrop fills the full canvas. Text layers position at canvas-pixel
+coordinates inside the screen. There is no Fabric-rendered device frame
+or bezel — the schema (`lib/canvas/schema.ts → ShotsCanvas`) has no
+device-frame layer kind, and `FabricCanvas` does not mount one.
+
+The red offset shadow visible around the canvas in the editor UI
+(`boxShadow: "8px 8px 0 var(--accent)"` on the wrapper div) is **brand
+decoration only** — not a device-bezel render. Don't try to "fix" the
+canvas to render a device chrome inside Fabric. If a bezel is ever needed
+for marketing or social previews, it lives on a separate export-only
+overlay path, not on the editing canvas.
+
+Other editor invariants worth pinning:
+
+- `lib/canvas/dispatch.ts` is the single source of truth for default text
+  layer positions (`TEXT_LAYOUT`) and styling (`textDefaultsFor`). Both
+  `defaultCanvas()` (initial-state seed) and the editor's `addTextLayer`
+  flow read from it, so the two paths can never drift apart again.
+- `TextLayer.system?: boolean` marks placeholder content seeded by
+  defaults. The collision-resolver in `dispatch.ts` REPLACES system
+  layers when the user dispatches a layer of the same role — preventing
+  the duplicate-text bug that would otherwise pile a new headline on top
+  of the placeholder. Editing flips `system` to `false` (handled by the
+  `text:changed` listener in `FabricCanvas`).
+- One project = one canvas in v1. The right-rail "FRAMES" UI is single-
+  frame today; multi-frame App Store carousels (5–10 screenshots per
+  device, each with its own backdrop + layer set) ship in v1.1 as a
+  purely additive `frames: ShotsFrame[]` field on `ShotsCanvas`.
+
 ## Visual system
 
 The dual-theme system in `app/globals.css` defines tokens for both
