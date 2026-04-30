@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { Check, Minus } from "lucide-react";
+import { Reveal } from "@/components/Reveal";
 
 type Cell = string | "yes" | "no";
 
@@ -46,7 +47,7 @@ export function Comparison() {
             description. Utility section — opens with the H2 directly,
             small inline subtitle, table below. Breaks the kicker → H2 →
             right-column rhythm of the surrounding sections. */}
-        <div className="flex items-end gap-4 md:gap-6 min-w-0 mb-3">
+        <Reveal as="div" className="flex items-end gap-4 md:gap-6 min-w-0 mb-3">
           <Image
             src="/comparison-trophy.png"
             alt=""
@@ -59,7 +60,7 @@ export function Comparison() {
           <h2 className="t-display text-[clamp(2rem,5vw,4rem)] leading-[0.95] min-w-0">
             How we stack up.
           </h2>
-        </div>
+        </Reveal>
         <p className="t-mono-sm text-[var(--fg-mute)] mb-10 max-w-2xl">
           ▸ Versus AppLaunchpad · Previewed · AppMockUp.
           {" "}Subscription traps, deceptive paywalls, editor lag.

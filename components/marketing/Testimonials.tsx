@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { Reveal } from "@/components/Reveal";
 
 type Voice = {
   quote: string;
@@ -36,14 +37,23 @@ export function Testimonials() {
   return (
     <section className="border-b border-[var(--line)]">
       <div className="max-w-[1480px] mx-auto px-4 md:px-8 py-14 md:py-20">
-        <h2 className="t-display text-[clamp(2rem,5vw,4rem)] mb-12 leading-[0.95] max-w-3xl text-balance">
+        <Reveal as="h2" className="t-display text-[clamp(2rem,5vw,4rem)] mb-3 leading-[0.95] max-w-3xl text-balance">
           What indie devs say<br />
           <span className="text-[var(--accent)]">when they ship.</span>
-        </h2>
+        </Reveal>
+        <p className="t-mono-xs text-[var(--fg-mute)] mb-12 italic">
+          Pre-launch · sample voices from beta testers
+        </p>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-[var(--line)] border border-[var(--line)]">
-          {VOICES.map((v) => (
-            <article key={v.handle} className="bg-[var(--bg)] p-7 min-h-[260px] flex flex-col">
+          {VOICES.map((v, i) => (
+            <Reveal
+              key={v.handle}
+              as="article"
+              delay={i * 80}
+              y={20}
+              className="bg-[var(--bg)] p-7 min-h-[260px] flex flex-col"
+            >
               <p className="t-serif-disrupt text-[20px] leading-snug text-[var(--fg)] flex-1">
                 <span className="text-[var(--accent)] mr-1">“</span>
                 {v.quote}
@@ -64,7 +74,7 @@ export function Testimonials() {
                   <div className="text-[var(--fg-mute)] text-[13px] mt-1 truncate">{v.app}</div>
                 </div>
               </footer>
-            </article>
+            </Reveal>
           ))}
         </div>
       </div>

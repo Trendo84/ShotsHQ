@@ -7,6 +7,13 @@
  * row reads as one cohesive product manifesto, not a patchwork of
  * disconnected mockups.
  */
+import Link from "next/link";
+import { Reveal } from "@/components/Reveal";
+
+/** Optional dedicated tool landing pages — surface-id → href map. */
+const TOOL_ROUTES: Record<string, string> = {
+  "web-hero":  "/tools/web-hero",
+};
 
 type Status = "Live" | "Beta" | "Soon";
 
@@ -90,7 +97,7 @@ export function Surfaces() {
       <div className="max-w-[1480px] mx-auto px-4 md:px-8 py-14 md:py-20">
 
         {/* Header */}
-        <div className="grid grid-cols-12 gap-8 mb-12 items-end">
+        <Reveal as="div" className="grid grid-cols-12 gap-8 mb-12 items-end">
           <div className="col-span-12 md:col-span-7">
             <div className="t-eyebrow t-eyebrow-accent mb-3">One project · every channel</div>
             <h2 className="t-display text-[clamp(2rem,5.5vw,4.5rem)] leading-[0.95] text-balance">
@@ -103,7 +110,7 @@ export function Surfaces() {
             channel a launch needs — App Store, marketing site, social
             cards, Product Hunt, GitHub. Same brand, every aspect.
           </p>
-        </div>
+        </Reveal>
 
         {/* Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-[var(--line)] border border-[var(--line)]">
@@ -149,9 +156,17 @@ export function Surfaces() {
                 </div>
               </div>
 
-              {/* Footer description */}
-              <div className="px-5 py-4 border-t border-[var(--line)]">
-                <p className="t-prose text-[12.5px] leading-snug">{s.description}</p>
+              {/* Footer description + (optional) tool CTA */}
+              <div className="px-5 py-4 border-t border-[var(--line)] flex items-end justify-between gap-3">
+                <p className="t-prose text-[12.5px] leading-snug min-w-0">{s.description}</p>
+                {TOOL_ROUTES[s.id] && (
+                  <Link
+                    href={TOOL_ROUTES[s.id]!}
+                    className="t-mono-xs uppercase tracking-[0.16em] text-[var(--accent)] hover:underline whitespace-nowrap shrink-0"
+                  >
+                    Try it →
+                  </Link>
+                )}
               </div>
             </article>
           ))}
