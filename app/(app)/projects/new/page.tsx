@@ -25,14 +25,54 @@ export default function NewProjectPage() {
   const [category, setCategory] = useState(CATEGORIES[0]);
   const [targets, setTargets] = useState<string[]>(DEFAULT_PROJECT_DEVICES);
 
-  // Submit is intentionally disabled until /api/projects + R2 upload land.
-  // Routing to a hardcoded /projects/p_new previously produced a 404, so the
-  // commit button is shown disabled with a "coming soon" tooltip until the
-  // backend is wired. The wizard preview still functions for tour/demos.
-  const submitting = false;
-  const submitEnabled = false;
-  // `router` retained for future POST /api/projects redirect.
-  void router;
+  // Step 3 (raw screenshot upload to R2) is intentionally a preview —
+  // direct-to-R2 presigned URLs land in the next pass. The COMMIT button
+  // creates the project record now and routes into the editor; the user
+  // can drop screenshots from inside the editor when that ships.
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const canCommit = name.trim().length > 0 && appName.trim().length > 0 && targets.length > 0;
+
+  async function commit() {
+    if (submitting || !canCommit) return;
+    setSubmitError(null);
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/projects", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({
+          name:           name.trim(),
+          appName:        appName.trim(),
+          appDescription: description.trim(),
+          category,
+          storeTargets:   targets,
+        }),
+      });
+      const json = await res.json().catch(() => null);
+
+      if (res.status === 401) {
+        router.push("/sign-in?next=/projects/new");
+        return;
+      }
+      if (!res.ok || !json?.ok || !json.data?.id) {
+        const code = json?.error ?? `http_${res.status}`;
+        setSubmitError(
+          code === "rate_limited"
+            ? "Too many requests — wait a moment and retry."
+            : `Could not create project (${code}).`,
+        );
+        setSubmitting(false);
+        return;
+      }
+      router.push(`/projects/${json.data.id}`);
+    } catch (err) {
+      console.error("[projects.new] network failure", err);
+      setSubmitError("Network error — please retry.");
+      setSubmitting(false);
+    }
+  }
 
   return (
     <>
@@ -198,31 +238,47 @@ export default function NewProjectPage() {
             <h2 className="t-display text-[36px]">UPLOAD SCREENS</h2>
             <p className="t-mono-sm text-[var(--fg-mute)] mt-2">DROP RAW iOS SCREENSHOTS BELOW. STORED DIRECT-TO-R2.</p>
 
-            <div className="mt-6 border-2 border-dashed border-[var(--line-strong)] p-12 text-center min-h-[280px] flex flex-col items-center justify-center hover:border-[var(--accent)] transition-colors">
-              <div className="t-display text-[32px]">DROP HERE</div>
-              <div className="t-mono-sm text-[var(--fg-mute)] mt-2">.PNG · 1290×2796 · 1320×2868 · 2064×2752</div>
+            <div
+              aria-disabled
+              title="Direct upload · coming soon"
+              className="mt-6 border-2 border-dashed border-[var(--line-strong)] p-8 sm:p-12 text-center min-h-[240px] sm:min-h-[280px] flex flex-col items-center justify-center opacity-60 cursor-not-allowed"
+            >
+              <div className="t-display text-[28px] sm:text-[32px]">DROP HERE · SOON</div>
+              <div className="t-mono-sm text-[var(--fg-mute)] mt-2">
+                .PNG · 1290×2796 · 1320×2868 · 2064×2752
+              </div>
               <div className="hazard h-2 w-full mt-6" aria-hidden />
-              <div className="t-mono-xs text-[var(--fg-mute)] mt-4">OR <button className="link-tick">SELECT FROM DEVICE</button></div>
+              <div className="t-mono-xs text-[var(--fg-mute)] mt-4">
+                You&apos;ll drop screens from inside the editor in v1.
+              </div>
             </div>
           </div>
           <aside className="col-span-12 md:col-span-5 p-6 md:p-10 flex flex-col justify-between gap-6">
             <div className="border border-[var(--line)] p-5">
               <div className="t-eyebrow t-eyebrow-accent mb-3">Ready to commission</div>
               <p className="t-mono-sm text-[var(--fg-dim)] leading-relaxed">
-                ONCE COMMITTED, THE PROJECT WILL OPEN IN THE EDITOR. AI
-                MODULES ARE OPT-IN AND CHARGED PER OPERATION.
+                COMMIT NOW TO CREATE THE PROJECT AND OPEN THE EDITOR. YOU
+                CAN ADD SCREENSHOTS, COPY, AND AI MODULES FROM THERE —
+                NOTHING IS CHARGED UNTIL YOU DISPATCH AN AI RUN.
               </p>
+              {submitError && (
+                <p role="alert" className="t-mono-xs text-[var(--accent)] mt-3 leading-tight">
+                  {submitError}
+                </p>
+              )}
             </div>
-            <div className="flex justify-between">
-              <Button variant="ghost" onClick={() => setStep(2)}>&lt;&lt; BACK</Button>
+            <div className="flex justify-between gap-3">
+              <Button variant="ghost" onClick={() => setStep(2)} disabled={submitting}>
+                &lt;&lt; BACK
+              </Button>
               <Button
                 variant="accent"
-                disabled
-                title="Project commit · coming soon"
-                aria-label="Commit project — coming soon"
-                className="opacity-50 cursor-not-allowed"
+                onClick={commit}
+                disabled={submitting || !canCommit}
+                aria-busy={submitting}
+                title={canCommit ? undefined : "Fill in name, app name, and at least one device"}
               >
-                {submitting ? "COMMITTING…" : submitEnabled ? "COMMIT >>" : "COMMIT · SOON"}
+                {submitting ? "COMMITTING…" : "COMMIT >>"}
               </Button>
             </div>
           </aside>

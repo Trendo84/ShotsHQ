@@ -40,12 +40,18 @@ export function HeroRotatingTitle() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="t-display text-[clamp(2rem,7vw,5.5rem)] leading-[0.92]">
-        <span className="whitespace-nowrap">Ship App Store</span>
+      {/*
+       * Headline lines break via explicit <br />, not whitespace-nowrap.
+       * nowrap was bleeding past viewport on narrow phones (≤375px) at
+       * the clamp's 2rem floor — the explicit breaks already give the
+       * cadence we want without forcing each line to refuse to wrap.
+       */}
+      <h1 className="t-display text-[clamp(1.75rem,7vw,5.5rem)] leading-[0.92] break-words">
+        Ship App Store
         <br />
-        <span className="text-[var(--accent)] whitespace-nowrap">screenshots</span>
+        <span className="text-[var(--accent)]">screenshots</span>
         <br />
-        <span className="whitespace-nowrap">before coffee.</span>
+        before coffee.
       </h1>
 
       {/* Rotating surface chip — communicates 'plus everything else' */}

@@ -81,6 +81,12 @@ html {
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
   scroll-behavior: smooth;
+  /* Defensive: clip any rogue horizontal overflow at the root. The body
+     rule below also clips, but iOS Safari occasionally honors only one
+     of the two depending on stacking-context churn from fixed elements
+     (sticky CTA bar, WIP banner). Belt-and-suspenders. */
+  overflow-x: clip;
+  max-width: 100vw;
 }
 
 body {
@@ -89,7 +95,21 @@ body {
   line-height: 1.5;
   letter-spacing: 0.02em;
   position: relative;
-  overflow-x: hidden;
+  overflow-x: clip;
+  max-width: 100vw;
+}
+
+/* Ensure no descendant element can force the layout wider than the
+   viewport (svg gradient overlays, off-canvas decorations, transformed
+   chrome, etc.). Specific elements that genuinely need to be wider —
+   the Comparison table, code blocks — already wrap themselves in
+   `overflow-x-auto` so this constraint doesn't break them. */
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+  height: auto;
 }
 
 /* Global noise + scanline atmosphere. Pinned, non-interactive. */

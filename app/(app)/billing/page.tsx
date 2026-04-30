@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Topbar } from "@/components/app/Topbar";
 import { Badge } from "@/components/ui/badge";
+import { PurchaseButton } from "@/components/billing/PurchaseButton";
 import { requireUser } from "@/lib/auth/clerk";
 import { getBalance, getLedgerHistory } from "@/lib/db/queries/credits";
 
@@ -81,17 +82,7 @@ export default async function BillingPage() {
               <div>
                 <div className="t-display text-[clamp(1.25rem,2.5vw,1.75rem)] t-numeric leading-tight">{p.price}</div>
                 <div className="t-mono-xs text-[var(--fg-mute)] mt-0.5">{p.desc}</div>
-                <button
-                  type="button"
-                  disabled
-                  title="Stripe checkout · coming soon"
-                  aria-label={`Purchase ${p.name} — coming soon`}
-                  className={`w-full mt-3 text-[10px] py-2 transition-colors opacity-50 cursor-not-allowed ${
-                    p.accent ? "btn btn-accent" : "btn"
-                  }`}
-                >
-                  PURCHASE · SOON
-                </button>
+                <PurchaseButton packId={p.id} packName={p.name} accent={p.accent} />
               </div>
             </article>
           ))}

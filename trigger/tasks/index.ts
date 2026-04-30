@@ -1,6 +1,7 @@
 /** Re-exports keep Trigger.dev's auto-discovery happy and consolidate import sites. */
 export { aiGenerateCopy }         from "./ai-generate-copy";
 export { aiRestyle }              from "./ai-restyle";
+export { aiTemplateSet }          from "./ai-template-set";
 export { batchTranslate, translateOne } from "./batch-translate";
 export { renderScreenshotTask }   from "./render-screenshot";
 export { uploadToAppStore }       from "./upload-to-app-store";
