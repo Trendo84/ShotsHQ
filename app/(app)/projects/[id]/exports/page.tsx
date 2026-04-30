@@ -48,7 +48,7 @@ export default async function ExportsPage({
               aria-label="Render now — coming soon"
               className="btn btn-accent flex-1 opacity-50 cursor-not-allowed"
             >
-              <RotateCw size={12} /> RENDER · SOON
+              <RotateCw size={12} /> Render · soon
             </button>
             <button
               type="button"
@@ -57,7 +57,7 @@ export default async function ExportsPage({
               aria-label="Push to App Store Connect — coming soon"
               className="btn flex-1 opacity-50 cursor-not-allowed"
             >
-              <Upload size={12} /> PUSH ASC · SOON
+              <Upload size={12} /> Push to ASC · soon
             </button>
           </div>
         </aside>
@@ -95,7 +95,7 @@ export default async function ExportsPage({
                 aria-label={`Download ${t.label} bundle — coming soon`}
                 className="btn w-full opacity-50 cursor-not-allowed"
               >
-                <Download size={12} /> DOWNLOAD · SOON
+                <Download size={12} /> Download · soon
               </button>
             </article>
           );
@@ -111,7 +111,7 @@ export default async function ExportsPage({
         <div className="px-5 sm:px-6 py-12 sm:py-16 text-center">
           <div className="t-eyebrow t-eyebrow-accent mb-2">No renders yet</div>
           <p className="t-mono-sm text-[var(--fg-mute)] max-w-md mx-auto">
-            When you click <strong>RENDER NOW</strong>, the run history streams
+            When you click <strong>Render</strong>, the run history streams
             here in real time — duration, locales, output size, status.
           </p>
         </div>

@@ -57,7 +57,7 @@ export function PurchaseButton({
           accent ? "btn btn-accent" : "btn"
         }`}
       >
-        PURCHASE · SOON
+        Purchase · soon
       </button>
     );
   }
@@ -110,8 +110,8 @@ export function PurchaseButton({
         }`}
       >
         {loading
-          ? <><Loader2 size={11} className="animate-spin" /> OPENING…</>
-          : <>PURCHASE &gt;&gt;</>}
+          ? <><Loader2 size={11} className="animate-spin" /> Opening…</>
+          : <>Purchase ›</>}
       </button>
       {error && (
         <p

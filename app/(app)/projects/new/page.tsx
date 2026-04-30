@@ -104,7 +104,7 @@ export default function NewProjectPage() {
             ))}
           </ol>
           <div className="t-mono-xs text-[var(--fg-mute)]">
-            ESTIMATED RUNTIME · 90 SECONDS · 0 CREDITS COMMITTED
+            EST · 90 SEC · 0 CR COMMITTED
           </div>
         </div>
       </div>
@@ -169,9 +169,9 @@ export default function NewProjectPage() {
               </div>
             </div>
             <div className="flex justify-between">
-              <Link href="/dashboard" className="btn">CANCEL</Link>
+              <Link href="/dashboard" className="btn">Cancel</Link>
               <Button variant="accent" onClick={() => setStep(2)} disabled={!name || !appName}>
-                NEXT &gt;&gt;
+                Next ›
               </Button>
             </div>
           </aside>
@@ -183,10 +183,11 @@ export default function NewProjectPage() {
         <section className="grid grid-cols-12 border-b border-[var(--line)]">
           <div className="col-span-12 md:col-span-8 border-r border-[var(--line)] p-6 md:p-10">
             <div className="t-eyebrow t-eyebrow-accent mb-2">Step 02 · Device targets</div>
-            <h2 className="t-display text-[clamp(1.75rem,4vw,2.25rem)] leading-[0.9]">DEVICE TARGETS</h2>
-            <p className="t-mono-sm text-[var(--fg-mute)] mt-2">
-              PICK EVERY DEVICE YOU INTEND TO EXPORT. WE'LL RENDER ALL APPLE-REQUIRED
-              SCREENSHOT DIMENSIONS AUTOMATICALLY FROM YOUR SELECTION.
+            <h2 className="t-display t-h-3">Device targets</h2>
+            <p className="t-prose text-[var(--fg-dim)] mt-2 max-w-prose">
+              Pick every device you intend to export. We&apos;ll render
+              all Apple-required screenshot dimensions automatically
+              from your selection.
             </p>
 
             <div className="mt-6">
@@ -221,9 +222,9 @@ export default function NewProjectPage() {
               )}
             </div>
             <div className="flex justify-between">
-              <Button variant="ghost" onClick={() => setStep(1)}>&lt;&lt; BACK</Button>
+              <Button variant="ghost" onClick={() => setStep(1)}>‹ Back</Button>
               <Button variant="accent" onClick={() => setStep(3)} disabled={targets.length === 0}>
-                NEXT &gt;&gt;
+                Next ›
               </Button>
             </div>
           </aside>
@@ -235,15 +236,17 @@ export default function NewProjectPage() {
         <section className="grid grid-cols-12 border-b border-[var(--line)]">
           <div className="col-span-12 md:col-span-7 border-r border-[var(--line)] p-6 md:p-10">
             <div className="t-eyebrow t-eyebrow-accent mb-2">Step 03 · Upload screens</div>
-            <h2 className="t-display text-[36px]">UPLOAD SCREENS</h2>
-            <p className="t-mono-sm text-[var(--fg-mute)] mt-2">DROP RAW iOS SCREENSHOTS BELOW. STORED DIRECT-TO-R2.</p>
+            <h2 className="t-display t-h-3">Upload screens</h2>
+            <p className="t-prose text-[var(--fg-dim)] mt-2 max-w-prose">
+              Drop raw iOS screenshots below — stored direct-to-R2.
+            </p>
 
             <div
               aria-disabled
               title="Direct upload · coming soon"
               className="mt-6 border-2 border-dashed border-[var(--line-strong)] p-8 sm:p-12 text-center min-h-[240px] sm:min-h-[280px] flex flex-col items-center justify-center opacity-60 cursor-not-allowed"
             >
-              <div className="t-display text-[28px] sm:text-[32px]">DROP HERE · SOON</div>
+              <div className="t-display text-[28px] sm:text-[32px]">Drop here · soon</div>
               <div className="t-mono-sm text-[var(--fg-mute)] mt-2">
                 .PNG · 1290×2796 · 1320×2868 · 2064×2752
               </div>
@@ -256,10 +259,10 @@ export default function NewProjectPage() {
           <aside className="col-span-12 md:col-span-5 p-6 md:p-10 flex flex-col justify-between gap-6">
             <div className="border border-[var(--line)] p-5">
               <div className="t-eyebrow t-eyebrow-accent mb-3">Ready to commission</div>
-              <p className="t-mono-sm text-[var(--fg-dim)] leading-relaxed">
-                COMMIT NOW TO CREATE THE PROJECT AND OPEN THE EDITOR. YOU
-                CAN ADD SCREENSHOTS, COPY, AND AI MODULES FROM THERE —
-                NOTHING IS CHARGED UNTIL YOU DISPATCH AN AI RUN.
+              <p className="t-prose text-[var(--fg-dim)] leading-relaxed">
+                Commit now to create the project and open the editor.
+                You can add screenshots, copy, and AI modules from there
+                — nothing is charged until you dispatch an AI run.
               </p>
               {submitError && (
                 <p role="alert" className="t-mono-xs text-[var(--accent)] mt-3 leading-tight">
@@ -269,7 +272,7 @@ export default function NewProjectPage() {
             </div>
             <div className="flex justify-between gap-3">
               <Button variant="ghost" onClick={() => setStep(2)} disabled={submitting}>
-                &lt;&lt; BACK
+                ‹ Back
               </Button>
               <Button
                 variant="accent"
@@ -278,7 +281,7 @@ export default function NewProjectPage() {
                 aria-busy={submitting}
                 title={canCommit ? undefined : "Fill in name, app name, and at least one device"}
               >
-                {submitting ? "COMMITTING…" : "COMMIT >>"}
+                {submitting ? "Committing…" : "Commit ›"}
               </Button>
             </div>
           </aside>

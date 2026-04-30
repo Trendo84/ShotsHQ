@@ -13,6 +13,7 @@
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
     "stripe:bootstrap": "tsx scripts/stripe-bootstrap.ts",
+    "stripe:smoke": "tsx scripts/stripe-smoke-test.ts",
     "seed:templates": "tsx scripts/seed-templates.ts",
     "trigger:dev": "trigger dev",
     "trigger:deploy": "trigger deploy",

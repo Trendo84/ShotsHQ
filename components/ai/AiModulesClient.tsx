@@ -7,19 +7,25 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 
 /**
- * AI dispatch client. Two modules wired end-to-end:
+ * AI dispatch client. Three modules wired end-to-end via Trigger.dev:
  *
- *   1. Copy   → POST /api/ai/generate-copy   → poll /api/ai/runs/[id]
- *   2. Backdrop → POST /api/ai/template-set  → poll /api/ai/runs/[id]
+ *   1. Copy      → POST /api/ai/generate-copy   → poll /api/ai/runs/[id]
+ *   2. Backdrop  → POST /api/ai/template-set    → poll /api/ai/runs/[id]
+ *   3. Translate → POST /api/ai/translate       → poll /api/ai/runs/[id]
  *
  * Polling is the v1 streaming strategy — Trigger.dev's realtime hook
  * (useRealtimeRun) requires a public access token issued at dispatch
  * time. Polling avoids that surface area and is fine at our cost
- * profile (~5–30s task durations, 1.5s poll interval = max ~20 reqs).
+ * profile (~5–60s task durations, 1.5s poll interval ≈ ≤40 reqs).
  *
- * Both modules surface inline errors in the result panel rather than
- * toasting — the operator sees the failure mode at the same place
- * they're looking for the success result.
+ * Translate uses the Copy module's last result as the source headline —
+ * the dispatch button stays disabled until Copy has produced output. If
+ * a user re-runs Copy, Translate output is cleared so the two stay in
+ * sync.
+ *
+ * Casing follows the rule in CLAUDE.md: button labels in Title Case,
+ * tags / micro-labels at ≤12px in ALL CAPS, descriptive copy in
+ * sentence case.
  */
 
 const LOCALES = [
@@ -30,7 +36,7 @@ const LOCALES = [
 ];
 
 const POLL_INTERVAL_MS = 1500;
-const POLL_TIMEOUT_MS  = 240_000; // 4 minutes — gpt-image-1 worst-case
+const POLL_TIMEOUT_MS  = 240_000; // 4 minutes — gpt-image-1 worst case
 
 const BACKDROP_STYLES = [
   { id: "minimal-light",     label: "Minimal · light"   },
@@ -43,22 +49,15 @@ const BACKDROP_STYLES = [
 type BackdropStyle = typeof BACKDROP_STYLES[number]["id"];
 
 type RunState =
-  | { phase: "idle";       output?: never; error?: never; runId?: never }
+  | { phase: "idle";        output?: never; error?: never; runId?: never }
   | { phase: "dispatching"; output?: never; error?: never; runId?: never }
-  | { phase: "running";    output?: never; error?: never; runId: string }
-  | { phase: "completed";  output: unknown; error?: never; runId: string }
-  | { phase: "failed";     output?: never; error: string; runId?: string };
+  | { phase: "running";     output?: never; error?: never; runId: string  }
+  | { phase: "completed";   output: unknown; error?: never; runId: string }
+  | { phase: "failed";      output?: never; error: string;  runId?: string };
 
-type CopyOutput = {
-  ok: true;
-  headline: string;
-};
-type TemplateSetOutput = {
-  ok: true;
-  url: string;
-  cost?: number;
-  newBalance?: number;
-};
+type CopyOutput        = { ok: true; headline: string };
+type TemplateSetOutput = { ok: true; url: string; cost?: number; newBalance?: number };
+type TranslateOutput   = { ok: true; results: Record<string, string>; failures: number };
 
 export function AiModulesClient({
   projectId,
@@ -85,8 +84,12 @@ export function AiModulesClient({
       });
       return;
     }
+    // Re-running copy invalidates any prior translate output — don't show
+    // translations of a now-stale headline.
+    setTranslateState({ phase: "idle" });
     setCopyState({ phase: "dispatching" });
-    const dispatch = await fetch("/api/ai/generate-copy", {
+
+    const res = await fetch("/api/ai/generate-copy", {
       method:  "POST",
       headers: { "Content-Type": "application/json" },
       body:    JSON.stringify({
@@ -97,19 +100,16 @@ export function AiModulesClient({
         locale:         "en",
       }),
     });
-    const json = await dispatch.json().catch(() => null);
-    if (!dispatch.ok || !json?.ok || !json.data?.runId) {
-      setCopyState({
-        phase: "failed",
-        error: errorMessage(dispatch.status, json?.error),
-      });
+    const json = await res.json().catch(() => null);
+    if (!res.ok || !json?.ok || !json.data?.runId) {
+      setCopyState({ phase: "failed", error: errorMessage(res.status, json?.error) });
       return;
     }
     setCopyState({ phase: "running", runId: json.data.runId });
   }
 
   // ── Backdrop module ──────────────────────────────────────────────────────
-  const [style, setStyle] = useState<BackdropStyle>("tactical-dark");
+  const [style,   setStyle]   = useState<BackdropStyle>("tactical-dark");
   const [bgState, setBgState] = useState<RunState>({ phase: "idle" });
 
   async function dispatchBackdrop() {
@@ -122,6 +122,7 @@ export function AiModulesClient({
       return;
     }
     setBgState({ phase: "dispatching" });
+
     const res = await fetch("/api/ai/template-set", {
       method:  "POST",
       headers: { "Content-Type": "application/json" },
@@ -136,46 +137,95 @@ export function AiModulesClient({
     });
     const json = await res.json().catch(() => null);
     if (!res.ok || !json?.ok || !json.data?.runId) {
-      setBgState({
-        phase: "failed",
-        error: errorMessage(res.status, json?.error),
-      });
+      setBgState({ phase: "failed", error: errorMessage(res.status, json?.error) });
       return;
     }
     setBgState({ phase: "running", runId: json.data.runId });
   }
 
-  // ── Translate module (still mocked — wires up when batch-translate is approved) ──
-  const [activeLocales, setActiveLocales] = useState<string[]>(["en"]);
+  // ── Translate module ─────────────────────────────────────────────────────
+  // Default selection drops English (the source) — picking the user's most
+  // common launch markets. They can toggle to any subset of the 41.
+  const [activeLocales, setActiveLocales] = useState<string[]>(
+    ["fr", "de", "es", "it", "ja", "ko", "zh-Hans"],
+  );
+  const [translateState, setTranslateState] = useState<RunState>({ phase: "idle" });
+
   function toggleLocale(l: string) {
+    if (l === "en") return; // source — never deselectable
     setActiveLocales((cur) => (cur.includes(l) ? cur.filter((x) => x !== l) : [...cur, l]));
+  }
+  function selectAllLocales() {
+    setActiveLocales(LOCALES.filter((l) => l !== "en"));
+  }
+  function clearLocales() {
+    setActiveLocales([]);
+  }
+
+  const sourceHeadline =
+    copyState.phase === "completed"
+      ? (copyState.output as CopyOutput | null)?.headline ?? null
+      : null;
+
+  const canTranslate =
+    sourceHeadline !== null &&
+    activeLocales.length > 0 &&
+    translateState.phase !== "dispatching" &&
+    translateState.phase !== "running";
+
+  async function dispatchTranslate() {
+    if (!canTranslate || !sourceHeadline) return;
+    setTranslateState({ phase: "dispatching" });
+
+    const res = await fetch("/api/ai/translate", {
+      method:  "POST",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify({
+        projectId,
+        source:     sourceHeadline,
+        fromLocale: "en",
+        toLocales:  activeLocales,
+        context:    [appName.trim(), category, description.trim()].filter(Boolean).join(" · "),
+      }),
+    });
+    const json = await res.json().catch(() => null);
+    if (!res.ok || !json?.ok || !json.data?.runId) {
+      setTranslateState({ phase: "failed", error: errorMessage(res.status, json?.error) });
+      return;
+    }
+    setTranslateState({ phase: "running", runId: json.data.runId });
   }
 
   // ── Poll runs ───────────────────────────────────────────────────────────
-  useRunPoller(copyState, setCopyState);
-  useRunPoller(bgState,   setBgState);
+  useRunPoller(copyState,      setCopyState);
+  useRunPoller(bgState,        setBgState);
+  useRunPoller(translateState, setTranslateState);
 
-  // ── Render ───────────────────────────────────────────────────────────────
+  // ── Queue counter ───────────────────────────────────────────────────────
+  const activeCount =
+    (isInFlight(copyState)      ? 1 : 0) +
+    (isInFlight(bgState)        ? 1 : 0) +
+    (isInFlight(translateState) ? 1 : 0);
+
   return (
     <>
       <div className="grid grid-cols-12 border-b-2 border-[var(--line-strong)]">
         <div className="col-span-12 md:col-span-7 border-r border-[var(--line)] p-6 md:p-10">
           <div className="t-eyebrow t-eyebrow-accent mb-2">Project · AI modules</div>
-          <h1 className="t-display text-[clamp(2.25rem,5.5vw,4.5rem)] leading-[0.92] text-balance">
-            AI<br />modules
+          <h1 className="t-display t-h-2 text-balance">
+            Three modules. One credit ledger.
           </h1>
         </div>
         <aside className="col-span-12 md:col-span-5 p-5 sm:p-6 md:p-10 grid grid-cols-2 gap-3 content-end border-t md:border-t-0 border-[var(--line)]">
           <div className="border border-[var(--line)] p-3 sm:p-4">
             <div className="t-mono-xs text-[var(--fg-mute)]">MODELS</div>
-            <div className="t-display text-[clamp(1.5rem,3vw,2.25rem)] t-numeric mt-1 leading-none">2</div>
-            <div className="t-mono-xs text-[var(--fg-mute)] mt-1">copy + image</div>
+            <div className="t-display text-[clamp(1.5rem,3vw,2.25rem)] t-numeric mt-1 leading-none">3</div>
+            <div className="t-mono-xs text-[var(--fg-mute)] mt-1">copy · image · translate</div>
           </div>
           <div className="border border-[var(--line)] p-3 sm:p-4">
             <div className="t-mono-xs text-[var(--fg-mute)]">QUEUE</div>
             <div className="t-display text-[clamp(1.5rem,3vw,2.25rem)] t-numeric mt-1 leading-none">
-              {(copyState.phase === "running" || copyState.phase === "dispatching" ? 1 : 0) +
-               (bgState.phase === "running"  || bgState.phase === "dispatching"  ? 1 : 0)}
+              {activeCount}
             </div>
             <div className="t-mono-xs text-[var(--fg-mute)] mt-1">active runs</div>
           </div>
@@ -189,9 +239,7 @@ export function AiModulesClient({
             <div className="t-eyebrow t-eyebrow-accent">Module · Copy</div>
             <Badge variant="warn">1 cr / gen</Badge>
           </div>
-          <h2 className="t-display text-[clamp(1.5rem,3vw,2.25rem)] leading-[0.95] mb-4">
-            Headline generator
-          </h2>
+          <h2 className="t-display t-h-3 mb-4">Headline generator</h2>
           <Label htmlFor="ai-app-name">App name</Label>
           <input
             id="ai-app-name"
@@ -211,17 +259,18 @@ export function AiModulesClient({
           <div className="mt-4 flex gap-3 items-center flex-wrap">
             <Button
               variant="accent"
-              disabled={copyState.phase === "dispatching" || copyState.phase === "running"}
+              disabled={isInFlight(copyState)}
+              aria-busy={isInFlight(copyState)}
               onClick={dispatchCopy}
             >
               {copyState.phase === "dispatching"
-                ? "▸ DISPATCHING…"
+                ? "Dispatching…"
                 : copyState.phase === "running"
-                ? "▸ STREAMING…"
-                : "▸ DISPATCH GPT-5 · 1 CR"}
+                ? "Streaming…"
+                : "Dispatch · GPT-5 · 1 cr"}
             </Button>
             <span className="t-mono-xs text-[var(--fg-mute)]">
-              SCHEMA · HeadlineSchema · ZOD · MAX 40CH
+              SCHEMA · HEADLINESCHEMA · ZOD · MAX 40CH
             </span>
           </div>
 
@@ -234,7 +283,7 @@ export function AiModulesClient({
               return (
                 <div className="mt-4 space-y-3">
                   <div>
-                    <div className="t-mono-xs text-[var(--fg-mute)]">HEADLINE</div>
+                    <div className="t-mono-xs text-[var(--fg-mute)]">HEADLINE · EN</div>
                     <div className="t-display text-[36px] leading-[0.85] mt-1">{o.headline}</div>
                   </div>
                 </div>
@@ -247,7 +296,7 @@ export function AiModulesClient({
           <div className="t-eyebrow t-eyebrow-accent mb-3">Job queue</div>
           <div className="border border-dashed border-[var(--line-strong)] p-5 sm:p-6 text-center">
             <div className="t-mono-xs text-[var(--fg-mute)] mb-2">
-              {copyState.phase === "running" || bgState.phase === "running" ? "ACTIVE" : "QUEUE EMPTY"}
+              {activeCount > 0 ? "ACTIVE" : "QUEUE EMPTY"}
             </div>
             <p className="t-mono-sm text-[var(--fg-dim)] leading-relaxed">
               Dispatched jobs run on Trigger.dev. Failed runs auto-refund credits.
@@ -263,9 +312,7 @@ export function AiModulesClient({
             <div className="t-eyebrow t-eyebrow-accent">Module · Backdrop</div>
             <Badge variant="warn">8 cr / gen</Badge>
           </div>
-          <h2 className="t-display text-[clamp(1.5rem,3vw,2.25rem)] leading-[0.95] mb-4">
-            Template set · gpt-image-1
-          </h2>
+          <h2 className="t-display t-h-3 mb-4">Template set · gpt-image-1</h2>
           <Label className="block mb-2">Style</Label>
           <div role="radiogroup" aria-label="Backdrop style" className="grid grid-cols-2 sm:grid-cols-3 gap-1">
             {BACKDROP_STYLES.map((s) => {
@@ -291,17 +338,18 @@ export function AiModulesClient({
           <div className="mt-4 flex gap-3 items-center flex-wrap">
             <Button
               variant="accent"
-              disabled={bgState.phase === "dispatching" || bgState.phase === "running"}
+              disabled={isInFlight(bgState)}
+              aria-busy={isInFlight(bgState)}
               onClick={dispatchBackdrop}
             >
               {bgState.phase === "dispatching"
-                ? "▸ DISPATCHING…"
+                ? "Dispatching…"
                 : bgState.phase === "running"
-                ? "▸ RENDERING…"
-                : "▸ DISPATCH gpt-image-1 · 8 CR"}
+                ? "Rendering…"
+                : "Dispatch · gpt-image-1 · 8 cr"}
             </Button>
             <span className="t-mono-xs text-[var(--fg-mute)]">
-              1536×1024 · 6-frame composition
+              1536×1024 · 6-FRAME COMPOSITION
             </span>
           </div>
 
@@ -346,46 +394,128 @@ export function AiModulesClient({
         </aside>
       </section>
 
-      {/* ── Translate module (still preview) ──────────────────────────────── */}
+      {/* ── Translate module ──────────────────────────────────────────────── */}
       <section id="i18n" className="grid grid-cols-12 border-b-2 border-[var(--line-strong)]">
         <div className="col-span-12 md:col-span-5 border-r border-[var(--line)] p-6 md:p-10">
           <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
-            <div className="t-mono-xs text-[var(--accent)]">[ MODULE / TRANSLATE ]</div>
-            <Badge variant="warn">1 CR / LOC</Badge>
+            <div className="t-eyebrow t-eyebrow-accent">Module · Translate</div>
+            <Badge variant="warn">1 cr / locale</Badge>
           </div>
-          <h2 className="t-display text-[clamp(1.75rem,4vw,2.5rem)] leading-[0.9] mb-4">
-            41-locale<br />fan-out
-          </h2>
-          <p className="t-mono-sm text-[var(--fg-mute)] leading-relaxed">
-            Each selected locale dispatches in parallel via Trigger.dev
-            batch. Auto-relayout for de/jp/ar/he. Generate the headline
-            first — translate runs against the saved English copy.
+          <h2 className="t-display t-h-3 mb-4">41-locale fan-out</h2>
+          <p className="t-prose text-[var(--fg-dim)] leading-relaxed">
+            Each selected locale dispatches in parallel via a Trigger.dev
+            batch. Auto-relayout for de · ja · ar · he. Translate runs
+            against your latest English headline — generate that first.
           </p>
-          <div className="mt-6 t-mono-xs text-[var(--fg-mute)]">
-            SELECTED · {activeLocales.length} OF {LOCALES.length}
+
+          {sourceHeadline && (
+            <div className="mt-5 border border-[var(--line)] p-3 bg-[var(--bg-2)]">
+              <div className="t-mono-xs text-[var(--fg-mute)] mb-1">SOURCE · EN</div>
+              <div className="text-[14px] text-[var(--fg)] leading-snug truncate">
+                {sourceHeadline}
+              </div>
+            </div>
+          )}
+
+          <div className="mt-4 flex items-center justify-between gap-2 flex-wrap">
+            <span className="t-mono-xs text-[var(--fg-mute)]">
+              SELECTED · {activeLocales.length} OF {LOCALES.length - 1}
+            </span>
+            <span className="t-mono-xs text-[var(--fg-mute)] flex items-center gap-2">
+              <button
+                type="button"
+                onClick={selectAllLocales}
+                className="hover:text-[var(--fg)] underline underline-offset-2 decoration-[var(--line-strong)] hover:decoration-[var(--accent)]"
+              >
+                ALL
+              </button>
+              <span className="opacity-40">·</span>
+              <button
+                type="button"
+                onClick={clearLocales}
+                className="hover:text-[var(--fg)] underline underline-offset-2 decoration-[var(--line-strong)] hover:decoration-[var(--accent)]"
+              >
+                CLEAR
+              </button>
+            </span>
           </div>
+
           <Button
             variant="accent"
-            disabled
-            title="Translate dispatch · coming soon"
-            aria-label="Dispatch translate — coming soon"
-            className="mt-3 w-full opacity-50 cursor-not-allowed"
+            disabled={!canTranslate}
+            aria-busy={isInFlight(translateState)}
+            onClick={dispatchTranslate}
+            title={
+              !sourceHeadline
+                ? "Generate a headline above first."
+                : activeLocales.length === 0
+                ? "Pick at least one locale."
+                : undefined
+            }
+            className="mt-3 w-full"
           >
-            ▸ DISPATCH × {activeLocales.length} · {activeLocales.length} CR · SOON
+            {translateState.phase === "dispatching"
+              ? "Dispatching…"
+              : translateState.phase === "running"
+              ? `Translating × ${activeLocales.length}…`
+              : !sourceHeadline
+              ? "Generate a headline first"
+              : `Dispatch × ${activeLocales.length} · ${activeLocales.length} cr`}
           </Button>
+
+          <RunPanel
+            label="Translate run"
+            state={translateState}
+            renderResult={(output) => {
+              const o = output as TranslateOutput | null;
+              if (!o?.results) return null;
+              const entries = Object.entries(o.results);
+              return (
+                <div className="mt-4 space-y-2 max-h-[320px] overflow-y-auto">
+                  {entries.map(([locale, text]) => (
+                    <div
+                      key={locale}
+                      className="grid grid-cols-[60px_1fr] gap-3 items-baseline border-b border-[var(--line)] pb-2 last:border-b-0"
+                    >
+                      <span className="t-mono-xs text-[var(--accent)] uppercase tracking-[0.14em]">
+                        {locale}
+                      </span>
+                      <span
+                        className="text-[14px] text-[var(--fg)] leading-snug"
+                        // ar / he need rtl flow; everything else inherits ltr
+                        dir={locale === "ar" || locale === "he" || locale === "fa" ? "rtl" : "ltr"}
+                      >
+                        {text}
+                      </span>
+                    </div>
+                  ))}
+                  {o.failures > 0 && (
+                    <p className="t-mono-xs text-[var(--accent)] pt-2">
+                      {o.failures} locale{o.failures === 1 ? "" : "s"} failed — credits refunded automatically.
+                    </p>
+                  )}
+                </div>
+              );
+            }}
+          />
         </div>
         <div className="col-span-12 md:col-span-7 p-6 md:p-10">
           <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-7 gap-1">
             {LOCALES.map((l) => {
-              const active = activeLocales.includes(l);
+              const isSource = l === "en";
+              const active   = activeLocales.includes(l);
               return (
                 <button
                   key={l}
                   type="button"
                   onClick={() => toggleLocale(l)}
                   aria-pressed={active}
-                  className={`t-mono-xs uppercase px-2 py-2 border transition-colors ${
-                    active
+                  disabled={isSource}
+                  title={isSource ? "Source locale — always included" : undefined}
+                  className={`t-mono-xs uppercase px-2 py-2 border transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)] ${
+                    isSource
+                      ? "border-[var(--line-strong)] bg-[var(--bg-2)] text-[var(--fg-mute)] cursor-default"
+                      : active
                       ? "border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-fg)]"
                       : "border-[var(--line)] text-[var(--fg-mute)] hover:border-[var(--accent)] hover:text-[var(--fg)]"
                   }`}
@@ -399,6 +529,12 @@ export function AiModulesClient({
       </section>
     </>
   );
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function isInFlight(s: RunState): boolean {
+  return s.phase === "dispatching" || s.phase === "running";
 }
 
 // ── Run polling hook ──────────────────────────────────────────────────────────
@@ -459,7 +595,7 @@ function useRunPoller(
         if (Date.now() - (startedAt.current ?? 0) > POLL_TIMEOUT_MS) {
           setState({
             phase: "failed",
-            error: "Timed out waiting for the run. Check Trigger.dev dashboard.",
+            error: "Timed out waiting for the run. Check the Trigger.dev dashboard.",
             runId: state.runId,
           });
           return;
@@ -529,9 +665,10 @@ function RunPanel({
           {state.phase === "failed"      && "✕ FAILED"}
         </span>
       </div>
-      {/* Indeterminate bar — we don't get progress percentages from gpt-image-1.
-         A pulsing accent stripe at idle width tells the user something's
-         happening without lying about how close to done we are. */}
+      {/* Indeterminate bar — we don't get progress percentages from
+         gpt-image-1 / GPT-5 / batch-translate. A pulsing accent stripe
+         tells the user something's happening without lying about
+         how close to done we are. */}
       {isRunning && (
         <div className="mt-2 h-1 bg-[var(--bg-2)] relative overflow-hidden">
           <div className="absolute inset-y-0 left-0 w-1/3 bg-[var(--accent)] animate-[ai-shimmer_1400ms_linear_infinite]" />
@@ -545,7 +682,7 @@ function RunPanel({
   );
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// ── Error helpers ─────────────────────────────────────────────────────────────
 
 function errorMessage(httpStatus: number, code?: string): string {
   if (code === "insufficient_credits") return "Not enough credits. Top up in Billing.";
