@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { isConstructionMode } from "@/lib/construction";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://shotshq.com";
 
@@ -11,6 +12,8 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://shotshq.com";
  * If we move docs to MDX/CMS, this file gets a dynamic loader.
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  if (isConstructionMode()) return [];
+
   const lastModified = new Date();
 
   const staticRoutes: MetadataRoute.Sitemap = [

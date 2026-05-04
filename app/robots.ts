@@ -1,8 +1,16 @@
 import type { MetadataRoute } from "next";
+import { isConstructionMode } from "@/lib/construction";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://shotshq.com";
 
 export default function robots(): MetadataRoute.Robots {
+  if (isConstructionMode()) {
+    return {
+      rules: [{ userAgent: "*", disallow: "/" }],
+      host: APP_URL,
+    };
+  }
+
   return {
     rules: [
       {

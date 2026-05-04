@@ -1,5 +1,11 @@
 import { NextResponse } from "next/server";
+import type { NextFetchEvent, NextRequest } from "next/server";
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import {
+  CONSTRUCTION_COOKIE,
+  hasConstructionAccess,
+  isConstructionMode,
+} from "@/lib/construction";
 
 const HAS_CLERK = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
 
@@ -42,10 +48,42 @@ const protectedMiddleware = clerkMiddleware(async (auth, req) => {
 
 // Without Clerk keys, run the app as a no-auth public preview so the
 // marketing + UI scaffold can be browsed without provisioning.
-const noopMiddleware = () => NextResponse.next();
+const noopMiddleware = (_req: NextRequest, _event: NextFetchEvent) => NextResponse.next();
 
 const middleware = HAS_CLERK ? protectedMiddleware : noopMiddleware;
-export default IS_E2E_BYPASS ? noopMiddleware : middleware;
+
+function constructionGate(req: NextRequest) {
+  if (!isConstructionMode()) return null;
+
+  const { pathname } = req.nextUrl;
+
+  if (
+    pathname === "/under-construction" ||
+    pathname === "/robots.txt" ||
+    pathname === "/sitemap.xml" ||
+    pathname.startsWith("/api/") ||
+    pathname.startsWith("/trpc")
+  ) {
+    return null;
+  }
+
+  if (hasConstructionAccess(req.cookies.get(CONSTRUCTION_COOKIE)?.value)) {
+    return null;
+  }
+
+  const url = req.nextUrl.clone();
+  url.pathname = "/under-construction";
+  url.searchParams.set("next", pathname + req.nextUrl.search);
+  return NextResponse.redirect(url);
+}
+
+export default function proxy(req: NextRequest, event: NextFetchEvent) {
+  const constructionResponse = constructionGate(req);
+  if (constructionResponse) return constructionResponse;
+
+  if (IS_E2E_BYPASS) return noopMiddleware(req, event);
+  return middleware(req, event);
+}
 
 export const config = {
   matcher: [
