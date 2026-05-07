@@ -39,7 +39,12 @@ export default defineConfig({
         reuseExistingServer: !process.env.CI,
         timeout: 120_000,
         env: {
-          NEXT_PUBLIC_E2E: "1",
+          NEXT_PUBLIC_E2E:           "1",
+          // The marketing "Under Construction" gate (lib/construction.ts)
+          // is on by default. E2E tests bypass it via the same explicit
+          // opt-out env var operators flip when previewing internally —
+          // we don't carry the construction cookie around.
+          SHOTSHQ_CONSTRUCTION_MODE: "0",
         },
       },
 });

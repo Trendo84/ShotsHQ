@@ -8,6 +8,7 @@ import { Input, Textarea } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { DevicePicker } from "@/components/devices/DevicePicker";
+import { CaptureDropzone } from "@/components/capture/CaptureDropzone";
 import { DEFAULT_PROJECT_DEVICES, DEVICES_BY_ID } from "@/lib/devices/catalog";
 import { TEMPLATES_BY_SLUG } from "@/lib/templates/catalog";
 
@@ -40,7 +41,7 @@ const STEP_META: Record<StepNum, { eyebrow: string; title: [string, string]; bod
   3: {
     eyebrow: "Step 03 · Upload screens",
     title:   ["Drop your", "screens."],
-    body:    "Raw iOS screenshots stored direct-to-R2. You'll add them from inside the editor in v1 — commit now to open the editor.",
+    body:    "Raw iOS screenshots stored direct-to-R2. We auto-bucket each PNG by dimension into the right device slot — no labelling required.",
   },
 };
 
@@ -76,12 +77,18 @@ export default function NewProjectPage() {
   );
   const [targets, setTargets] = useState<string[]>(DEFAULT_PROJECT_DEVICES);
 
-  // Step 3 (raw screenshot upload to R2) is intentionally a preview —
-  // direct-to-R2 presigned URLs land in the next pass. The COMMIT button
-  // creates the project record now and routes into the editor; the user
-  // can drop screenshots from inside the editor when that ships.
+  // Step 3 wires the CaptureDropzone (drag-drop screen intake) once
+  // the project has been created. Two phases:
+  //   - Pre-commit: COMMIT creates the project, returns its id, holds
+  //     the user on Step 3 (no longer redirects). User can then drop
+  //     screens directly into the dropzone.
+  //   - Post-capture: dropzone returns `{inserted, skipped}`; we show
+  //     a "→ Open editor" CTA. Skip-with-no-screens is also valid;
+  //     the editor accepts an empty frame manifest.
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [createdProjectId, setCreatedProjectId] = useState<string | null>(null);
+  const [captureSummary, setCaptureSummary] = useState<{ inserted: number; skipped: number } | null>(null);
 
   const canCommit = name.trim().length > 0 && appName.trim().length > 0 && targets.length > 0;
 
@@ -117,7 +124,12 @@ export default function NewProjectPage() {
         setSubmitting(false);
         return;
       }
-      router.push(`/projects/${json.data.id}`);
+      // Hold the user on Step 3 with the dropzone primed. Routing to
+      // the editor moves to the explicit CTA after capture (or the
+      // "Skip → Open editor" affordance for users who want to add
+      // screens later from inside the editor).
+      setCreatedProjectId(json.data.id);
+      setSubmitting(false);
     } catch (err) {
       console.error("[projects.new] network failure", err);
       setSubmitError("Network error — please retry.");
@@ -307,32 +319,66 @@ export default function NewProjectPage() {
             <div className="t-eyebrow t-eyebrow-accent mb-2">Step 03 · Upload screens</div>
             <h2 className="t-display t-h-3">Upload screens</h2>
             <p className="t-prose text-[var(--fg-dim)] mt-2 max-w-prose">
-              Drop raw iOS screenshots below — stored direct-to-R2.
+              {createdProjectId
+                ? "Drop raw iOS screenshots below — we read each PNG's dimensions and bucket them into the right device slot automatically."
+                : "Commit the project metadata first, then drop screenshots directly into R2 from this step."}
             </p>
 
-            <div
-              aria-disabled
-              title="Direct upload · coming soon"
-              className="mt-6 border-2 border-dashed border-[var(--line)] p-8 sm:p-12 text-center min-h-[240px] sm:min-h-[280px] flex flex-col items-center justify-center opacity-50 cursor-not-allowed"
-            >
-              <div className="t-display text-[28px] sm:text-[32px]">Drop here <span className="text-[var(--fg-mute)]/70">· soon</span></div>
-              <div className="t-mono-sm text-[var(--fg-mute)] mt-2">
-                .PNG · 1290×2796 · 1320×2868 · 2064×2752
-              </div>
-              <div className="hazard h-2 w-full mt-6" aria-hidden />
-              <div className="t-mono-xs text-[var(--fg-mute)] mt-4">
-                You&apos;ll drop screens from inside the editor in v1.
-              </div>
+            <div className="mt-6">
+              {createdProjectId ? (
+                <CaptureDropzone
+                  projectId={createdProjectId}
+                  onComplete={(r) => setCaptureSummary(r)}
+                />
+              ) : (
+                <div
+                  aria-disabled
+                  title="Commit the project to enable the dropzone"
+                  className="border-2 border-dashed border-[var(--line)] p-8 sm:p-12 text-center min-h-[240px] sm:min-h-[280px] flex flex-col items-center justify-center opacity-50"
+                >
+                  <div className="t-display text-[28px] sm:text-[32px]">Drop here.</div>
+                  <div className="t-mono-sm text-[var(--fg-mute)] mt-2">
+                    .PNG · 1290×2796 · 1320×2868 · 2064×2752
+                  </div>
+                  <div className="t-mono-xs text-[var(--fg-mute)] mt-4">
+                    Commit metadata to enable upload.
+                  </div>
+                </div>
+              )}
             </div>
           </div>
           <aside className="col-span-12 md:col-span-5 p-6 md:p-10 flex flex-col justify-between gap-6">
             <div className="border border-[var(--line)] p-5">
-              <div className="t-eyebrow t-eyebrow-accent mb-3">Ready to commission</div>
-              <p className="t-prose text-[var(--fg-dim)] leading-relaxed">
-                Commit now to create the project and open the editor.
-                You can add screenshots, copy, and AI modules from there
-                — nothing is charged until you dispatch an AI run.
-              </p>
+              <div className="t-eyebrow t-eyebrow-accent mb-3">
+                {createdProjectId ? "Project committed" : "Ready to commission"}
+              </div>
+              {!createdProjectId ? (
+                <p className="t-prose text-[var(--fg-dim)] leading-relaxed">
+                  Commit now to create the project. Once committed, the
+                  dropzone activates — drop a folder of PNGs and we
+                  auto-bucket by dimension. Nothing is charged until you
+                  dispatch an AI run.
+                </p>
+              ) : (
+                <>
+                  <dl className="dl-rule">
+                    <div><dt>PROJECT</dt><dd className="truncate">{name || appName || "—"}</dd></div>
+                    {captureSummary && (
+                      <>
+                        <div><dt>UPLOADED</dt><dd className="tabular-nums">{captureSummary.inserted}</dd></div>
+                        {captureSummary.skipped > 0 && (
+                          <div><dt>SKIPPED</dt><dd className="tabular-nums text-[var(--fg-mute)]">{captureSummary.skipped} (dupes)</dd></div>
+                        )}
+                      </>
+                    )}
+                  </dl>
+                  <p className="t-mono-xs text-[var(--fg-mute)] mt-3 leading-relaxed">
+                    {captureSummary
+                      ? "Open the editor to compose your first screenshot set."
+                      : "Drop your screens or skip — you can always upload more from inside the editor."}
+                  </p>
+                </>
+              )}
               {submitError && (
                 <p role="alert" className="t-mono-xs text-[var(--accent)] mt-3 leading-tight">
                   {submitError}
@@ -340,18 +386,27 @@ export default function NewProjectPage() {
               )}
             </div>
             <div className="flex justify-between gap-3">
-              <Button variant="ghost" onClick={() => setStep(2)} disabled={submitting}>
+              <Button variant="ghost" onClick={() => setStep(2)} disabled={submitting || !!createdProjectId}>
                 ‹ Back
               </Button>
-              <Button
-                variant="accent"
-                onClick={commit}
-                disabled={submitting || !canCommit}
-                aria-busy={submitting}
-                title={canCommit ? undefined : "Fill in name, app name, and at least one device"}
-              >
-                {submitting ? "Committing…" : "Commit ›"}
-              </Button>
+              {!createdProjectId ? (
+                <Button
+                  variant="accent"
+                  onClick={commit}
+                  disabled={submitting || !canCommit}
+                  aria-busy={submitting}
+                  title={canCommit ? undefined : "Fill in name, app name, and at least one device"}
+                >
+                  {submitting ? "Committing…" : "Commit ›"}
+                </Button>
+              ) : (
+                <Button
+                  variant="accent"
+                  onClick={() => router.push(`/projects/${createdProjectId}`)}
+                >
+                  {captureSummary ? "Open editor →" : "Skip → Open editor"}
+                </Button>
+              )}
             </div>
           </aside>
         </section>

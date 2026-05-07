@@ -39,13 +39,26 @@ test.describe("New project wizard navigation", () => {
     // Step 2 → 3
     await page.getByRole("button", { name: /^Next/ }).click();
     await expect(page.getByText(/Step 03 · Upload screens/).first()).toBeVisible();
-    await expect(page.getByText(/Drop here · soon/)).toBeVisible();
+    // Capture v1.1: prior "Drop here · soon" placeholder is gone.
+    // The dropzone is the actual feature now — disabled until the
+    // project is committed (no projectId yet), enabled afterwards.
+    await expect(page.getByText(/Drop here\./).first()).toBeVisible();
+    await expect(page.getByText(/Commit metadata to enable upload/)).toBeVisible();
 
-    // Commit should redirect to the project page.
+    // Commit creates the project but does NOT redirect — it activates
+    // the dropzone so the user can drop screens directly. The user
+    // then clicks "Skip → Open editor" (or "Open editor →" after
+    // capture) to navigate.
     const commit = page.getByRole("button", { name: /^Commit/ });
+    await commit.click();
+    await expect(
+      page.getByRole("button", { name: /Open editor/ }),
+    ).toBeVisible({ timeout: 15_000 });
+
+    // Now click into the editor.
     await Promise.all([
       page.waitForURL(/\/projects\/[a-f0-9-]+(?:\/.*)?$/, { timeout: 15_000 }),
-      commit.click(),
+      page.getByRole("button", { name: /Open editor/ }).click(),
     ]);
   });
 
