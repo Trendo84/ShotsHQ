@@ -59,3 +59,8 @@ export function slug(s: string): string {
 export function exportName(projectName: string, deviceLabel: string): string {
   return `${slug(projectName)}-${slug(deviceLabel)}.png`;
 }
+
+export function seqName(index: number, deviceId: string, projectName: string): string {
+  const n = String(index).padStart(2, "0");
+  return `${n}-${slug(deviceId)}-${slug(projectName)}.png`;
+}

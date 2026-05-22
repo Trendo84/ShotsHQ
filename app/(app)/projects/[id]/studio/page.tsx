@@ -3,13 +3,13 @@ import { Topbar } from "@/components/app/Topbar";
 import { StudioClient } from "@/components/studio/StudioClient";
 import { requireUser } from "@/lib/auth/clerk";
 import { getProject } from "@/lib/db/queries/projects";
-import { extractStudioDesign } from "@/lib/studio/schema";
+import { extractStudioDesignSet } from "@/lib/studio/schema";
 
 /**
  * ShotsHQ Studio — ASOForge-style constrained screenshot engine.
  *
- * Phase B: studio state is now loaded from and persisted back into the
- * existing project JSON payload in a backward-compatible way.
+ * Phase C: ordered panel set with filmstrip, reordering, duplication,
+ * deletion, and bulk export naming.
  */
 export default async function ProjectStudioPage({
   params,
@@ -21,7 +21,7 @@ export default async function ProjectStudioPage({
   const project = await getProject(id, user.id);
   if (!project) notFound();
 
-  const initialStudio = extractStudioDesign(project.polotnoJson);
+  const initialStudio = extractStudioDesignSet(project.polotnoJson);
 
   return (
     <>

@@ -3,9 +3,8 @@ import type { DeviceId } from "@/lib/canvas/schema";
 /**
  * ASOForge-style constrained screenshot studio for ShotsHQ.
  *
- * Phase A goal: prove a stronger creative engine can live beside the
- * existing Fabric editor. This file is pure data/types so the preview,
- * export math, and future server renderer all read from the same model.
+ * Phase C upgrades the model from one editable design to an ordered set of
+ * panels (the real unit of an App Store screenshot pack).
  */
 
 export type StudioDeviceSize = {
@@ -171,6 +170,7 @@ export const THEME_PRESETS: readonly ThemePreset[] = [
 ] as const;
 
 export type StudioDesign = {
+  panelId: string;
   headline: string;
   subhead: string;
   headlineSize: number;
@@ -189,6 +189,16 @@ export type StudioDesign = {
   deviceId: DeviceId;
   frameId: string;
 };
+
+export type StudioDesignSet = {
+  version: "2";
+  activePanelId: string;
+  panels: StudioDesign[];
+};
+
+export function nextPanelId(): string {
+  return `panel-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+}
 
 export function deviceById(id: DeviceId): StudioDeviceSize {
   return DEVICE_SIZES.find((d) => d.id === id) ?? DEVICE_SIZES[0]!;
@@ -225,6 +235,7 @@ export function defaultStudioDesign(deviceId: DeviceId = DEFAULT_DEVICE_ID): Stu
   const theme = THEME_PRESETS[0]!;
   const frame = defaultFrameForDevice(deviceId);
   return {
+    panelId: nextPanelId(),
     headline: "Ship App Store\nscreenshots faster.",
     subhead: "Constrained layout. Exact export dims. Stronger than a blank canvas.",
     headlineSize: 34,
@@ -242,5 +253,21 @@ export function defaultStudioDesign(deviceId: DeviceId = DEFAULT_DEVICE_ID): Stu
     screenshotRemote: false,
     deviceId,
     frameId: frame.id,
+  };
+}
+
+export function cloneStudioDesign(panel: StudioDesign): StudioDesign {
+  return {
+    ...panel,
+    panelId: nextPanelId(),
+  };
+}
+
+export function defaultStudioDesignSet(deviceId: DeviceId = DEFAULT_DEVICE_ID): StudioDesignSet {
+  const panel = defaultStudioDesign(deviceId);
+  return {
+    version: "2",
+    activePanelId: panel.panelId,
+    panels: [panel],
   };
 }
