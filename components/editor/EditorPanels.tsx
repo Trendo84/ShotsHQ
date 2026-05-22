@@ -3,10 +3,52 @@
 import { useState } from "react";
 import { Type, Smartphone, Image as ImageIcon, Layers, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
-import { CURRENT_DEVICES, groupByFamily } from "@/lib/devices/catalog";
+import { CURRENT_DEVICES, groupByFamily, DEVICES_BY_ID } from "@/lib/devices/catalog";
+import { findStoreTargetByDimensions } from "@/lib/utils/store-dimensions";
 import { DeviceTile } from "@/components/devices/DeviceTile";
-import type { ShotsBackground, TextRole } from "@/lib/canvas/schema";
+import type { DeviceId, ShotsBackground, TextRole } from "@/lib/canvas/schema";
 import type { LayerSummary } from "./FabricCanvas";
+
+/**
+ * Catalog device IDs are marketing names ("iphone-17-pro-max"), but the
+ * persisted canvas schema only knows three storeTarget enum values
+ * (iphone_69 / iphone_67 / ipad_13). Map between them at the picker
+ * boundary so the panel can render the rich catalog while the canvas
+ * stays in the locked App Store dimension classes.
+ *
+ * The mapping is **data-driven**: we look at the catalog device's
+ * Apple-required screenshot dim and find which storeTarget that dim
+ * belongs to. So iPhone 17 Pro Max (required 1320×2868) → iphone_67;
+ * iPhone 16 Pro Max (required 1290×2796) → iphone_69; every iPad
+ * (required 2064×2752) → ipad_13. SE 3 at 1242×2208 doesn't match any
+ * locked class — we fall back to the family default. Audit P1-6.
+ */
+function storeTargetForCatalogId(catalogId: string): DeviceId {
+  const d = DEVICES_BY_ID[catalogId];
+  if (!d) return "iphone_69";
+
+  const required = d.screenshotDims.find((dim) => dim.required) ?? d.screenshotDims[0];
+  if (required) {
+    const target = findStoreTargetByDimensions({ width: required.w, height: required.h });
+    if (target) return target;
+  }
+  // Catalog device with no matching locked-class dim (e.g. legacy SE) —
+  // fall back to the family's canonical class.
+  return d.family === "ipad" ? "ipad_13" : "iphone_69";
+}
+
+/**
+ * For the panel UI: given the persisted storeTarget enum, find the
+ * "default representative" catalog ID to highlight. We pick the
+ * highest-tier current-generation device that maps to that class.
+ */
+function defaultCatalogIdForStoreTarget(target: DeviceId): string {
+  switch (target) {
+    case "ipad_13":   return "ipad-pro-13-m4";
+    case "iphone_67": return "iphone-16-plus";
+    case "iphone_69": return "iphone-17-pro-max";
+  }
+}
 
 const PANELS = [
   { id: "frame",      label: "DEVICE FRAME", icon: Smartphone, code: "01" },
@@ -17,6 +59,10 @@ const PANELS = [
 ];
 
 type LeftPanelProps = {
+  /** Currently-active device class for the canvas. Drives FramePanel selection. */
+  currentDevice?:   DeviceId;
+  /** Called when the user picks a different device from FramePanel. */
+  onChangeDevice?:  (device: DeviceId) => void;
   onAddText?:        (role: TextRole) => void;
   onSetBackground?:  (bg: ShotsBackground) => void;
   /** Live ordered layer list from the Fabric canvas — top of stack first. */
@@ -28,6 +74,8 @@ type LeftPanelProps = {
 };
 
 export function LeftPanel({
+  currentDevice,
+  onChangeDevice,
   onAddText,
   onSetBackground,
   layers,
@@ -62,7 +110,12 @@ export function LeftPanel({
         })}
       </div>
       <div className="flex-1 overflow-y-auto p-4">
-        {active === "frame"      && <FramePanel />}
+        {active === "frame"      && (
+          <FramePanel
+            currentDevice={currentDevice ?? "iphone_69"}
+            onChangeDevice={onChangeDevice}
+          />
+        )}
         {active === "background" && <BackgroundPanel onSetBackground={onSetBackground} />}
         {active === "text"       && <TextPanel onAddText={onAddText} />}
         {active === "layers"     && (
@@ -80,11 +133,34 @@ export function LeftPanel({
   );
 }
 
-function FramePanel() {
-  const [selected, setSelected] = useState<string>("iphone-17-pro-max");
-  const [activeFamily, setActiveFamily] = useState<"iphone" | "ipad">("iphone");
+function FramePanel({
+  currentDevice,
+  onChangeDevice,
+}: {
+  currentDevice: DeviceId;
+  onChangeDevice?: (device: DeviceId) => void;
+}) {
+  // The visually-highlighted tile mirrors the canvas's actual storeTarget.
+  // When the user clicks a different tile, we map back to a storeTarget and
+  // call up to the editor shell — which runs `migrateCanvasToDevice` and
+  // remounts the Fabric canvas. Without this round-trip, the prior
+  // implementation's local-only `setSelected` was a UI lie. Audit P1-6.
+  const [selectedCatalogId, setSelectedCatalogId] = useState<string>(
+    defaultCatalogIdForStoreTarget(currentDevice),
+  );
+  const [activeFamily, setActiveFamily] = useState<"iphone" | "ipad">(
+    currentDevice === "ipad_13" ? "ipad" : "iphone",
+  );
   const grouped = groupByFamily(CURRENT_DEVICES);
   const list = grouped[activeFamily];
+
+  function pickDevice(catalogId: string) {
+    setSelectedCatalogId(catalogId);
+    const target = storeTargetForCatalogId(catalogId);
+    if (target !== currentDevice) {
+      onChangeDevice?.(target);
+    }
+  }
 
   return (
     <>
@@ -105,30 +181,36 @@ function FramePanel() {
         ))}
       </div>
       <ul className="grid grid-cols-2 gap-2">
-        {list.map((d) => (
-          <li key={d.id}>
-            <button
-              type="button"
-              onClick={() => setSelected(d.id)}
-              aria-pressed={selected === d.id}
-              className={cn(
-                "w-full text-left border p-2 transition-colors",
-                selected === d.id
-                  ? "border-[var(--accent)] bg-[color-mix(in_srgb,var(--accent)_8%,transparent)]"
-                  : "border-[var(--line)] hover:border-[var(--accent)]",
-              )}
-            >
-              <DeviceTile device={d} selected={selected === d.id} size="sm" showName />
-              {d.isStoreRequired && (
-                <div className="text-[9px] uppercase tracking-[0.12em] font-semibold text-[var(--accent)] mt-1.5">Required</div>
-              )}
-            </button>
-          </li>
-        ))}
+        {list.map((d) => {
+          const tileTarget = storeTargetForCatalogId(d.id);
+          const matchesCanvas = tileTarget === currentDevice;
+          const isSelected = selectedCatalogId === d.id || matchesCanvas;
+          return (
+            <li key={d.id}>
+              <button
+                type="button"
+                onClick={() => pickDevice(d.id)}
+                aria-pressed={isSelected}
+                className={cn(
+                  "w-full text-left border p-2 transition-colors",
+                  isSelected
+                    ? "border-[var(--accent)] bg-[color-mix(in_srgb,var(--accent)_8%,transparent)]"
+                    : "border-[var(--line)] hover:border-[var(--accent)]",
+                )}
+              >
+                <DeviceTile device={d} selected={isSelected} size="sm" showName />
+                {d.isStoreRequired && (
+                  <div className="text-[9px] uppercase tracking-[0.12em] font-semibold text-[var(--accent)] mt-1.5">Required</div>
+                )}
+              </button>
+            </li>
+          );
+        })}
       </ul>
       <p className="t-mono-xs text-[var(--fg-mute)] mt-4 leading-relaxed">
-        Select the device for the active screenshot. Required devices are
-        the ones App Store Connect demands; everything else is optional.
+        Picking a device updates the canvas dimensions and rescales layers
+        proportionally. We render every selection at the App Store-required
+        size for its class on export.
       </p>
     </>
   );

@@ -13,7 +13,7 @@ These are **not up for debate** without an explicit user override:
 | Auth | Clerk. Not NextAuth, not Better Auth, not Supabase Auth. |
 | DB | Neon Postgres + Drizzle. Prisma was rejected (cold starts). |
 | Payments | Stripe Billing — `meterEvents` + `creditGrants`. Never `usageRecords` (deprecated 2025-03-31.basil). |
-| Canvas | Polotno SDK. Konva / Fabric.js / build-from-scratch all rejected. |
+| Canvas | **Fabric.js v7** (free, OSS). Polotno was rejected ($899/mo, not viable for bootstrapped v1). |
 | AI orchestration | Vercel AI SDK v6 with `generateObject` + Zod for structured output. |
 | AI copy | OpenAI GPT-5. Codex is the backup. |
 | AI images | fal.ai (Flux 2 + birefnet). Replicate too slow. Direct DALL-E rejected. |
@@ -43,8 +43,9 @@ be trusted for authorization.
 - ❌ Grant credits from the Stripe Checkout success URL — webhook only.
 - ❌ Inline AI prompts in feature code — they live in `lib/ai/prompts.ts`.
 - ❌ Use `generateText` for AI copy — use `generateObject` with Zod schemas.
-- ❌ Trust client-side Polotno canvas exports for final assets — server
-  re-renders via `sharp` are authoritative.
+- ❌ Trust client-side Fabric canvas exports for final assets — server
+  re-renders via `sharp` (using `ShotsCanvas` JSON) are authoritative.
+- ❌ Reference `NEXT_PUBLIC_POLOTNO_KEY` anywhere — Polotno is gone.
 - ❌ Use `border-radius` anywhere in UI. The aesthetic is rigid 90° corners.
 
 ## Conventions
@@ -78,7 +79,7 @@ Locked typographic stack:
 ## "Done" for v1 (per spec)
 
 - [ ] Sign-up via Google / Apple / email
-- [ ] Project create + Polotno editor
+- [ ] Project create + Fabric.js editor
 - [ ] AI copy with credit debit + meter event
 - [ ] AI backdrop with credit debit + meter event
 - [ ] Translate to ≥10 locales
@@ -94,7 +95,7 @@ Locked typographic stack:
 ## When stuck
 
 - Stripe credit/meter behavior → https://docs.stripe.com/billing/subscriptions/usage-based/billing-credits
-- Polotno → https://polotno.com/docs/overview
+- Fabric.js v7 → http://fabricjs.com/docs
 - Trigger.dev v3 → https://trigger.dev/docs
 - Vercel AI SDK → https://sdk.vercel.ai/docs
 - Drizzle → https://orm.drizzle.team

@@ -39,9 +39,9 @@ const STEP_META: Record<StepNum, { eyebrow: string; title: [string, string]; bod
     body:    "Every device you target gets all Apple-required screenshot dimensions rendered automatically.",
   },
   3: {
-    eyebrow: "Step 03 · Upload screens",
+    eyebrow: "Step 03 · Upload screens (optional)",
     title:   ["Drop your", "screens."],
-    body:    "Raw iOS screenshots stored direct-to-R2. We auto-bucket each PNG by dimension into the right device slot — no labelling required.",
+    body:    "Commit the project first, then drop raw .PNGs — we auto-bucket each by dimension into the right device slot. Uploading is optional here; you can always add screens from inside the editor after committing.",
   },
 };
 
@@ -354,10 +354,11 @@ export default function NewProjectPage() {
               </div>
               {!createdProjectId ? (
                 <p className="t-prose text-[var(--fg-dim)] leading-relaxed">
-                  Commit now to create the project. Once committed, the
-                  dropzone activates — drop a folder of PNGs and we
-                  auto-bucket by dimension. Nothing is charged until you
-                  dispatch an AI run.
+                  Commit now to create the project. The dropzone
+                  activates after commit — drop a folder of PNGs (we
+                  auto-bucket by dimension) or skip and add screens
+                  from inside the editor later. Either path is fine;
+                  nothing is charged until you dispatch an AI run.
                 </p>
               ) : (
                 <>

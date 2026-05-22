@@ -16,8 +16,12 @@ import {
  * Multi-select picker with category tabs, plan-gated CTAs, and a
  * sticky footer summary.
  *
- * Persistence + render dispatch is wired in the morning. For now we
- * keep state in component memory and post to a noop server action.
+ * Persistence + render dispatch will be wired in a follow-up. For now
+ * we keep selection state in component memory and the "Render all"
+ * CTA is honestly disabled with explanatory copy — selecting a
+ * surface is still useful (informs the user what we'll render and at
+ * what dimensions) but clicking the dispatch button is not a no-op
+ * pretending to be live. Audit P1-7.
  */
 export function SurfaceMatrix({ projectId }: { projectId: string }) {
   const [selected, setSelected] = useState<string[]>(["ios-appstore"]);
@@ -104,13 +108,25 @@ export function SurfaceMatrix({ projectId }: { projectId: string }) {
             >
               View existing exports
             </Link>
+            {/*
+              "Render all" dispatch is not yet wired to the Trigger.dev
+              task. Audit P1-7 found this button looked active but
+              produced no observable result. Until the dispatch route
+              ships, the button is honestly disabled + labelled so users
+              understand selecting surfaces sets up the manifest but
+              doesn't fire a render. The disabled visual is the brand
+              "soon" pattern: opacity-50 + cursor-not-allowed + a clear
+              "· Soon" suffix in the label.
+            */}
             <button
               type="button"
-              className="group inline-flex items-center gap-3 bg-[var(--accent)] text-[var(--accent-fg)] pl-5 pr-1.5 py-2 transition-transform duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]"
-              disabled={selected.length === 0}
+              disabled
+              aria-disabled
+              title="Render dispatch is in active development — selecting surfaces here saves the manifest only. The render queue ships in v1.1."
+              className="group inline-flex items-center gap-3 bg-[var(--accent)] text-[var(--accent-fg)] pl-5 pr-1.5 py-2 opacity-50 cursor-not-allowed"
             >
-              <span className="btn-label">Render all</span>
-              <span className="inline-grid place-items-center w-9 h-9 bg-[var(--accent-fg)] text-[var(--accent)] transition-transform duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0.5 font-bold">
+              <span className="btn-label">Render all <span className="text-[var(--accent-fg)]/70 ml-1">· Soon</span></span>
+              <span className="inline-grid place-items-center w-9 h-9 bg-[var(--accent-fg)] text-[var(--accent)] font-bold">
                 →
               </span>
             </button>

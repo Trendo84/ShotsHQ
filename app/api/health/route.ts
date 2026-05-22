@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import { db } from "@/lib/db";
+import { resolveBuildInfo } from "@/lib/observability/version";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -9,6 +10,11 @@ export const dynamic = "force-dynamic";
  * `SELECT 1` so monitoring can verify the full path (Vercel function →
  * Neon Postgres). Cheap enough to ping every 30 seconds without burning
  * compute.
+ *
+ * The `version` field used to be `"dev"` in production because the
+ * only source was an env var nobody sets. It now resolves through a
+ * documented fallback chain — see `lib/observability/version.ts`.
+ * Tooling and incident responders get a real identifier per deploy.
  */
 export async function GET() {
   const started = Date.now();
@@ -27,18 +33,20 @@ export async function GET() {
 
   const totalMs = Date.now() - started;
   const ok = dbOk;
+  const build = resolveBuildInfo();
 
   return Response.json(
     {
       ok,
-      service: "shotshq",
-      version: process.env.NEXT_PUBLIC_APP_VERSION ?? "dev",
-      env: process.env.VERCEL_ENV ?? process.env.NODE_ENV ?? "unknown",
+      service:       "shotshq",
+      version:       build.version,
+      versionSource: build.source,
+      env:           process.env.VERCEL_ENV ?? process.env.NODE_ENV ?? "unknown",
       checks: {
         db: { ok: dbOk, latencyMs: dbLatencyMs, error: dbError },
       },
       latencyMs: totalMs,
-      ts: new Date().toISOString(),
+      ts:        new Date().toISOString(),
     },
     {
       status: ok ? 200 : 503,

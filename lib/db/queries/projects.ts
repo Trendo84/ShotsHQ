@@ -1,12 +1,17 @@
 import { and, desc, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { projects, type NewProject, type Project } from "@/lib/db/schema";
+import { isProbablyUuid } from "@/lib/db/uuid";
 
 export async function listProjectsForUser(userId: string): Promise<Project[]> {
   return db.select().from(projects).where(eq(projects.userId, userId)).orderBy(desc(projects.updatedAt));
 }
 
 export async function getProject(id: string, userId: string): Promise<Project | null> {
+  // Defensive: a non-uuid id (e.g. "p_01" from a stale doc link) would
+  // otherwise throw a Postgres parse error. Treat it as a clean miss.
+  if (!isProbablyUuid(id)) return null;
+
   const [row] = await db
     .select()
     .from(projects)

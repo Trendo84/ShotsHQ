@@ -4,40 +4,73 @@ import { withSentryConfig } from "@sentry/nextjs";
 /**
  * Clerk live-key guard.
  *
- * Pre-launch (default): we just WARN if a `pk_test_*` key is shipped to a
- * Vercel production deployment. Builds still pass. The WIP banner is up,
- * the site is openly under construction, and a hard block here would slow
- * iteration to a crawl while the env-var swap and Clerk production-instance
- * DNS dance are still TBD.
+ * The audit (`docs/audits/2026-05-22-live-site-app-fix-brief.md` → P0-1)
+ * found the live site rendering the Clerk "Development mode" badge and
+ * leaking dev-key console warnings to every visitor. The dev keys were
+ * still configured in Vercel production after a soft-launch. This guard
+ * is the code-side half of the fix; the env swap is the deploy-side half
+ * (documented below).
  *
- * Launch (strict): set `STRICT_LAUNCH_CHECKS=1` in Vercel → Settings →
- * Environment Variables → Production. With that flag set, this guard
- * upgrades from warning to hard build failure — preventing any future
- * regression where a dev key sneaks back into production.
+ * Behavior:
+ *   - **Default (any production environment, any production-flavored
+ *     NODE_ENV / VERCEL_ENV)**: a `pk_test_*` publishable key OR an
+ *     `sk_test_*` secret key on a production build is a HARD build
+ *     failure. No flag required to opt into the protection. The dev-mode
+ *     leak is a credibility-grade incident — better to break the build
+ *     than to ship "Development mode" to paying users again.
+ *   - **Local dev / preview / non-production**: warn-only. Developers
+ *     iterate against `pk_test_*` constantly; the guard never bites
+ *     them unless they accidentally label their box as production.
+ *   - **Explicit escape hatch**: `ALLOW_CLERK_DEV_KEYS_IN_PROD=1` is the
+ *     break-glass override for the deploy ritual itself (when an operator
+ *     is intentionally building a staging-flavored prod env that still
+ *     runs against dev keys). Use it knowingly; it's logged loudly.
  *
- * Launch ritual:
- *   1. Configure Clerk production instance (DNS records, OAuth providers).
- *   2. Swap NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY (pk_test_* → pk_live_*).
- *   3. Swap CLERK_SECRET_KEY (sk_test_* → sk_live_*).
- *   4. Set STRICT_LAUNCH_CHECKS=1.
- *   5. Remove WipBanner from app/layout.tsx and redeploy.
+ * Deploy-side fix (still required outside this file):
+ *   1. Configure the Clerk production instance (DNS records, OAuth
+ *      providers, custom domain).
+ *   2. In Vercel → Settings → Environment Variables → Production:
+ *        NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY  →  pk_live_*
+ *        CLERK_SECRET_KEY                   →  sk_live_*
+ *   3. Redeploy. The Clerk "Development mode" badge disappears and the
+ *      browser console no longer warns about dev keys.
+ *   4. (Optional) Remove the WipBanner once you're ready to lift the
+ *      "Pre-launch build" framing.
  */
-const usingClerkDevKey =
-  process.env.VERCEL_ENV === "production" &&
-  process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?.startsWith("pk_test_");
+// "Production build" here means "a build that will be served to real
+// users." That's Vercel's production environment for this project.
+// Local `pnpm build` runs for verification have NODE_ENV=production
+// too, but they aren't user-facing — gating on VERCEL_ENV avoids
+// breaking developer iteration loops.
+const IS_PRODUCTION_BUILD = process.env.VERCEL_ENV === "production";
 
-if (usingClerkDevKey) {
+const PUB_KEY = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ?? "";
+const SEC_KEY = process.env.CLERK_SECRET_KEY                  ?? "";
+
+const usingClerkDevPublishable = PUB_KEY.startsWith("pk_test_");
+const usingClerkDevSecret      = SEC_KEY.startsWith("sk_test_");
+
+if (IS_PRODUCTION_BUILD && (usingClerkDevPublishable || usingClerkDevSecret)) {
+  const which = [
+    usingClerkDevPublishable ? "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_*" : null,
+    usingClerkDevSecret      ? "CLERK_SECRET_KEY=sk_test_*"                  : null,
+  ].filter(Boolean).join(" + ");
+
   const message =
-    "[next.config] Clerk DEV key (pk_test_*) detected on a Vercel " +
-    "production deployment. The Clerk widget will render 'Development " +
-    "mode' to every visitor. Swap to pk_live_* before lifting the WIP banner. " +
-    "Set STRICT_LAUNCH_CHECKS=1 to upgrade this warning to a hard build failure.";
+    `[next.config] Clerk DEV key detected on a production build (${which}). ` +
+    `This causes the Clerk widget to render "Development mode" to every ` +
+    `visitor and surfaces dev-key warnings in their browser console. ` +
+    `Swap to live keys in Vercel → Settings → Environment Variables → ` +
+    `Production. To intentionally build with dev keys against a ` +
+    `production-flavored environment, set ALLOW_CLERK_DEV_KEYS_IN_PROD=1 ` +
+    `(use knowingly).`;
 
-  if (process.env.STRICT_LAUNCH_CHECKS === "1") {
+  if (process.env.ALLOW_CLERK_DEV_KEYS_IN_PROD === "1") {
+    // eslint-disable-next-line no-console
+    console.warn(`\n\x1b[33m⚠ ${message}\x1b[0m\n`);
+  } else {
     throw new Error(message);
   }
-  // eslint-disable-next-line no-console
-  console.warn(`\n\x1b[33m⚠ ${message}\x1b[0m\n`);
 }
 
 /**
@@ -116,6 +149,28 @@ const nextConfig: NextConfig = {
       },
     ];
     return [{ source: "/(.*)", headers: securityHeaders }];
+  },
+
+  /**
+   * Top-level legal / contact aliases.
+   *
+   * Audit P1-5: `/privacy`, `/security`, `/terms`, `/contact` 404'd
+   * because the canonical content lives under `/docs/<slug>`. These
+   * short paths are what users (and external link audits) reach for
+   * by habit, so they should resolve. We 308-redirect to the canonical
+   * doc page rather than duplicating content — keeps a single source
+   * of truth in `app/(marketing)/docs/[...slug]/page.tsx`.
+   *
+   * 308 (permanent) preserves the request method and tells search
+   * engines to remember the canonical location.
+   */
+  async redirects() {
+    return [
+      { source: "/privacy",  destination: "/docs/privacy",  permanent: true },
+      { source: "/terms",    destination: "/docs/terms",    permanent: true },
+      { source: "/security", destination: "/docs/security", permanent: true },
+      { source: "/contact",  destination: "/docs/contact",  permanent: true },
+    ];
   },
 };
 

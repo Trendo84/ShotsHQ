@@ -181,10 +181,13 @@ Vercel handles both via the project's domain settings. Add both, set
    switcher (top-right) — Swiss now reads as graph paper, not ghost lines.
 2. **Visit `/projects/new`.** Step 2 (device targets) is now a real
    picker with 22 devices.
-3. **Visit `/projects/p_01`** then **"Surfaces"**. New page entirely —
-   pick which surfaces to render, see the manifest update.
-4. **Visit `/projects/p_01/editor`.** The canvas now responds — try
-   clicking the headline, hit ⌘+, hit ⌘-.
+3. **Create a project via `/projects/new`, then visit its
+   `Surfaces` tab.** New page entirely — pick which surfaces to
+   render, see the manifest update. (Earlier drafts referenced a
+   fixture `p_01` route — the DB now uses real UUIDs, so
+   `/projects/p_01` 404s; create one through the wizard.)
+4. **Open the editor for that project.** The canvas now responds —
+   try clicking the headline, hit ⌘+, hit ⌘-.
 5. **Visit `/api/og?title=YOUR TEST`.** Returns a 1200×630 PNG.
 6. **Visit `/api/health`.** Should return `{ok: true}` with sub-1s DB
    latency from Sydney.

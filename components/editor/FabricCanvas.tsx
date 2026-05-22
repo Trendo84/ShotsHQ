@@ -199,9 +199,15 @@ export const FabricCanvas = forwardRef<FabricCanvasHandle, Props>(
     // canvas with that project's state. Without this, switching projects
     // leaves stale Fabric objects on the previous canvas instance.
     //
+    // Deps ALSO include `shots.device` so the editor's device-frame switcher
+    // (LeftPanel → FramePanel) actually updates the canvas. Without this,
+    // selecting iPad while the canvas was iPhone left the Fabric instance
+    // sized at 1290×2796 with layers positioned for that, while the React
+    // status bar showed the new device label — pure UI lie. Audit P1-6.
+    //
     // `shots`, `onSave`, `scheduleSave`, `emitLayers` are intentionally
-    // captured by the closure (one project = one mount); we don't want
-    // re-mount churn on every save round-trip.
+    // captured by the closure (one project + one device = one mount);
+    // we don't want re-mount churn on every save round-trip.
 
     useEffect(() => {
       let disposed = false;
@@ -287,7 +293,7 @@ export const FabricCanvas = forwardRef<FabricCanvasHandle, Props>(
         fc.current = null;
       };
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [projectId]);
+    }, [projectId, shots.device]);
 
     // ── Zoom sync ─────────────────────────────────────────────────────────────
 

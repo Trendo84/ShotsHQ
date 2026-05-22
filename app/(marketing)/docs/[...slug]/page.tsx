@@ -231,25 +231,58 @@ const DOCS: Record<string, DocEntry> = {
     ),
   },
   status: {
-    title: "SYSTEM STATUS",
-    excerpt: "Real-time infrastructure metrics. Refreshes every 60s.",
+    title: "OPERATIONAL STATUS",
+    excerpt: "How to check that ShotsHQ is up, and where status updates are posted.",
     body: (
       <>
+        <h2>Liveness check</h2>
         <p>
-          Live data below — refreshes every 60 seconds. Authenticated operators
-          can see per-project queue depth at{" "}
-          <Link href="/dashboard" className="link-tick">/dashboard</Link>.
+          The canonical liveness endpoint is{" "}
+          <Link href="/api/health" className="link-tick">/api/health</Link>.
+          It returns an explicit JSON shape with a database round-trip
+          result and a build identifier — useful for uptime monitors,
+          incident response, and tooling. Cache headers are{" "}
+          <samp>no-store</samp>, so every call is fresh.
         </p>
-        <ul>
-          <li>API: <samp>OK</samp></li>
-          <li>AI image gen: <samp>OK · 142ms p50</samp></li>
-          <li>AI copy gen: <samp>OK · 380ms p50</samp></li>
-          <li>Storage: <samp>OK</samp></li>
-          <li>Background jobs: <samp>OK · 3 queued</samp></li>
-        </ul>
         <p>
-          For incident history and post-mortems, see the{" "}
-          <Link href="/changelog" className="link-tick">changelog</Link>.
+          Response shape:
+        </p>
+        <pre><code>{`{
+  "ok": true,
+  "service": "shotshq",
+  "version": "<sha-or-package-version>",
+  "env": "production" | "preview" | "development",
+  "checks": { "db": { "ok": true, "latencyMs": <ms> } },
+  "latencyMs": <total-ms>,
+  "ts": "<iso8601>"
+}`}</code></pre>
+
+        <h2>Incident communication</h2>
+        <p>
+          Pre-launch we don&apos;t publish a live status board. If
+          something is broken, we post it in the{" "}
+          <Link href="/changelog" className="link-tick">changelog</Link>{" "}
+          and, for sustained outages, on the{" "}
+          <Link href="/under-construction" className="link-tick">/under-construction</Link>{" "}
+          surface that fronts the site during maintenance windows. A
+          third-party status page (Statuspage / Better Stack) is in
+          scope for v1.1.
+        </p>
+
+        <h2>Reporting an issue</h2>
+        <p>
+          Email <a href="mailto:support@shotshq.com" className="link-tick">support@shotshq.com</a>{" "}
+          with the URL you were on, a screenshot, and the timestamp.
+          The Sentry trace ID from the page footer (if present) speeds
+          triage materially.
+        </p>
+
+        <p className="t-mono-xs text-[var(--fg-mute)]">
+          This page intentionally shows no real-time metrics. ShotsHQ
+          is pre-launch and we don&apos;t fabricate p50 latencies or
+          queue depth — when a real status board ships, it&apos;ll be
+          backed by the health endpoint above, not by hard-coded
+          numbers.
         </p>
       </>
     ),
