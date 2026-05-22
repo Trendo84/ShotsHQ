@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Topbar } from "@/components/app/Topbar";
 import { Badge } from "@/components/ui/badge";
-import { ChevronRight, Edit3, Sparkles, Download, Globe, Layers, Smartphone } from "lucide-react";
+import { ChevronRight, Sparkles, Download, Globe, Layers, Smartphone } from "lucide-react";
 import { requireUser } from "@/lib/auth/clerk";
 import { getProject } from "@/lib/db/queries/projects";
 
@@ -21,12 +21,11 @@ export default async function ProjectOverviewPage({
   const updated  = project.updatedAt.toISOString().slice(0, 16).replace("T", " ");
 
   const ACTIONS = [
-    { href: `/projects/${id}/studio`,   icon: Smartphone, label: "Open studio", desc: "Constrained screenshot engine", code: "01" },
-    { href: `/projects/${id}/editor`,   icon: Edit3,      label: "Open editor", desc: "Fabric.js canvas",               code: "02" },
-    { href: `/projects/${id}/ai`,       icon: Sparkles,   label: "AI panel",    desc: "Copy, backdrop, restyle",        code: "03" },
-    { href: `/projects/${id}/surfaces`, icon: Layers,     label: "Surfaces",    desc: "App Store + web + social",       code: "04" },
-    { href: `/projects/${id}/exports`,  icon: Download,   label: "Exports",     desc: "Render and download",            code: "05" },
-    { href: `/projects/${id}/ai#i18n`,  icon: Globe,      label: "Translate",   desc: "41-locale fan-out",              code: "06" },
+    { href: `/projects/${id}/studio`, icon: Smartphone, label: "Open studio", desc: "Constrained screenshot engine", code: "01" },
+    { href: `/projects/${id}/ai`,     icon: Sparkles,   label: "AI panel",    desc: "Copy, backdrop, restyle",        code: "02" },
+    { href: `/projects/${id}/surfaces`, icon: Layers,   label: "Surfaces",    desc: "App Store + web + social",       code: "03" },
+    { href: `/projects/${id}/exports`, icon: Download,  label: "Exports",     desc: "Render and download",            code: "04" },
+    { href: `/projects/${id}/ai#i18n`, icon: Globe,     label: "Translate",   desc: "41-locale fan-out",              code: "05" },
   ];
 
   return (
@@ -53,7 +52,7 @@ export default async function ProjectOverviewPage({
               <span className="btn-label">Open studio</span>
               <span className="inline-grid place-items-center w-9 h-9 bg-[var(--accent-fg)] text-[var(--accent)] transition-transform group-hover:translate-x-0.5 font-bold">→</span>
             </Link>
-            <Link href={`/projects/${id}/editor`} className="btn text-[12px] tracking-[0.04em] normal-case">Editor</Link>
+            <Link href={`/projects/${id}/studio`} className="btn text-[12px] tracking-[0.04em] normal-case">Studio</Link>
             <Link href={`/projects/${id}/ai`} className="btn text-[12px] tracking-[0.04em] normal-case">AI panel</Link>
             <Link href={`/projects/${id}/exports`} className="btn text-[12px] tracking-[0.04em] normal-case">Exports</Link>
           </div>
@@ -113,8 +112,8 @@ export default async function ProjectOverviewPage({
             <div className="p-5 sm:p-6 t-mono-xs text-[var(--fg-mute)] text-center">
               No device targets selected yet.
               <br />
-              <Link href={`/projects/${id}/editor`} className="text-[var(--accent)] underline mt-2 inline-block">
-                Open editor →
+              <Link href={`/projects/${id}/studio`} className="text-[var(--accent)] underline mt-2 inline-block">
+                Open studio →
               </Link>
             </div>
           ) : (

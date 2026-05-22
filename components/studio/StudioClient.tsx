@@ -1,8 +1,9 @@
 "use client";
 
 import * as React from "react";
-import { Download, Image as ImageIcon, Upload, Wand2 } from "lucide-react";
+import { Download, Image as ImageIcon, Upload, Wand2, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { saveStudio } from "@/app/actions/studio";
 import { StudioPanel } from "./StudioPanel";
 import {
   CANVAS_BASE_WIDTH,
@@ -25,6 +26,7 @@ type Props = {
   projectName: string;
   appName: string;
   appDescription: string;
+  initialStudio?: StudioDesign | null;
 };
 
 type ExportResult = {
@@ -34,13 +36,22 @@ type ExportResult = {
   ok: boolean;
 };
 
+type SaveState = "saved" | "dirty" | "saving" | "error";
+
 const PREVIEW_W = 264;
 const ALIGNMENTS: StudioDesign["align"][] = ["left", "center", "right"];
 const FONT_CHOICES: StudioDesign["fontFamily"][] = ["display", "sans", "mono"];
 const BACKGROUND_KINDS: BackgroundKind[] = ["radial", "linear", "solid"];
 
-export function StudioClient({ projectId, projectName, appName, appDescription }: Props) {
+export function StudioClient({
+  projectId,
+  projectName,
+  appName,
+  appDescription,
+  initialStudio,
+}: Props) {
   const [design, setDesign] = React.useState<StudioDesign>(() => {
+    if (initialStudio) return initialStudio;
     const d = defaultStudioDesign();
     return {
       ...d,
@@ -50,15 +61,37 @@ export function StudioClient({ projectId, projectName, appName, appDescription }
   });
   const [busy, setBusy] = React.useState(false);
   const [log, setLog] = React.useState<ExportResult | null>(null);
+  const [saveState, setSaveState] = React.useState<SaveState>("saved");
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const captureRef = React.useRef<HTMLDivElement>(null);
   const lastObjectUrl = React.useRef<string | null>(null);
+  const saveTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mounted = React.useRef(false);
 
   React.useEffect(() => {
     return () => {
       if (lastObjectUrl.current) URL.revokeObjectURL(lastObjectUrl.current);
+      if (saveTimer.current) clearTimeout(saveTimer.current);
     };
   }, []);
+
+  React.useEffect(() => {
+    if (!mounted.current) {
+      mounted.current = true;
+      return;
+    }
+    if (saveState !== "dirty") return;
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => {
+      setSaveState("saving");
+      void saveStudio(projectId, design)
+        .then(() => setSaveState("saved"))
+        .catch(() => setSaveState("error"));
+    }, 900);
+    return () => {
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+    };
+  }, [design, projectId, saveState]);
 
   const device = deviceById(design.deviceId);
   const previewScale = PREVIEW_W / CANVAS_BASE_WIDTH;
@@ -69,13 +102,18 @@ export function StudioClient({ projectId, projectName, appName, appDescription }
     [device.family],
   );
 
+  function updateDesign(updater: (current: StudioDesign) => StudioDesign) {
+    setDesign((current) => updater(current));
+    setSaveState("dirty");
+  }
+
   function patch<K extends keyof StudioDesign>(key: K, value: StudioDesign[K]) {
-    setDesign((current) => ({ ...current, [key]: value }));
+    updateDesign((current) => ({ ...current, [key]: value }));
   }
 
   function applyTheme(themeId: string) {
     const theme = themeById(themeId);
-    setDesign((current) => ({
+    updateDesign((current) => ({
       ...current,
       themeId,
       bg: theme.bg,
@@ -87,7 +125,7 @@ export function StudioClient({ projectId, projectName, appName, appDescription }
   }
 
   function applyDevice(nextDevice: DeviceId) {
-    setDesign((current) => {
+    updateDesign((current) => {
       const nextFrame = frameById(current.frameId, nextDevice);
       return {
         ...current,
@@ -102,7 +140,7 @@ export function StudioClient({ projectId, projectName, appName, appDescription }
     if (lastObjectUrl.current) URL.revokeObjectURL(lastObjectUrl.current);
     const url = URL.createObjectURL(file);
     lastObjectUrl.current = url;
-    setDesign((current) => ({
+    updateDesign((current) => ({
       ...current,
       screenshotUrl: url,
       screenshotRemote: false,
@@ -137,12 +175,12 @@ export function StudioClient({ projectId, projectName, appName, appDescription }
     <div className="grid grid-cols-12 min-h-[calc(100dvh-7rem)]">
       <section className="col-span-12 xl:col-span-4 border-r border-[var(--line)] bg-[var(--bg)]">
         <div className="border-b border-[var(--line)] px-5 py-4">
-          <div className="t-eyebrow t-eyebrow-accent mb-2">Studio engine · Phase A</div>
+          <div className="t-eyebrow t-eyebrow-accent mb-2">Studio engine · Phase B</div>
           <h1 className="t-display text-[clamp(1.75rem,4vw,3rem)] leading-[0.92] tracking-[-0.04em] normal-case text-balance">
             Constrained screenshot studio.
           </h1>
           <p className="t-prose mt-3 text-[var(--fg-dim)] max-w-[46ch]">
-            The ASOForge-style engine inside ShotsHQ: device frame, layout, headline, background, and exact App Store export — without the blank-canvas mess.
+            The ASOForge-style engine inside ShotsHQ: device frame, layout, headline, background, exact App Store export, and now project persistence.
           </p>
         </div>
 
@@ -400,10 +438,11 @@ export function StudioClient({ projectId, projectName, appName, appDescription }
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-px border border-[var(--line)] bg-[var(--line)]">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-px border border-[var(--line)] bg-[var(--line)]">
             <InfoCell label="Engine" value="ASOForge-style Studio" sub="Constrained composition, not a blank canvas" icon={<Wand2 size={14} />} />
             <InfoCell label="Device contract" value={`${device.width}×${device.height}`} sub="Exact App Store export target" icon={<ImageIcon size={14} />} />
             <InfoCell label="Export" value={log ? (log.ok ? "Verified exact" : "Mismatch") : "Ready"} sub={log ? `${log.actual} vs expected ${log.expected}` : "Run export to verify output dims"} icon={<Download size={14} />} />
+            <InfoCell label="Persistence" value={saveLabel(saveState)} sub={saveHelp(saveState)} icon={<Save size={14} />} />
           </div>
 
           {log && (
@@ -413,6 +452,13 @@ export function StudioClient({ projectId, projectName, appName, appDescription }
               <div className="t-mono-xs text-[var(--fg-mute)] mt-1">Expected {log.expected} · got {log.actual}</div>
             </div>
           )}
+
+          <div className="border border-[var(--line)] bg-[var(--bg)] px-4 py-3">
+            <div className="t-mono-xs text-[var(--fg-mute)] uppercase tracking-[0.14em]">Phase B note</div>
+            <p className="t-prose mt-2 text-[13px] text-[var(--fg-dim)] max-w-[68ch]">
+              Studio state now persists into the project payload, and `/editor` is being converted into a studio-first path. Server-authoritative render, screenshot seeding, and multi-panel filmstrip are next.
+            </p>
+          </div>
         </div>
 
         <div style={{ position: "fixed", left: "-99999px", top: 0, pointerEvents: "none" }} aria-hidden>
@@ -455,4 +501,22 @@ function InfoCell({
       </div>
     </div>
   );
+}
+
+function saveLabel(state: SaveState): string {
+  switch (state) {
+    case "saved": return "Saved";
+    case "dirty": return "Unsaved";
+    case "saving": return "Saving";
+    case "error": return "Retry needed";
+  }
+}
+
+function saveHelp(state: SaveState): string {
+  switch (state) {
+    case "saved": return "Persisted into the project payload";
+    case "dirty": return "Waiting for the autosave debounce";
+    case "saving": return "Writing studio state to the project";
+    case "error": return "Save failed — next edit retries automatically";
+  }
 }

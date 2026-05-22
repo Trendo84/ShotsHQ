@@ -375,8 +375,8 @@ export default function NewProjectPage() {
                   </dl>
                   <p className="t-mono-xs text-[var(--fg-mute)] mt-3 leading-relaxed">
                     {captureSummary
-                      ? "Open the editor to compose your first screenshot set."
-                      : "Drop your screens or skip — you can always upload more from inside the editor."}
+                      ? "Open the studio to compose your first screenshot set."
+                      : "Drop your screens or skip — you can always upload more from inside the studio."}
                   </p>
                 </>
               )}
@@ -403,9 +403,9 @@ export default function NewProjectPage() {
               ) : (
                 <Button
                   variant="accent"
-                  onClick={() => router.push(`/projects/${createdProjectId}`)}
+                  onClick={() => router.push(`/projects/${createdProjectId}/studio`)}
                 >
-                  {captureSummary ? "Open editor →" : "Skip → Open editor"}
+                  {captureSummary ? "Open studio →" : "Skip → Open studio"}
                 </Button>
               )}
             </div>

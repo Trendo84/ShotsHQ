@@ -3,13 +3,13 @@ import { Topbar } from "@/components/app/Topbar";
 import { StudioClient } from "@/components/studio/StudioClient";
 import { requireUser } from "@/lib/auth/clerk";
 import { getProject } from "@/lib/db/queries/projects";
+import { extractStudioDesign } from "@/lib/studio/schema";
 
 /**
  * ShotsHQ Studio — ASOForge-style constrained screenshot engine.
  *
- * Phase A is intentionally local-state only: it proves the superior
- * creative engine can live inside the product shell and export exact
- * App Store pixel dimensions for the three locked device classes.
+ * Phase B: studio state is now loaded from and persisted back into the
+ * existing project JSON payload in a backward-compatible way.
  */
 export default async function ProjectStudioPage({
   params,
@@ -21,6 +21,8 @@ export default async function ProjectStudioPage({
   const project = await getProject(id, user.id);
   if (!project) notFound();
 
+  const initialStudio = extractStudioDesign(project.polotnoJson);
+
   return (
     <>
       <Topbar section="Studio" breadcrumb={["Operator", "Projects", project.name, "Studio"]} />
@@ -29,6 +31,7 @@ export default async function ProjectStudioPage({
         projectName={project.name}
         appName={project.appName}
         appDescription={project.appDescription}
+        initialStudio={initialStudio}
       />
     </>
   );
