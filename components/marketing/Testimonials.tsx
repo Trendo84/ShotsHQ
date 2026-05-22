@@ -58,9 +58,7 @@ export function Testimonials() {
             </h2>
           </div>
           <p className="col-span-12 md:col-span-5 t-prose max-w-md">
-            ShotsHQ is a solo studio shipping in public. Every release,
-            every architectural call, every credit-ledger refund rule
-            is documented and reachable from this site.
+            Solo studio. Public releases. Public changelog. Public roadmap.
           </p>
         </Reveal>
 
@@ -102,9 +100,7 @@ export function Testimonials() {
         </div>
 
         <p className="t-mono-xs text-[var(--fg-mute)] mt-8 max-w-2xl leading-relaxed">
-          Real testimonials land here once we&apos;ve shipped to a
-          critical mass of indie iOS devs. We&apos;d rather wait for
-          the real thing than ship fake quotes.
+          Real testimonials land here once there are enough real customers to quote.
         </p>
       </div>
     </section>

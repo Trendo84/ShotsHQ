@@ -66,9 +66,7 @@ export function Comparison() {
           </h2>
         </Reveal>
         <p className="t-mono-sm text-[var(--fg-mute)] mb-10 max-w-2xl">
-          ShotsHQ is built for one job: turn finished product screens into launch-ready
-          App Store assets, localized variants, and promo surfaces without rebuilding the
-          same composition all week.
+          Built for launch-ready App Store assets, localized variants, and promo surfaces — not generic canvas work.
         </p>
 
         <div className="border border-[var(--line)] max-w-full md:max-w-4xl overflow-x-auto">

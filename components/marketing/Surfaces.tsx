@@ -105,9 +105,7 @@ export function Surfaces() {
             </h2>
           </div>
           <p className="col-span-12 md:col-span-5 t-prose max-w-md">
-            Start with one screenshot system, then fan it out to the App Store,
-            marketing site, social cards, Product Hunt, GitHub, and the assets
-            people ask you for after launch day.
+            One screenshot system for the App Store, marketing site, social cards, Product Hunt, GitHub, and press assets.
           </p>
         </Reveal>
 

@@ -108,10 +108,7 @@ export function Roadmap() {
             What&apos;s <span className="text-[var(--accent)]">shipping next.</span>
           </h2>
           <p className="col-span-12 md:col-span-5 t-prose text-[14px] max-w-md">
-            We ship in the open. Statuses above flip live as features move
-            from <em>in dev</em> to <em>live</em>. Bug us at{" "}
-            <a className="link-tick" href="mailto:roadmap@shotshq.com">roadmap@shotshq.com</a>{" "}
-            if a missing item should jump the queue.
+            Statuses flip live. If something should move up, email <a className="link-tick" href="mailto:roadmap@shotshq.com">roadmap@shotshq.com</a>.
           </p>
         </div>
       </div>

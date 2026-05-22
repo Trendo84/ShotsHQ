@@ -43,7 +43,7 @@ export function Faq() {
             Questions, answered.
           </h2>
           <p className="col-span-12 md:col-span-5 t-prose max-w-md">
-            Still stuck? Email <a className="link-tick" href="mailto:support@shotshq.com">support@shotshq.com</a>. Human reply within 12 hours.
+            Still stuck? Email <a className="link-tick" href="mailto:support@shotshq.com">support@shotshq.com</a>.
           </p>
         </div>
 

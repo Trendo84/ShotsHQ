@@ -70,9 +70,7 @@ export function FeatureGrid() {
             </h2>
           </div>
           <p className="col-span-12 md:col-span-5 t-prose max-w-md">
-            Use AI where it compresses the workload. Keep control everywhere
-            else. Every module is optional, independently metered, and refunded
-            on failure.
+            Every module is optional, independently metered, and refunded on failure.
           </p>
         </Reveal>
 

@@ -20,12 +20,9 @@ export function MetricsBand() {
           <div className="col-span-12 md:col-span-7">
             <div className="t-eyebrow t-eyebrow-accent mb-3">At a glance</div>
             <h2 className="t-display text-[clamp(1.5rem,3.2vw,2.5rem)] leading-[0.95] tracking-[-0.03em] normal-case text-balance">
-              The shape of the product, before you keep scrolling.
+              What the product actually covers.
             </h2>
           </div>
-          <p className="col-span-12 md:col-span-5 t-prose text-[14px] max-w-md">
-            No vanity metrics here — just the constraints and capabilities that define what ShotsHQ actually does today.
-          </p>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-[var(--line)] border border-[var(--line)]">
           {METRICS.map((m) => (

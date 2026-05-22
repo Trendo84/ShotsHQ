@@ -49,8 +49,7 @@ export function CTA() {
             </ul>
 
             <p className="t-prose max-w-sm">
-              Start free with no card. Upgrade only when you want clean
-              exports, more credits, or Studio&apos;s unmetered workflow.
+              Start free. Upgrade when you want clean exports, more credits, or Studio.
             </p>
 
             <div className="flex items-center gap-4 flex-wrap">
