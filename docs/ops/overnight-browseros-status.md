@@ -1,5 +1,160 @@
 # ShotsHQ overnight BrowserOS status
 
+## 2026-05-23 06:10 AEST · cycle #3
+
+### What shipped this cycle
+
+**`fix(studio): upload persistence — same-origin proxy + readiness requires durable storage`** (commit `22fac24`, pushed to `origin/main`).
+
+BrowserOS cycle #3 brief confirmed the suspected persistence bug: Studio's `onUpload` stored a `blob:` URL only; `sanitizeStudioDesign` stripped it on save; reload reset the panel to ○ DRAFT. The readiness signal lied about whether the screenshot would survive.
+
+Diagnostic also surfaced a deeper blocker: the existing presigned-PUT path (`/api/upload` + browser PUT to R2) is blocked by **CORS preflight** because the R2 bucket has no CORS config. Operator-side to fix; in the meantime the same-origin proxy path ships persistence today.
+
+#### New route: `app/api/upload/direct/route.ts`
+
+Same-origin multipart POST → server PUTs to R2 with our credentials → returns durable `publicUrl`. CSRF/auth via Clerk, scopes to `users/<userId>/projects/<projectId>/<nanoid>.<ext>`, 10 MB cap, PNG/JPEG/WEBP only. Sidesteps the bucket-CORS dependency entirely.
+
+The existing `/api/upload` (presigned PUT) stays in place — CaptureDropzone still uses it; when R2 CORS is configured operator-side, both paths become reliable.
+
+#### Studio upload flow (`components/studio/StudioClient.tsx`)
+
+1. `URL.createObjectURL` → optimistic local blob URL; panel marked `screenshotUrl=blob, screenshotRemote=false`. Readiness shows `screenshot-uploading`.
+2. POST file to `/api/upload/direct` same-origin (no CORS).
+3. Server PUTs to R2, returns durable `https:` `publicUrl`.
+4. Swap blob → `publicUrl`, flip `screenshotRemote=true`. Autosave persists the durable URL into `polotnoJson.studio.panels[].screenshotUrl`.
+5. On reload, server re-hydrates with the durable URL intact; panel is still ● READY.
+
+Race-safe: swap step verifies `panel.screenshotUrl === localUrl` so a stale completion can't overwrite a newer upload. On failure: keep the blob URL so the user can still design in-session, but never claim ready; surface error inline with a "Click to retry" affordance.
+
+Per-panel upload state surfaces under the dropzone with distinct copy for idle / uploading / persisted / error.
+
+#### Readiness rule tightened (`lib/studio/readiness.ts`)
+
+A panel is now ready only when `screenshotRemote === true`. Three observable screenshot states:
+
+| Panel state | Readiness issue |
+|---|---|
+| no URL | `no-screenshot` |
+| URL + `remote=false` (blob or in-flight) | `screenshot-uploading` |
+| URL + `remote=true` | ready (subject to headline) |
+
+This is the canonical "blob-only does NOT count as ready" rule. A hypothetical https URL with `remote=false` would also be flagged uploading — readiness is bound to the flag, not URL sniffing.
+
+### Files touched
+
+```
+A  app/api/upload/direct/route.ts        (server-side proxied PUT)
+A  e2e/fixtures/iphone-69.png            (1290×2796 PNG test fixture)
+A  e2e/studio-upload-persistence.spec.ts (2 specs)
+M  components/studio/StudioClient.tsx    (onUpload → /api/upload/direct)
+M  lib/studio/readiness.ts               (require remote=true)
+M  tests/studio/readiness.test.ts        (new persistence-rule specs)
+```
+
+### Verification (all green, on commit `22fac24`)
+
+```
+pnpm typecheck   → clean
+pnpm test        → 173 passed across 17 files
+pnpm test:e2e    → 11 / 11 passed
+                     - 2 new studio-upload-persistence
+                     - 4 export-readiness     (cycle #2)
+                     - 3 studio-device-switch (cycle #1)
+                     - 2 wizard
+pnpm build       → clean
+git push         → bbaea49..22fac24 main -> main
+```
+
+### Acceptance-criteria status (brief's six bullets)
+
+1. ✅ Uploading produces a durable remote URL (R2 public URL), not just a blob.
+2. ✅ After autosave + reload, screenshot is still present.
+3. ✅ Filmstrip/panel readiness stays READY after reload (e2e verifies via `data-panel-ready="true"`).
+4. ✅ `Export current` / `Export all` only enable when `screenshotRemote=true`.
+5. ✅ No temporary state claims ready unless screenshot survives reload (rule + tests pin this).
+6. ✅ Automated coverage for upload → save → reload via the new e2e spec, including the `/exports` cross-surface assertion that the same project shows `data-readiness-status="ready"` after the round-trip.
+
+### Blockers
+
+- **R2 bucket CORS config** — operator-side. Cloudflare R2 bucket `shotshq-exports` has no CORS rule, so the browser-direct presigned-PUT path (`/api/upload`) is blocked by preflight. Today the server-side proxy at `/api/upload/direct` is the path Studio uses; the existing `/api/upload` remains for CaptureDropzone but its browser PUT is broken until CORS lands. Recommended rule (set via Cloudflare R2 dashboard or `aws s3api put-bucket-cors`):
+  ```json
+  [{
+    "AllowedOrigins": ["https://shotshq.com", "http://localhost:3000"],
+    "AllowedMethods": ["PUT", "GET", "HEAD"],
+    "AllowedHeaders": ["*"],
+    "ExposeHeaders":  ["ETag"],
+    "MaxAgeSeconds":  3600
+  }]
+  ```
+  Once configured, CaptureDropzone's existing presign path will start working in the browser, and Studio could optionally migrate back to presigned PUTs (better for big files; the 10 MB proxy cap is conservative).
+
+- **Clerk live-key swap in Vercel production env** — carried forward from cycle #1.
+
+### Highest-priority next target
+
+Two strong candidates:
+
+1. **Verify Studio export actually renders the persisted screenshot.** The persistence loop is now solid, but the `html-to-image` export path crops the panel including the remote `<img>`. We need to confirm:
+   - The remote URL loads with `crossOrigin="anonymous"` (DeviceFrame.tsx sets this).
+   - R2 returns proper CORS headers for the GET (separate from the PUT-preflight issue — public R2 URLs typically do return `Access-Control-Allow-Origin: *`, but worth confirming with the `Export current` button after upload).
+   - The exported PNG matches the expected dim (1290×2796 etc.) — `measurePng` in the export log will say so.
+   This is a 30-min browser smoke; if it works, ship the v0.10 changelog entry. If it doesn't, R2 likely needs `image/*` GET CORS too.
+
+2. **CaptureDropzone parity.** CaptureDropzone (in `/projects/new` Step 3) still uses the presign + browser PUT path that's broken by missing R2 CORS. Either:
+   - (a) Make CaptureDropzone use `/api/upload/direct` too (consistent, works today).
+   - (b) Wait for the operator R2 CORS swap (cleaner, still presigned).
+   Decision depends on operator timeline.
+
+### Next BrowserOS prompt (paste verbatim next hour)
+
+```
+Continue the overnight loop in /Volumes/NVME EXT/Ivan/CODEX/ShotsHQ.
+Read docs/ops/overnight-browseros-loop.md (operating rules) and the
+top entry of docs/ops/overnight-browseros-status.md (latest cycle —
+yours).
+
+Focus for this cycle: verify Studio's full export loop now that
+upload persistence is real. Specifically:
+
+ 1. On /projects/new, create a fresh project. Open Studio.
+ 2. Upload a real screenshot (any PNG/JPG; iPhone-aspect preferred).
+ 3. Confirm: panel flips to ● READY, screenshot persisted indicator
+    shows "Screenshot persisted — survives reload", Export current
+    button enables.
+ 4. Click Export current. A PNG should download to your Downloads
+    folder named like `01_iphone_69_<projectslug>.png`.
+ 5. The Studio "Last export run" log should show "Exact" with
+    "Expected 1290×2796 · got 1290×2796".
+ 6. Verify the downloaded PNG actually contains the uploaded screen-
+    shot rendered into the device frame at exact dims.
+
+If any step fails, that's the cycle's bug to fix. The most-likely
+break-points:
+  - The remote R2 GET might trigger a CORS-tainted canvas, making
+    toDataURL throw. DeviceFrame.tsx already sets crossOrigin=
+    "anonymous" for remote URLs; R2 public URLs should serve with
+    Access-Control-Allow-Origin: * by default, but worth checking
+    network response headers in DevTools.
+  - The pixelRatio scaling in export.ts could mismatch the actual
+    pixel output; the "Last export run" log will show the actual
+    dim vs expected.
+
+If the full upload → export loop works end-to-end, write a v0.10
+changelog entry catching the public changelog up (it stops at v0.7;
+v0.8 was the audit batch, v0.9 was the Studio engine + persistence).
+
+If the export is broken, fix it as the cycle's task. Patterns to
+match: same data-* attributes for testability, e2e spec that
+asserts the exported PNG dim matches expected.
+
+Treat the repo + git state as truth. Update docs/ops/overnight-
+browseros-status.md with timestamp + what shipped + verification +
+blockers + next target + next prompt before stopping. Reply with a
+concise ship report.
+```
+
+---
+
 ## 2026-05-23 05:05 AEST · cycle #2
 
 ### What shipped this cycle
