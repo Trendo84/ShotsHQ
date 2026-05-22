@@ -4,7 +4,6 @@ import { FeatureGrid } from "@/components/marketing/FeatureGrid";
 import { Templates } from "@/components/marketing/Templates";
 import { Surfaces } from "@/components/marketing/Surfaces";
 import { CTA } from "@/components/marketing/CTA";
-import { MetricsBand } from "@/components/marketing/MetricsBand";
 import { Reveal } from "@/components/Reveal";
 import { HomeJsonLd } from "@/components/seo/JsonLd";
 
@@ -14,7 +13,6 @@ export default function LandingPage() {
       <HomeJsonLd />
       <Hero />
       <Reveal as="div"><PipelineDiagram /></Reveal>
-      <Reveal as="div"><MetricsBand /></Reveal>
       <Reveal as="div"><Surfaces /></Reveal>
       <Reveal as="div"><Templates compact /></Reveal>
       <Reveal as="div"><FeatureGrid /></Reveal>
