@@ -47,18 +47,19 @@ test.describe("New project wizard navigation", () => {
 
     // Commit creates the project but does NOT redirect — it activates
     // the dropzone so the user can drop screens directly. The user
-    // then clicks "Skip → Open editor" (or "Open editor →" after
-    // capture) to navigate.
+    // then clicks "Skip → Open studio" (or "Open studio →" after
+    // capture) to navigate. The Studio pivot renamed the CTA from
+    // "Open editor" to "Open studio" — see app/(app)/projects/new/page.tsx.
     const commit = page.getByRole("button", { name: /^Commit/ });
     await commit.click();
     await expect(
-      page.getByRole("button", { name: /Open editor/ }),
+      page.getByRole("button", { name: /Open studio/ }),
     ).toBeVisible({ timeout: 15_000 });
 
-    // Now click into the editor.
+    // Now click into the studio.
     await Promise.all([
       page.waitForURL(/\/projects\/[a-f0-9-]+(?:\/.*)?$/, { timeout: 15_000 }),
-      page.getByRole("button", { name: /Open editor/ }).click(),
+      page.getByRole("button", { name: /Open studio/ }).click(),
     ]);
   });
 

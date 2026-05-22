@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { saveStudio } from "@/app/actions/studio";
+import { applyDeviceToActivePanel } from "@/lib/studio/device-switch";
 import { StudioPanel } from "./StudioPanel";
 import {
   CANVAS_BASE_WIDTH,
@@ -25,7 +26,6 @@ import {
   cloneStudioDesign,
   defaultStudioDesignSet,
   deviceById,
-  frameById,
   themeById,
   type BackgroundKind,
   type StudioDesign,
@@ -187,13 +187,12 @@ export function StudioClient({
   }
 
   function applyDevice(nextDevice: DeviceId) {
-    updateActivePanel((panel) => {
-      const nextFrame = frameById(panel.frameId, nextDevice);
-      return {
-        ...panel,
-        deviceId: nextDevice,
-        frameId: nextFrame.id,
-      };
+    // Route through the pure reducer so the click-handler path and the
+    // unit-test surface share one implementation. Frame compatibility
+    // is enforced inside the reducer (see lib/studio/device-switch.ts).
+    updateStudio((current) => {
+      const next = applyDeviceToActivePanel(current, nextDevice);
+      return next === current ? current : next;
     });
   }
 
@@ -414,18 +413,23 @@ export function StudioClient({
           </StudioField>
 
           <StudioField label="Device class">
-            <div className="grid grid-cols-1 gap-2">
+            <div className="grid grid-cols-1 gap-2" role="radiogroup" aria-label="Device class">
               {DEVICE_SIZES.map((size) => {
                 const active = size.id === activePanel.deviceId;
                 return (
                   <button
                     key={size.id}
                     type="button"
+                    role="radio"
+                    aria-checked={active}
+                    aria-pressed={active}
+                    data-device-id={size.id}
+                    data-active={active ? "true" : "false"}
                     onClick={() => applyDevice(size.id)}
                     className={`border px-3 py-2 text-left transition-colors ${
                       active
-                        ? "border-[var(--accent)] bg-[color-mix(in_srgb,var(--accent)_9%,transparent)]"
-                        : "border-[var(--line)] hover:border-[var(--accent)]"
+                        ? "border-[var(--accent)] bg-[color-mix(in_srgb,var(--accent)_9%,transparent)] text-[var(--accent)]"
+                        : "border-[var(--line)] hover:border-[var(--accent)] text-[var(--fg)]"
                     }`}
                   >
                     <div className="t-mono-sm uppercase tracking-[0.12em]">{size.shortLabel}</div>
