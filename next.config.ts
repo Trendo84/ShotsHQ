@@ -177,7 +177,15 @@ const nextConfig: NextConfig = {
 export default withSentryConfig(nextConfig, {
   org:     "shotshq",
   project: "shotshq",
-  // Upload source maps in CI only — keeps local builds fast.
+  // Remote Vercel builds started failing inside Sentry's source-map frame
+  // filtering step with `ERR_INVALID_ARG_TYPE: path must be string` even
+  // though local `next build` succeeds. Until that upstream/toolchain issue is
+  // resolved, disable source-map processing/upload so production deploys stay
+  // reliable. Runtime error capture still works; only source-map symbolication
+  // is reduced.
+  sourcemaps: {
+    disable: true,
+  },
   silent: true,
   // Tree-shake Sentry logger in production.
   disableLogger: true,
