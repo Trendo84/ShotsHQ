@@ -48,7 +48,7 @@ const SIGNALS: Signal[] = [
 
 export function Testimonials() {
   return (
-    <section className="border-b border-[var(--line)]">
+    <section className="border-b border-[var(--line)] bg-[var(--bg-2)]">
       <div className="max-w-[1480px] mx-auto px-4 md:px-8 py-14 md:py-20">
         <Reveal as="div" className="grid grid-cols-12 gap-8 mb-10 items-end">
           <div className="col-span-12 md:col-span-7">

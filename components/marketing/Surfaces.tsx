@@ -93,7 +93,7 @@ const SURFACES: Surface[] = [
 
 export function Surfaces() {
   return (
-    <section className="border-b border-[var(--line)]">
+    <section className="border-b border-[var(--line)] bg-[var(--bg-2)]">
       <div className="max-w-[1480px] mx-auto px-4 md:px-8 py-14 md:py-20">
 
         {/* Header */}

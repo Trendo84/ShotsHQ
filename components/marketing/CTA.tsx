@@ -9,7 +9,7 @@ const PLANS = [
 
 export function CTA() {
   return (
-    <section className="relative overflow-hidden border-t border-[var(--line)]">
+    <section className="relative overflow-hidden border-t border-[var(--line)] bg-[var(--bg-2)]">
       <div className="relative z-10 max-w-[1480px] mx-auto px-4 md:px-8 py-16 md:py-24">
         <div className="grid grid-cols-12 gap-8 items-end">
 

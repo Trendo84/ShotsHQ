@@ -44,7 +44,7 @@ function Value({ v, accent }: { v: Cell; accent?: boolean }) {
 
 export function Comparison() {
   return (
-    <section className="border-b border-[var(--line)]">
+    <section className="border-b border-[var(--line)] bg-[var(--bg)]">
       <div className="max-w-[1480px] mx-auto px-4 md:px-8 py-14 md:py-20">
 
         {/* Pattern-break: single-column header, no kicker, no right-column
