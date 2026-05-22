@@ -43,10 +43,10 @@ export function Hero() {
           <div className="col-span-12 lg:col-span-7 flex flex-col gap-6 sm:gap-8 min-w-0">
             <HeroRotatingTitle />
 
-            <p className="t-prose-lg max-w-[44ch]">
-              Your app in every App Store format, every locale, every
-              required dimension — in minutes. Drop in raw screenshots.
-              Ship everything else.
+            <p className="t-prose-lg max-w-[46ch]">
+              Turn raw iPhone screenshots into a finished App Store pack —
+              headline copy, backdrops, locales, and exact export dimensions
+              included. Drop in the shots. Ship everything else.
             </p>
 
             {/* CTA row — primary + secondary on their own line */}
@@ -72,9 +72,12 @@ export function Hero() {
                built-in-public chip + "indie dev solo studio" line moved
                below the fold (lives in Footer / About) per UX audit
                P3 #12 — eight elements above-the-fold was overload. */}
-            <p className="t-mono-xs text-[var(--fg-mute)] -mt-2 sm:-mt-3">
-              No card · Free tier exports include a watermark
-            </p>
+            <div className="flex flex-wrap gap-x-5 gap-y-2 -mt-2 sm:-mt-3 text-[11px] sm:text-[12px] uppercase tracking-[0.16em] text-[var(--fg-mute)]">
+              <span>No card</span>
+              <span>41 locales</span>
+              <span>3 Apple device classes</span>
+              <span>Free exports include watermark</span>
+            </div>
 
             {/* Quiet "also exports" rotator — under the fold of the
                hero column on desktop, last row before the visual on

@@ -49,8 +49,8 @@ export function CTA() {
             </ul>
 
             <p className="t-prose max-w-sm">
-              Free forever, no card. Credits never expire. Watermark only
-              on free exports — removed with any pack or Studio plan.
+              Start free with no card. Upgrade only when you want clean
+              exports, more credits, or Studio&apos;s unmetered workflow.
             </p>
 
             <div className="flex items-center gap-4 flex-wrap">

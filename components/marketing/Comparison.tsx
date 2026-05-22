@@ -62,13 +62,13 @@ export function Comparison() {
             draggable={false}
           />
           <h2 className="t-display t-h-3 min-w-0">
-            How we compare to incumbent screenshot tools.
+            Keep the polish of templates without getting trapped in a generic design canvas.
           </h2>
         </Reveal>
         <p className="t-mono-sm text-[var(--fg-mute)] mb-10 max-w-2xl">
-          The features that took us months to build and would take an
-          incumbent a billing-system rewrite to copy. The table below
-          does the rest of the talking.
+          ShotsHQ is built for one job: turn finished product screens into launch-ready
+          App Store assets, localized variants, and promo surfaces without rebuilding the
+          same composition all week.
         </p>
 
         <div className="border border-[var(--line)] max-w-full md:max-w-4xl overflow-x-auto">

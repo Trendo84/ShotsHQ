@@ -104,8 +104,7 @@ export function Testimonials() {
         <p className="t-mono-xs text-[var(--fg-mute)] mt-8 max-w-2xl leading-relaxed">
           Real testimonials land here once we&apos;ve shipped to a
           critical mass of indie iOS devs. We&apos;d rather wait for
-          the real thing than ship fake quotes — that&apos;s exactly
-          the kind of thing the comparison table below calls out.
+          the real thing than ship fake quotes.
         </p>
       </div>
     </section>
