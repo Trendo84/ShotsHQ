@@ -117,6 +117,17 @@ export function StudioClient({
   const [log, setLog] = React.useState<ExportResult[]>([]);
   const [saveState, setSaveState] = React.useState<SaveState>("saved");
 
+  /**
+   * Per-panel upload-state, keyed by panelId. Drives the inline
+   * upload progress + error UI under the upload dropzone.
+   *
+   *   "idle"     — no upload in flight
+   *   "uploading"— presign + PUT in progress
+   *   "error"    — last upload failed; user can retry
+   */
+  const [uploadState, setUploadState] = React.useState<Record<string, "idle" | "uploading" | "error">>({});
+  const [uploadError, setUploadError] = React.useState<Record<string, string | null>>({});
+
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const saveTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const mounted = React.useRef(false);
@@ -208,15 +219,99 @@ export function StudioClient({
     });
   }
 
+  /**
+   * Upload a screenshot for the active panel.
+   *
+   * Persistence design (cycle #3, 2026-05-23):
+   *
+   *   1. Optimistically set a `blob:` URL on the panel so the user
+   *      sees their selection immediately. `screenshotRemote=false`
+   *      marks the panel as not-yet-persisted; readiness reports
+   *      `screenshot-uploading`.
+   *   2. POST the file to `/api/upload/direct` (same-origin
+   *      multipart; the server PUTs to R2 with our credentials).
+   *      We deliberately avoid the presigned-URL + browser-PUT
+   *      path here because the R2 bucket isn't CORS-configured
+   *      yet — the browser preflight would be blocked. Server-
+   *      side proxy upload sidesteps CORS entirely.
+   *   3. On success: swap the blob URL with the durable `https:`
+   *      URL and flip `screenshotRemote=true`. The autosave debounce
+   *      then persists the durable URL into `polotnoJson.studio`
+   *      and the panel survives reload. Readiness flips to ready.
+   *   4. On failure: keep the blob URL (so the user can still
+   *      design against their screenshot in-session) but mark
+   *      uploadState=error and surface the message inline. Panel
+   *      stays not-ready until a retry succeeds.
+   *
+   * Race-safety: between steps 1 and 3, the user can click upload
+   * again with a different file. We check `panel.screenshotUrl ===
+   * localUrl` before swapping, so a stale-completion swap can't
+   * overwrite the user's latest selection.
+   */
+  const uploadScreenshotForPanel = React.useCallback(
+    async (panelId: string, file: File) => {
+      const localUrl = URL.createObjectURL(file);
+      blobUrls.current.add(localUrl);
+
+      // Step 1: optimistic local preview.
+      updateStudio((current) => ({
+        ...current,
+        panels: current.panels.map((p) =>
+          p.panelId === panelId
+            ? { ...p, screenshotUrl: localUrl, screenshotRemote: false }
+            : p,
+        ),
+      }));
+      setUploadState((cur) => ({ ...cur, [panelId]: "uploading" }));
+      setUploadError((cur) => ({ ...cur, [panelId]: null }));
+
+      try {
+        // Step 2: same-origin multipart POST → server proxies to R2.
+        const form = new FormData();
+        form.append("file", file);
+        form.append("projectId", projectId);
+
+        const uploadRes = await fetch("/api/upload/direct", {
+          method: "POST",
+          body:   form,
+        });
+        const uploadJson = await uploadRes.json().catch(() => null);
+        if (!uploadRes.ok || !uploadJson?.ok || !uploadJson.data?.publicUrl) {
+          throw new Error(uploadJson?.error ?? `upload_http_${uploadRes.status}`);
+        }
+        const { publicUrl } = uploadJson.data as { publicUrl: string };
+
+        // Step 3: swap blob → remote, but only if the user hasn't
+        // since replaced the panel's screenshot with something
+        // newer.
+        updateStudio((current) => ({
+          ...current,
+          panels: current.panels.map((p) =>
+            p.panelId === panelId && p.screenshotUrl === localUrl
+              ? { ...p, screenshotUrl: publicUrl, screenshotRemote: true }
+              : p,
+          ),
+        }));
+        setUploadState((cur) => ({ ...cur, [panelId]: "idle" }));
+
+        // Revoke the blob now that we've persisted; the preview
+        // continues to render from the remote URL.
+        URL.revokeObjectURL(localUrl);
+        blobUrls.current.delete(localUrl);
+      } catch (err) {
+        // Step 4: keep the blob URL so the user can still design,
+        // but never claim ready. Surface the error inline.
+        const message = err instanceof Error ? err.message : "upload_failed";
+        setUploadState((cur) => ({ ...cur, [panelId]: "error" }));
+        setUploadError((cur) => ({ ...cur, [panelId]: message }));
+      }
+    },
+    [projectId],
+  );
+
   function onUpload(file: File | undefined) {
     if (!file) return;
-    const url = URL.createObjectURL(file);
-    blobUrls.current.add(url);
-    updateActivePanel((panel) => ({
-      ...panel,
-      screenshotUrl: url,
-      screenshotRemote: false,
-    }));
+    void uploadScreenshotForPanel(studio.activePanelId, file);
   }
 
   function onDrop(e: React.DragEvent<HTMLButtonElement>) {
@@ -473,6 +568,12 @@ export function StudioClient({
               onClick={() => fileInputRef.current?.click()}
               onDragOver={(e) => e.preventDefault()}
               onDrop={onDrop}
+              data-active-panel-screenshot-state={
+                uploadState[activePanel.panelId] ?? "idle"
+              }
+              data-active-panel-screenshot-remote={
+                activePanel.screenshotRemote ? "true" : "false"
+              }
               className="w-full border border-dashed border-[var(--line-strong)] bg-[var(--bg-2)] px-4 py-6 text-left hover:border-[var(--accent)] transition-colors"
             >
               <div className="flex items-center gap-3">
@@ -480,7 +581,15 @@ export function StudioClient({
                 <div>
                   <div className="t-mono-sm text-[var(--fg)] uppercase tracking-[0.14em]">Upload PNG / JPG</div>
                   <div className="t-mono-xs text-[var(--fg-mute)] mt-1">
-                    {activePanel.screenshotUrl ? "Screenshot loaded into the active panel." : "Drop a screenshot here or click to pick a file."}
+                    {uploadState[activePanel.panelId] === "uploading"
+                      ? "Uploading to durable storage…"
+                      : uploadState[activePanel.panelId] === "error"
+                        ? `Upload failed: ${uploadError[activePanel.panelId] ?? "unknown error"}. Click to retry.`
+                        : activePanel.screenshotUrl
+                          ? activePanel.screenshotRemote
+                            ? "Screenshot persisted — survives reload."
+                            : "Screenshot loaded locally. Persisting…"
+                          : "Drop a screenshot here or click to pick a file."}
                   </div>
                 </div>
               </div>
@@ -489,6 +598,7 @@ export function StudioClient({
               ref={fileInputRef}
               type="file"
               accept="image/png,image/jpeg,image/jpg,image/webp"
+              data-testid="studio-upload-input"
               className="hidden"
               onChange={(e) => onUpload(e.target.files?.[0])}
             />

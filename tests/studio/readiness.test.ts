@@ -58,14 +58,30 @@ describe("evaluatePanel()", () => {
     expect(evaluatePanel(panel).issues).toContain("no-headline");
   });
 
-  it("accepts a blob: screenshot URL (just-uploaded panel)", () => {
+  // Cycle #3 (2026-05-23) — persistence rule. A blob URL alone is
+  // browser-local and won't survive reload because sanitizeStudioDesign
+  // strips it on save. We MUST NOT report ready until the screenshot
+  // is durable.
+
+  it("does NOT accept a blob: URL by itself — that's the upload-in-flight state", () => {
     const panel = readyPanel({ screenshotUrl: "blob:http://localhost/abc-123", screenshotRemote: false });
+    const r = evaluatePanel(panel);
+    expect(r.ready).toBe(false);
+    expect(r.issues).toContain("screenshot-uploading");
+  });
+
+  it("accepts a remote https screenshot URL with screenshotRemote=true", () => {
+    const panel = readyPanel({ screenshotUrl: "https://cdn.example.test/a.png", screenshotRemote: true });
     expect(evaluatePanel(panel).ready).toBe(true);
   });
 
-  it("accepts a remote https screenshot URL (post-reload panel)", () => {
-    const panel = readyPanel({ screenshotUrl: "https://cdn.example.test/a.png", screenshotRemote: true });
-    expect(evaluatePanel(panel).ready).toBe(true);
+  it("does NOT accept a remote-looking URL if screenshotRemote=false (defensive)", () => {
+    // Defensive: even if the URL string looks remote, the canonical
+    // signal is the screenshotRemote flag — we don't sniff URLs.
+    const panel = readyPanel({ screenshotUrl: "https://cdn.example.test/a.png", screenshotRemote: false });
+    const r = evaluatePanel(panel);
+    expect(r.ready).toBe(false);
+    expect(r.issues).toContain("screenshot-uploading");
   });
 
   it("returns multi-issue arrays when both headline + screenshot are missing", () => {

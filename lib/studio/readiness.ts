@@ -39,6 +39,7 @@ import type { StudioDesign, StudioDesignSet } from "@/components/studio/types";
 
 export type PanelReadinessIssue =
   | "no-screenshot"
+  | "screenshot-uploading"
   | "no-headline";
 
 export type PanelReadiness = {
@@ -61,8 +62,9 @@ export type StudioReadiness = {
 };
 
 const ISSUE_COPY: Record<PanelReadinessIssue, string> = {
-  "no-screenshot": "missing app screenshot",
-  "no-headline":   "missing headline",
+  "no-screenshot":        "missing app screenshot",
+  "screenshot-uploading": "screenshot uploading",
+  "no-headline":          "missing headline",
 };
 
 /**
@@ -76,10 +78,30 @@ export function describeIssues(issues: readonly PanelReadinessIssue[]): string[]
 
 /**
  * Evaluate a single panel. Pure.
+ *
+ * **Persistence rule (cycle #3, 2026-05-23):** a panel is only ready
+ * when its screenshot is **durably persisted** to remote storage —
+ * i.e. `screenshotRemote === true`. A `blob:` URL alone is browser-
+ * local; `sanitizeStudioDesign` strips it on save, and the panel
+ * reverts to "no screenshot" after reload. Treating blob-only panels
+ * as ready was the original audit lie — readiness must reflect what
+ * actually survives reload.
+ *
+ * Three observable states for the screenshot field:
+ *   - no `screenshotUrl`           → `"no-screenshot"`
+ *   - `screenshotUrl` + `remote=false` → `"screenshot-uploading"`
+ *     (a blob just dropped; presigned-PUT to R2 still in flight, or
+ *     the upload failed and the panel is sitting on stale local
+ *     bytes that won't outlive this tab)
+ *   - `screenshotUrl` + `remote=true`  → ready (subject to headline)
  */
 export function evaluatePanel(panel: StudioDesign): PanelReadiness {
   const issues: PanelReadinessIssue[] = [];
-  if (!panel.screenshotUrl) issues.push("no-screenshot");
+  if (!panel.screenshotUrl) {
+    issues.push("no-screenshot");
+  } else if (!panel.screenshotRemote) {
+    issues.push("screenshot-uploading");
+  }
   if (!panel.headline.trim()) issues.push("no-headline");
   return {
     panelId: panel.panelId,
