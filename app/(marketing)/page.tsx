@@ -17,11 +17,11 @@ export default function LandingPage() {
     <>
       <HomeJsonLd />
       <Hero />
-      <Reveal as="div"><MetricsBand /></Reveal>
       <Reveal as="div"><PipelineDiagram /></Reveal>
+      <Reveal as="div"><MetricsBand /></Reveal>
       <Reveal as="div"><FeatureGrid /></Reveal>
-      <Reveal as="div"><Templates compact /></Reveal>
       <Reveal as="div"><Surfaces /></Reveal>
+      <Reveal as="div"><Templates compact /></Reveal>
       <Reveal as="div"><Testimonials /></Reveal>
       <Reveal as="div"><Comparison /></Reveal>
       <Reveal as="div"><Roadmap /></Reveal>

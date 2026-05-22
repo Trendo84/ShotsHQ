@@ -49,13 +49,14 @@ export function Templates({ compact = false }: { compact?: boolean }) {
       <div className="max-w-[1480px] mx-auto px-4 md:px-8 py-14 md:py-20">
         <div className="grid grid-cols-12 gap-8 mb-10 items-end">
           <h2 className="col-span-12 md:col-span-7 t-display t-h-3">
-            Don&apos;t want to start from blank?
+            Start from a direction,
             <br />
-            <span className="text-[var(--accent)]">{TEMPLATE_COUNT}&nbsp;templates to remix.</span>
+            <span className="text-[var(--accent)]">not a blank canvas.</span>
           </h2>
           <p className="col-span-12 md:col-span-5 t-prose max-w-md">
-            {TEMPLATE_COUNT}&nbsp;curated starting points. Pick one, swap your
-            screens in, ship. Or build a project from blank if you&apos;d rather.
+            {TEMPLATE_COUNT}&nbsp;curated starting points for real App Store work.
+            Pick a system, swap your screens in, then refine instead of composing
+            every frame from scratch.
           </p>
         </div>
 

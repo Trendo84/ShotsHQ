@@ -101,13 +101,13 @@ export function Surfaces() {
           <div className="col-span-12 md:col-span-7">
             <div className="t-eyebrow t-eyebrow-accent mb-3">One project · every channel</div>
             <h2 className="t-display t-h-2 text-balance">
-              Render once, fan out to <span className="text-[var(--accent)]">every channel a launch needs</span>.
+              Build it once, ship it to <span className="text-[var(--accent)]">every surface a launch actually needs</span>.
             </h2>
           </div>
           <p className="col-span-12 md:col-span-5 t-prose max-w-md">
-            Drop your screens in once. ShotsHQ fans them out to every
-            channel a launch needs — App Store, marketing site, social
-            cards, Product Hunt, GitHub. Same brand, every aspect.
+            Start with one screenshot system, then fan it out to the App Store,
+            marketing site, social cards, Product Hunt, GitHub, and the assets
+            people ask you for after launch day.
           </p>
         </Reveal>
 

@@ -62,7 +62,7 @@ export function FeatureGrid() {
   return (
     <section className="border-b border-[var(--line)]">
       <div className="max-w-[1480px] mx-auto px-4 md:px-8 py-14 md:py-20">
-        <Reveal as="div" className="grid grid-cols-12 gap-8 mb-14 items-end">
+        <Reveal as="div" className="grid grid-cols-12 gap-8 mb-8 items-end">
           <div className="col-span-12 md:col-span-7">
             <div className="t-eyebrow t-eyebrow-accent mb-3">Modules</div>
             <h2 className="t-display t-h-2 text-balance">
@@ -70,9 +70,31 @@ export function FeatureGrid() {
             </h2>
           </div>
           <p className="col-span-12 md:col-span-5 t-prose max-w-md">
-            Each module deploys independently, bills independently, refunds on
-            failure. Studio subscribers skip the meter entirely.
+            Use AI where it compresses the workload. Keep control everywhere
+            else. Every module is optional, independently metered, and refunded
+            on failure.
           </p>
+        </Reveal>
+
+        <Reveal
+          as="div"
+          className="grid grid-cols-1 md:grid-cols-3 gap-px bg-[var(--line)] border border-[var(--line)] mb-10"
+        >
+          {[
+            "Dispatch only the modules you need",
+            "Failed runs refund automatically",
+            "Studio plans skip the meter entirely",
+          ].map((item, i) => (
+            <div
+              key={item}
+              className="bg-[var(--bg-2)] px-4 py-3 flex items-center gap-3"
+            >
+              <span className="t-mono-xs text-[var(--accent)]">0{i + 1}</span>
+              <span className="t-mono-xs text-[var(--fg-mute)] uppercase tracking-[0.14em]">
+                {item}
+              </span>
+            </div>
+          ))}
         </Reveal>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-[var(--line)] border border-[var(--line)]">
@@ -84,7 +106,8 @@ export function FeatureGrid() {
               y={16}
               className="bg-[var(--bg)] p-7 min-h-[280px] flex flex-col"
             >
-              <header className="flex items-center justify-end mb-5">
+              <header className="flex items-start justify-between gap-3 mb-5">
+                <span className="t-mono-xs text-[var(--fg-mute)]">0{i + 1}</span>
                 <span className="t-eyebrow text-[var(--accent)] bg-[color-mix(in_srgb,var(--accent)_10%,transparent)] border border-[var(--accent)] px-1.5 py-0.5 normal-case tracking-[0.05em]">
                   {f.spec}
                 </span>
