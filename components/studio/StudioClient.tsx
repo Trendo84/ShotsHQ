@@ -16,6 +16,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { saveStudio } from "@/app/actions/studio";
 import { applyDeviceToActivePanel } from "@/lib/studio/device-switch";
+import {
+  describeIssues,
+  evaluatePanel,
+  evaluateStudio,
+  statusHelp,
+  statusLabel,
+  statusOf,
+} from "@/lib/studio/readiness";
 import { StudioPanel } from "./StudioPanel";
 import {
   CANVAS_BASE_WIDTH,
@@ -53,6 +61,10 @@ type ExportResult = {
   actual: string;
   ok: boolean;
   panelLabel: string;
+  /** True when the row represents a blocked/skipped panel rather than a real render. */
+  blocked?: boolean;
+  /** Human-readable reason for blocked/skipped panels. */
+  blockedReason?: string;
 };
 
 type SaveState = "saved" | "dirty" | "saving" | "error";
@@ -290,6 +302,24 @@ export function StudioClient({
   }
 
   async function exportCurrent() {
+    // Defense-in-depth: even though the button is `disabled` when
+    // !canExportCurrent, an operator inspecting via DevTools could
+    // strip the attribute. Refuse and surface inline copy explaining
+    // what's missing — never silent no-op or fake "Exporting…".
+    const activeReadinessNow = evaluatePanel(activePanel);
+    if (!activeReadinessNow.ready) {
+      const issues = describeIssues(activeReadinessNow.issues);
+      setLog([{
+        file:       "—",
+        panelLabel: panelLabel(activeIndex),
+        expected:   `${activeDevice.width}×${activeDevice.height}`,
+        actual:     "blocked",
+        ok:         false,
+        blocked:    true,
+        blockedReason: issues.join(" · ") || "panel not ready to export",
+      }]);
+      return;
+    }
     setBusy(true);
     setLog([]);
     try {
@@ -301,11 +331,41 @@ export function StudioClient({
   }
 
   async function exportAll() {
+    // Defense-in-depth — see exportCurrent above. We also SKIP
+    // unready panels in the bulk run (instead of bailing entirely)
+    // so the user gets the partial set + a clear log of what was
+    // skipped and why.
+    const eval0 = evaluateStudio(studio);
+    if (!eval0.exportable) {
+      setLog(studio.panels.map((panel, index) => ({
+        file:          "—",
+        panelLabel:    panelLabel(index),
+        expected:      `${deviceById(panel.deviceId).width}×${deviceById(panel.deviceId).height}`,
+        actual:        "blocked",
+        ok:            false,
+        blocked:       true,
+        blockedReason: describeIssues(evaluatePanel(panel).issues).join(" · ") || "panel not ready",
+      })));
+      return;
+    }
     setBusy(true);
     setLog([]);
     try {
       const results: ExportResult[] = [];
       for (const [index, panel] of studio.panels.entries()) {
+        const panelReady = evaluatePanel(panel);
+        if (!panelReady.ready) {
+          results.push({
+            file:          "—",
+            panelLabel:    panelLabel(index),
+            expected:      `${deviceById(panel.deviceId).width}×${deviceById(panel.deviceId).height}`,
+            actual:        "skipped",
+            ok:            false,
+            blocked:       true,
+            blockedReason: describeIssues(panelReady.issues).join(" · ") || "panel not ready",
+          });
+          continue;
+        }
         // eslint-disable-next-line no-await-in-loop
         const result = await exportPanel(panel, index);
         results.push(result);
@@ -316,7 +376,29 @@ export function StudioClient({
     }
   }
 
-  const exactCount = log.filter((item) => item.ok).length;
+  const exactCount   = log.filter((item) => item.ok).length;
+  const blockedCount = log.filter((item) => item.blocked).length;
+  const renderedTotal = log.length - blockedCount;
+  const exportRunSummary = log.length === 0
+    ? null
+    : blockedCount > 0
+      ? `${exactCount} exact · ${blockedCount} blocked`
+      : `${exactCount}/${renderedTotal} exact`;
+
+  /**
+   * Export readiness — single source of truth driving the Export
+   * buttons + InfoCell + per-panel filmstrip badges. Audit P0
+   * (2026-05-23): fresh project claimed "EXPORT READY" and enabled
+   * CTAs that produced nothing. See lib/studio/readiness.ts for the
+   * rules + tests/studio/readiness.test.ts for the contract.
+   */
+  const readiness        = React.useMemo(() => evaluateStudio(studio), [studio]);
+  const status           = statusOf(readiness);
+  const activeReady      = evaluatePanel(activePanel).ready;
+  const activeIssues     = describeIssues(evaluatePanel(activePanel).issues);
+  const readyPanelCount  = readiness.readyPanels;
+  const canExportCurrent = activeReady && !busy;
+  const canExportAll     = readiness.exportable && !busy;
 
   return (
     <div className="grid grid-cols-12 min-h-[calc(100dvh-7rem)]">
@@ -604,10 +686,39 @@ export function StudioClient({
             <Button variant="ghost" type="button" onClick={() => applyTheme(THEME_PRESETS[0]!.id)}>
               <Wand2 size={14} className="mr-2" /> Reset theme
             </Button>
-            <Button variant="ghost" type="button" disabled={busy} onClick={exportAll}>
-              <Download size={14} className="mr-2" /> {busy ? "Exporting…" : `Export all (${studio.panels.length})`}
+            <Button
+              variant="ghost"
+              type="button"
+              disabled={!canExportAll}
+              data-export-all-enabled={canExportAll ? "true" : "false"}
+              title={
+                canExportAll
+                  ? (status === "partial"
+                      ? `Export the ${readyPanelCount} ready panel(s); the rest stay queued until each has a screenshot + headline.`
+                      : `Export all ${readyPanelCount} panels at exact App Store dimensions.`)
+                  : "No panels are ready yet — upload a screenshot into each panel and write a headline before exporting."
+              }
+              onClick={exportAll}
+            >
+              <Download size={14} className="mr-2" />
+              {busy
+                ? "Exporting…"
+                : status === "partial"
+                  ? `Export ready (${readyPanelCount}/${readiness.totalPanels})`
+                  : `Export all (${readyPanelCount})`}
             </Button>
-            <Button variant="accent" type="button" disabled={busy} onClick={exportCurrent}>
+            <Button
+              variant="accent"
+              type="button"
+              disabled={!canExportCurrent}
+              data-export-current-enabled={canExportCurrent ? "true" : "false"}
+              title={
+                canExportCurrent
+                  ? "Export the active panel at its exact App Store dimensions."
+                  : `Active panel not ready: ${activeIssues.join(" · ") || "no exportable content yet"}. Add what's missing in the panel above.`
+              }
+              onClick={exportCurrent}
+            >
               <Download size={14} className="mr-2" /> {busy ? "Exporting…" : "Export current"}
             </Button>
           </div>
@@ -625,10 +736,13 @@ export function StudioClient({
                 const scale = FILMSTRIP_W / CANVAS_BASE_WIDTH;
                 const height = Math.round((CANVAS_BASE_WIDTH * device.height) / device.width * scale);
                 const active = panel.panelId === studio.activePanelId;
+                const tileReadiness = readiness.perPanel[index];
+                const tileReady = tileReadiness?.ready === true;
                 return (
                   <button
                     key={panel.panelId}
                     type="button"
+                    data-panel-ready={tileReady ? "true" : "false"}
                     onClick={() => selectPanel(panel.panelId)}
                     className={`shrink-0 border p-2 text-left transition-colors ${
                       active
@@ -636,7 +750,12 @@ export function StudioClient({
                         : "border-[var(--line)] hover:border-[var(--accent)]"
                     }`}
                   >
-                    <div className="t-mono-xs text-[var(--fg-mute)] uppercase tracking-[0.14em] mb-2">{String(index + 1).padStart(2, "0")}</div>
+                    <div className="t-mono-xs text-[var(--fg-mute)] uppercase tracking-[0.14em] mb-2 flex items-center justify-between gap-2">
+                      <span>{String(index + 1).padStart(2, "0")}</span>
+                      <span className={tileReady ? "text-[var(--signal,#7CB342)]" : "text-[var(--fg-mute)]"}>
+                        {tileReady ? "● READY" : "○ DRAFT"}
+                      </span>
+                    </div>
                     <div style={{ width: FILMSTRIP_W, height, position: "relative", overflow: "hidden" }}>
                       <div style={{ transform: `scale(${scale})`, transformOrigin: "top left", width: CANVAS_BASE_WIDTH }}>
                         <StudioPanel design={panel} />
@@ -669,7 +788,23 @@ export function StudioClient({
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-px border border-[var(--line)] bg-[var(--line)]">
             <InfoCell label="Panels" value={String(studio.panels.length).padStart(2, "0")} sub="Ordered screenshot set" icon={<Copy size={14} />} />
             <InfoCell label="Device contract" value={`${activeDevice.width}×${activeDevice.height}`} sub="Exact App Store export target" icon={<ImageIcon size={14} />} />
-            <InfoCell label="Export" value={log.length > 0 ? `${exactCount}/${log.length} exact` : "Ready"} sub={log.length > 0 ? "Current or bulk export just ran" : "Use Export current or Export all"} icon={<Download size={14} />} />
+            <InfoCell
+              label="Export"
+              value={
+                exportRunSummary !== null
+                  ? exportRunSummary
+                  : statusLabel(status)
+              }
+              sub={
+                exportRunSummary !== null
+                  ? (blockedCount > 0
+                      ? "Ready panels exported; blocked panels skipped."
+                      : "Current or bulk export just ran.")
+                  : statusHelp(readiness)
+              }
+              icon={<Download size={14} />}
+              data-status={status}
+            />
             <InfoCell label="Persistence" value={saveLabel(saveState)} sub={saveHelp(saveState)} icon={<Save size={14} />} />
           </div>
 
@@ -679,14 +814,24 @@ export function StudioClient({
                 <div className="t-mono-sm uppercase tracking-[0.12em]">Last export run</div>
               </div>
               <div className="divide-y divide-[var(--line)]">
-                {log.map((item) => (
-                  <div key={item.file} className="px-4 py-3 flex items-start justify-between gap-4">
+                {log.map((item, idx) => (
+                  <div key={`${item.panelLabel}-${idx}`} className="px-4 py-3 flex items-start justify-between gap-4" data-export-row-status={item.blocked ? "blocked" : item.ok ? "ok" : "mismatch"}>
                     <div>
                       <div className="text-[14px] text-[var(--fg)]">{item.panelLabel} · {item.file}</div>
-                      <div className="t-mono-xs text-[var(--fg-mute)] mt-1">Expected {item.expected} · got {item.actual}</div>
+                      <div className="t-mono-xs text-[var(--fg-mute)] mt-1">
+                        {item.blocked
+                          ? `Skipped — ${item.blockedReason ?? "panel not ready"}`
+                          : `Expected ${item.expected} · got ${item.actual}`}
+                      </div>
                     </div>
-                    <div className={`t-mono-xs uppercase tracking-[0.14em] ${item.ok ? "text-[var(--signal)]" : "text-[var(--accent)]"}`}>
-                      {item.ok ? "Exact" : "Mismatch"}
+                    <div className={`t-mono-xs uppercase tracking-[0.14em] ${
+                      item.blocked
+                        ? "text-[var(--accent)]"
+                        : item.ok
+                          ? "text-[var(--signal)]"
+                          : "text-[var(--accent)]"
+                    }`}>
+                      {item.blocked ? "Blocked" : item.ok ? "Exact" : "Mismatch"}
                     </div>
                   </div>
                 ))}
@@ -694,12 +839,67 @@ export function StudioClient({
             </div>
           )}
 
-          <div className="border border-[var(--line)] bg-[var(--bg)] px-4 py-3">
-            <div className="t-mono-xs text-[var(--fg-mute)] uppercase tracking-[0.14em]">Phase C note</div>
-            <p className="t-prose mt-2 text-[13px] text-[var(--fg-dim)] max-w-[68ch]">
-              Studio now behaves like a real screenshot pack builder: ordered panels, filmstrip selection, duplication, reordering, deletion, per-panel editing, and bulk export naming. Next is screenshot seeding plus a server-authoritative studio renderer.
-            </p>
-          </div>
+          {/*
+            Readiness checklist — shown when at least one panel is not
+            ready. Honest about what blocks export and links the
+            operator to the Exports page where the full per-panel
+            checklist lives. Audit P0 (2026-05-23).
+          */}
+          {!readiness.fullyReady && !readiness.empty && (
+            <div
+              className="border border-[var(--line-strong)] bg-[var(--bg)] px-4 py-3"
+              data-readiness-status={status}
+            >
+              <div className="t-mono-xs text-[var(--accent)] uppercase tracking-[0.14em] flex items-center gap-2">
+                <span aria-hidden>○</span> Export readiness · {statusLabel(status)}
+              </div>
+              <p className="t-prose mt-2 text-[13px] text-[var(--fg-dim)] max-w-[68ch]">
+                {statusHelp(readiness)}
+              </p>
+              <ul className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-1.5">
+                {readiness.perPanel.map((p, idx) => {
+                  const issues = describeIssues(p.issues);
+                  return (
+                    <li
+                      key={p.panelId}
+                      className="t-mono-xs text-[12px] text-[var(--fg-mute)] flex items-start gap-2"
+                    >
+                      <span className={p.ready ? "text-[var(--signal,#7CB342)]" : "text-[var(--accent)]"} aria-hidden>
+                        {p.ready ? "●" : "○"}
+                      </span>
+                      <span className="truncate">
+                        Panel {String(idx + 1).padStart(2, "0")} ·{" "}
+                        <span className="text-[var(--fg-dim)]">
+                          {p.ready ? "ready" : issues.join(" · ")}
+                        </span>
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+              <div className="mt-3 t-mono-xs text-[var(--fg-mute)]">
+                Add a screenshot via the <strong>Upload PNG / JPG</strong>{" "}
+                control above each panel; write a non-empty headline to
+                lift a panel out of draft.
+              </div>
+            </div>
+          )}
+
+          {readiness.fullyReady && (
+            <div
+              className="border border-[var(--line)] bg-[var(--bg)] px-4 py-3"
+              data-readiness-status="ready"
+            >
+              <div className="t-mono-xs text-[var(--signal,#7CB342)] uppercase tracking-[0.14em] flex items-center gap-2">
+                <span aria-hidden>●</span> Export readiness · Ready
+              </div>
+              <p className="t-prose mt-2 text-[13px] text-[var(--fg-dim)] max-w-[68ch]">
+                {statusHelp(readiness)} Browser exports land in your
+                Downloads folder; a server-authoritative renderer + R2
+                streaming is in scope for v1.1.
+              </p>
+            </div>
+          )}
         </div>
 
         <div style={{ position: "fixed", left: "-99999px", top: 0, pointerEvents: "none" }} aria-hidden>
@@ -732,14 +932,19 @@ function InfoCell({
   value,
   sub,
   icon,
+  ...dataAttrs
 }: {
   label: string;
   value: string;
   sub: string;
   icon: React.ReactNode;
+  [dataKey: `data-${string}`]: string | undefined;
 }) {
   return (
-    <div className="bg-[var(--bg)] p-4 min-h-[118px] flex flex-col justify-between">
+    <div
+      className="bg-[var(--bg)] p-4 min-h-[118px] flex flex-col justify-between"
+      {...dataAttrs}
+    >
       <div className="flex items-center justify-between gap-3">
         <div className="t-mono-xs text-[var(--fg-mute)] uppercase tracking-[0.14em]">{label}</div>
         <div className="text-[var(--accent)]">{icon}</div>
