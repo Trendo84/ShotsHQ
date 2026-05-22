@@ -54,7 +54,7 @@ export function Templates({ compact = false }: { compact?: boolean }) {
             <span className="text-[var(--accent)]">not a blank canvas.</span>
           </h2>
           <p className="col-span-12 md:col-span-5 t-prose max-w-md">
-            {TEMPLATE_COUNT}&nbsp;starting points for real App Store work. Pick one, swap your screens in, refine.
+            {TEMPLATE_COUNT}&nbsp;starting points for App Store launches. Pick one, swap your screens in, refine.
           </p>
         </div>
 

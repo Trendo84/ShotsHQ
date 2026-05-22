@@ -66,7 +66,7 @@ export function Comparison() {
           </h2>
         </Reveal>
         <p className="t-mono-sm text-[var(--fg-mute)] mb-10 max-w-2xl">
-          Built for launch-ready App Store assets, localized variants, and promo surfaces — not generic canvas work.
+          Built for App Store assets, localized variants, and promo surfaces — not generic canvas work.
         </p>
 
         <div className="border border-[var(--line)] max-w-full md:max-w-4xl overflow-x-auto">

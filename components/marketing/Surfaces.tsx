@@ -105,7 +105,7 @@ export function Surfaces() {
             </h2>
           </div>
           <p className="col-span-12 md:col-span-5 t-prose max-w-md">
-            One screenshot system for the App Store, marketing site, social cards, Product Hunt, GitHub, and press assets.
+            One system for the App Store, site, social cards, Product Hunt, GitHub, and press assets.
           </p>
         </Reveal>
 

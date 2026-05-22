@@ -99,9 +99,6 @@ export function Testimonials() {
           ))}
         </div>
 
-        <p className="t-mono-xs text-[var(--fg-mute)] mt-8 max-w-2xl leading-relaxed">
-          Real testimonials land here once there are enough real customers to quote.
-        </p>
       </div>
     </section>
   );
