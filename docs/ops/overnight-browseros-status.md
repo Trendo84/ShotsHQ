@@ -1,5 +1,171 @@
 # ShotsHQ overnight BrowserOS status
 
+## 2026-05-23 18:25 AEST · cycle #11
+
+### What shipped this cycle
+
+**`fix(settings): ship real profile save + honest v1.1 status on ASC/API`** (commit `f70b9ac` to be replaced with actual sha, pushed to `origin/main`).
+
+Brief target: make `/settings` truthful and functional. The audit anchor was specific — the page advertised "Changes persist within five seconds" while three dead controls (`Save profile · soon`, fake `sk_live_••••` API key + Rotate, `Verify and save · soon` ASC form) actively lied. The ASC credential form was the worst case: a user could paste a real `.p8` private key into the textarea, click a disabled-looking button, and walk away thinking they'd saved sensitive cryptographic material that the form quietly dropped.
+
+#### Profile save flow — shipped for real
+
+| Layer | What landed |
+|---|---|
+| Schema | `drizzle/migrations/0001_serious_synch.sql` adds `display_name`, `handle`, `bio` text columns to `users` (all `NOT NULL DEFAULT ''`). Non-destructive. Applied to dev DB; prod migrates on next Vercel deploy. |
+| API | `POST /api/settings/profile` — Zod-validated patch (only updates keys present in the body), trims whitespace, validates handle `[a-z0-9_-]{3,30}`, bio ≤280, display name ≤50. Rate-limited via apiLimiter (120/min/user). Clerk-gated via `requireUser()`. |
+| Client form | `ProfileForm` tracks dirty state, surfaces idle / saving / saved / error inline, exposes `data-profile-status` + `data-profile-dirty` + `data-profile-save` for testability. Save button only enables when dirty AND valid AND not submitting. After a successful save the snapshot updates and the button disables again. |
+| Persistence | Values survive reload — the e2e spec round-trips a unique value against the dev DB. |
+
+#### Studio API + ASC — rewritten as honest v1.1 surfaces
+
+The brief allowed a fallback for ASC: "If true verification cannot honestly ship this cycle, remove the pseudo-actionable disabled save path." Real ASC verification requires JWT-signing with ES256 against Apple's API — meaningful work, not safe to fake. Took the fallback for both surfaces:
+
+| Surface | Was | Now |
+|---|---|---|
+| Studio API | Fake `sk_live_••••` Input + Copy / Rotate / Webhook URL / Webhook secret inputs that did nothing | `<div data-api-status="locked\|planned">` planned-surface block. Free users → upgrade CTA. Studio users → "ships in v1.1, you'll be in the first wave". Links to `/docs/api`. |
+| ASC | Issuer ID / Key ID / .p8 textarea + permanently-disabled `Verify and save · soon` | `<div data-asc-status="planned">` planned-surface block. No credential inputs. Honest paragraph explaining why we're not collecting the `.p8` yet. Links to `/docs/asc`. |
+
+#### Testability contract (all new hooks per brief)
+
+| Hook | Location | Values |
+|---|---|---|
+| `data-settings-section` | each `<section>` | `profile` / `api` / `asc` / `danger` |
+| `data-profile-status` | profile `<form>` | `idle` / `dirty` / `saving` / `saved` / `error` |
+| `data-profile-dirty` | profile `<form>` | `true` / `false` |
+| `data-profile-save` | save button | `true` |
+| `data-profile-saved` | saved chip | `true` (only when status=saved && !dirty) |
+| `data-profile-error` | inline error | `true` |
+| `data-api-status` | Studio API block | `locked` / `planned` |
+| `data-asc-status` | ASC block | `planned` (with vocab `disconnected\|draft\|verifying\|connected\|error` reserved for the v1.1 verify flow) |
+
+`data-theme-id` was listed in the brief as conditional ("if that section is rendered on this page"). The current /settings has no theme section, so no theme hook was added — Studio already exposes `data-theme-id` on its theme selector per cycle #8.
+
+### Files touched
+
+```
+M  app/(app)/settings/page.tsx                    (data-settings-section, header copy, initial values)
+A  app/api/settings/profile/route.ts              (POST — Zod patch, rate limit, logError)
+M  components/settings/SettingsForms.tsx          (real ProfileForm, honest StudioApiForm + AscForm)
+A  drizzle/migrations/0001_serious_synch.sql      (display_name, handle, bio columns)
+A  drizzle/migrations/meta/0001_snapshot.json     (drizzle-kit generated)
+M  drizzle/migrations/meta/_journal.json          (drizzle-kit appended)
+M  lib/db/schema.ts                               (users columns + comment)
+M  tests/billing/status.test.ts                   (fixture backfill for new User fields)
+A  tests/settings/profile-schema.test.ts          (13 Zod-contract specs)
+A  e2e/settings.spec.ts                           (8 regression specs)
+```
+
+### Verification (all green)
+
+```
+pnpm typecheck   → clean
+pnpm test        → 231 / 231 pass across 22 files
+                     - 13 new profile-schema specs            ✅
+                     - 218 prior suite                         ✅
+pnpm test:e2e    → 48 / 48 pass
+                     - 8 new settings                          ✅
+                     - 9 marketing-honesty                     ✅ (cycle #10)
+                     - 4 billing-readiness                     ✅ (cycle #9)
+                     - 6 studio-selector-parity                ✅ (cycle #8)
+                     - 1 hydration smoke                       ✅ (cycle #6)
+                     - 1 export-loop                           ✅ (cycle #6)
+                     - 5 list-surfaces                         ✅ (cycle #5)
+                     - 3 project-overview                      ✅ (cycle #4)
+                     - 4 export-readiness                      ✅ (cycle #2)
+                     - 3 studio-device-switch                  ✅ (cycle #1)
+                     - 2 studio-upload-persistence             ✅ (cycle #3)
+                     - 2 wizard                                ✅
+pnpm build       → clean
+git push         → a286e6b..c1a8254 main -> main
+```
+
+### Acceptance-criteria status (brief's 5 bullets)
+
+1. ✅ Editing profile fields leads to a real save path and persisted values after reload (e2e spec 6 round-trips a unique value).
+2. ✅ The `Save profile · soon` button is gone — the save button now reads `Save profile` and reflects real dirty-state.
+3. ✅ ASC section is explicitly marked v1.1 with `data-asc-status="planned"` — no fake half-enabled surface. The brief allowed this fallback ("If true verification cannot honestly ship this cycle, remove the pseudo-actionable disabled save path").
+4. ✅ `data-settings-section` and `data-asc-status` exist (+ a fuller set of hooks for profile state — see table above).
+5. ✅ Tests cover the shipped behavior — 13 unit + 8 e2e specs.
+
+### Blockers
+
+None code-side. Operator items still carried forward:
+
+- **R2 bucket CORS** — operator-side, no-rush since same-origin proxy ships.
+- **Clerk live-key swap** in Vercel production env.
+- **Drizzle migration must run on prod** — `pnpm db:migrate` against the prod DB at next Vercel deploy. The migration is `ALTER TABLE "users" ADD COLUMN … DEFAULT '' NOT NULL` × 3 — instant, non-destructive, but flagged so it doesn't get missed. (Dev DB already migrated this cycle with explicit user authorization.)
+- **Studio + Lifetime e2e coverage on /billing** — requires seeding a paid synthetic user; unit tests cover all four plans in pure-logic form.
+- **Dead `Comparison.tsx` marketing component** (cycle #10 carry-forward) — still holds the ASC overclaim if anyone re-mounts it.
+
+### Highest-priority next target
+
+Now that the four most-visited authenticated surfaces (`/dashboard`, `/projects`, `/projects/[id]`, `/studio`), `/exports`, `/billing`, AND `/settings` are all on the readiness contract, the remaining audit surface is the actual generation pipeline:
+
+1. **`/projects/[id]/ai` audit** — the AI panel route exists. Pricing advertises 5 AI modules (copy, backdrop, template set, restyle, translate). Are any rendered as "soon" when the backend is live, or rendered as live when the backend is failing? Especially after cycle #10 made the marketing copy honest, the AI panel is the place where the truth actually has to be served to a clicking user.
+
+2. **`/projects/[id]/surfaces` audit** — renders before /studio. Does it lie about which surfaces are ready vs blocked vs empty?
+
+3. **CaptureDropzone migrate to `/api/upload/direct`** — wizard Step 3 dropzone still uses the presigned-PUT path that's CORS-blocked. Studio uses the proxy. After the cycle #10 quickstart docs described the proxy as the canonical path, would be good to actually use it everywhere.
+
+4. **`?e2e_plan=` fixture override for /billing paid-tier e2e** — carried from cycle #9.
+
+5. **Delete `Comparison.tsx`** — dead component still holds an ASC overclaim. Either delete or update.
+
+### Next BrowserOS prompt (paste verbatim next hour)
+
+```
+Continue the overnight loop in /Volumes/NVME EXT/Ivan/CODEX/ShotsHQ.
+Read docs/ops/overnight-browseros-loop.md (operating rules) and the
+top entry of docs/ops/overnight-browseros-status.md (latest cycle —
+yours).
+
+Focus this cycle: audit /projects/[id]/ai for the same readiness-lie
+shape that the cycles-#2-through-#11 sweep caught for the other
+surfaces. Pricing markets 5 AI modules (copy, backdrop, template set,
+restyle, translate) — but it's been 11 cycles since anyone audited the
+AI panel itself. Now that the marketing surfaces are honest (cycle #10)
+and /settings is honest (cycle #11), the AI panel is the surface where
+the marketing promise actually has to be served to a clicking user.
+
+Concrete steps:
+
+ 1. Visit /projects/[id]/ai with NEXT_PUBLIC_E2E=1. Note for each of
+    the 5 modules:
+      - Is the CTA enabled or disabled?
+      - If enabled, does it actually dispatch a Trigger.dev task
+        (debit + AI call + meter event) or is it a noop?
+      - If disabled, does the copy honestly explain why ("v1.1",
+        "Studio plan only", "needs screenshot first", etc.) or does
+        it lie?
+      - Does the result surface render real outputs, fake outputs,
+        or skeletons indefinitely?
+
+ 2. Cross-check the route + dispatcher (lib/ai/* + trigger/tasks/*).
+    Common lies to look for:
+      - "Generate ›" button that POSTs to a non-existent route
+      - Result panel that shows a stock image regardless of input
+      - Skeleton that never resolves because the task never runs
+      - Cost shown as "1 cr" when the route doesn't actually debit
+      - "Refunded on failure" UI that doesn't actually refund
+
+ 3. If any lie is found, fix it using the cycle-#5/cycle-#11 pattern:
+    derive from real state (the ai_jobs table is the source of truth),
+    expose data-ai-module / data-ai-status / data-ai-cost attributes
+    for testability, add an e2e spec.
+
+ 4. If /projects/[id]/ai is already honest, pivot to
+    /projects/[id]/surfaces using the same audit checklist.
+
+Re-run pnpm typecheck / pnpm test / pnpm test:e2e / pnpm build.
+Update docs/ops/overnight-browseros-status.md and reply with a
+ship report.
+
+Treat the repo + git state as truth. Don't trust session memory.
+```
+
+---
+
 ## 2026-05-23 17:45 AEST · cycle #10
 
 ### What shipped this cycle
