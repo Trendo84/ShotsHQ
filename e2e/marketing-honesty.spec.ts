@@ -26,6 +26,44 @@ import { test, expect } from "@playwright/test";
  */
 
 test.describe("Public-surfaces honesty contract", () => {
+  test("template preview assets are checked into git and resolve 200", async ({ request }) => {
+    // Cycle "morning-finish" — the preview PNGs lived in
+    // public/templates/preview/ but were untracked. Local renders fine
+    // (next dev serves from disk), production 404'd, and next/image
+    // returned 400 INVALID_IMAGE_OPTIMIZE_REQUEST when the optimizer
+    // hit a non-existent source. This spec runs against the dev server
+    // bound by Playwright; if the files aren't in git, deploys can't
+    // serve them. Pin the canonical three the brief named.
+    for (const slug of ["mono-punch", "soft-sunrise", "hazard-stripe"]) {
+      const url = `/templates/preview/template-preview-${slug}.png`;
+      const res = await request.get(url);
+      expect(res.status(), `expected 200 for ${url}`).toBe(200);
+      // PNG bytes — defensive sanity check the route isn't serving
+      // an HTML 404 page with status 200 from some catch-all.
+      const buf = Buffer.from(await res.body());
+      expect(buf.length, `expected non-empty body for ${url}`).toBeGreaterThan(1000);
+      // PNG signature: 89 50 4E 47 0D 0A 1A 0A
+      expect(buf[0]).toBe(0x89);
+      expect(buf[1]).toBe(0x50);
+      expect(buf[2]).toBe(0x4e);
+      expect(buf[3]).toBe(0x47);
+    }
+  });
+
+  test("templates gallery renders the preview <img> tags with the expected src paths", async ({ page }) => {
+    // Belt-and-braces: even if the asset URLs resolve 200, the
+    // gallery must actually reference them via the expected URL
+    // pattern. Pin three slugs that exist in the catalog.
+    await page.goto("/templates");
+    for (const slug of ["mono-punch", "soft-sunrise", "hazard-stripe"]) {
+      const img = page.locator(`img[alt*="${slug.replace(/-/g, " ")}" i]`).first();
+      await expect(img).toBeVisible();
+      const src = await img.getAttribute("src");
+      expect(src ?? "").toContain(`/templates/preview/template-preview-${slug}.png`);
+    }
+  });
+
+
   test("public pages do NOT mount the WIP / pre-launch banner", async ({ page }) => {
     // Overnight redesign: the hazard-stripe `Work in progress · Pre-launch
     // build · Some features still wiring up` banner was unmounted from

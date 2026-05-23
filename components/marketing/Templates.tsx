@@ -221,7 +221,16 @@ function TemplateCard({
           sizes="(max-width: 767px) 50vw, (max-width: 1279px) 33vw, 25vw"
           priority={priority}
           loading={priority ? "eager" : "lazy"}
-          quality={88}
+          // `unoptimized` because production was returning 400
+          // `INVALID_IMAGE_OPTIMIZE_REQUEST` from the Vercel image
+          // optimizer for these previews (root cause was the source
+          // files being untracked → 404; the optimizer correctly
+          // failed). Even with the assets now committed, the previews
+          // are already 22-36 kB tiny PNGs — running them through the
+          // optimizer offers basically no win and adds another
+          // failure point on every render. Static-serve is the more
+          // reliable choice for static-art assets at this size.
+          unoptimized
           className="w-full h-full object-cover transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-[1.03]"
         />
         {/* Subtle bottom scrim — grounds the floating "Use →" pill so it
