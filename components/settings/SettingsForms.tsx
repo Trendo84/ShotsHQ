@@ -264,20 +264,18 @@ export function StudioApiForm({ enabled }: { enabled: boolean }) {
   if (!enabled) {
     return (
       <div
-        className="border border-dashed border-[var(--line-strong)] p-5 space-y-3"
+        className="border border-dashed border-[var(--line)] p-4 space-y-2"
         data-api-status="locked"
       >
-        <div className="t-mono-xs text-[var(--fg-mute)]">LOCKED · STUDIO + LIFETIME</div>
         <p className="t-prose text-[14px]">
-          The public REST + webhook API ships in v1.1 for Studio and
-          Lifetime subscribers. Upgrade now to be in the first wave when
-          it lights up — no migration cost.
+          REST + webhook API is included with Studio and Lifetime.
+          Upgrade now to be in the first wave when it ships.
         </p>
         <a
           href="/billing"
           className="btn text-[11px] tracking-[0.04em] normal-case inline-flex items-center gap-2"
         >
-          ▸ Upgrade to Studio
+          Upgrade to Studio →
         </a>
       </div>
     );
@@ -285,19 +283,14 @@ export function StudioApiForm({ enabled }: { enabled: boolean }) {
 
   return (
     <div
-      className="border border-[var(--line-strong)] p-5 space-y-3"
+      className="border border-[var(--line)] p-4 space-y-2"
       data-api-status="planned"
     >
-      <div className="t-mono-xs text-[var(--accent)]">V1.1 · PLANNED</div>
       <p className="t-prose text-[14px]">
-        Your Studio plan includes the public REST + webhook API when it
-        ships in v1.1. Issuing keys, rotating them, and configuring
-        webhook destinations all land in the same release — we&apos;ll
-        email you the day they go live so you don&apos;t have to keep
-        checking.
-      </p>
-      <p className="t-mono-xs text-[var(--fg-mute)]">
-        ▸ See <a href="/docs/api" className="text-[var(--fg-dim)] hover:text-[var(--accent)] underline">/docs/api</a> for the planned contract.
+        Your Studio plan includes the public REST + webhook API. We&apos;ll
+        email the day it ships — see{" "}
+        <a href="/docs/api" className="text-[var(--fg-dim)] hover:text-[var(--accent)] underline">/docs/api</a>{" "}
+        for the planned contract.
       </p>
     </div>
   );
@@ -326,26 +319,17 @@ export function StudioApiForm({ enabled }: { enabled: boolean }) {
 export function AscForm() {
   return (
     <div
-      className="border border-[var(--line-strong)] p-5 space-y-3"
+      className="border border-[var(--line)] p-4 space-y-2"
       data-asc-status="planned"
     >
-      <div className="t-mono-xs text-[var(--accent)]">V1.1 · PLANNED</div>
       <p className="t-prose text-[14px]">
-        Direct push to App Store Connect ships in v1.1 alongside the
-        server render queue. Generated assets will upload per-locale,
-        per-device, with App Store Connect&apos;s required filename
-        conventions handled automatically.
+        Direct push to App Store Connect ships alongside the server
+        render queue. We&apos;ll validate your Issuer ID, Key ID, and{" "}
+        <samp>.p8</samp> against Apple in-flight — and never re-display
+        the raw key after the first save.
       </p>
-      <p className="t-prose text-[14px]">
-        We&apos;re not collecting your ASC API key yet — paste-and-pray
-        is exactly how cryptographic material gets lost. When the
-        verify flow ships, you&apos;ll paste the Issuer ID, Key ID, and
-        <samp className="mx-1">.p8</samp> private key once, we&apos;ll
-        validate them against Apple in-flight, and the raw key never
-        re-renders after the first save.
-      </p>
-      <p className="t-mono-xs text-[var(--fg-mute)]">
-        ▸ See <a href="/docs/asc" className="text-[var(--fg-dim)] hover:text-[var(--accent)] underline">/docs/asc</a> for the planned setup flow.
+      <p className="t-mono-xs text-[var(--fg-dim)]">
+        See <a href="/docs/asc" className="text-[var(--fg-dim)] hover:text-[var(--accent)] underline">/docs/asc</a> for the planned setup flow.
       </p>
     </div>
   );

@@ -207,7 +207,7 @@ function TemplateCard({
       href={href}
       aria-label={`Use the ${t.name} template`}
       style={{ cursor: "pointer" }}
-      className="group relative border border-[var(--line)] bg-[var(--bg)] hover:border-[var(--accent)] hover:-translate-y-0.5 hover:shadow-[6px_6px_0_var(--accent)] transition-all duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] flex flex-col cursor-pointer focus-visible:outline-none focus-visible:border-[var(--accent)] focus-visible:ring-1 focus-visible:ring-[var(--accent)] focus-visible:-translate-y-0.5"
+      className="group relative border border-[var(--line)] bg-[var(--bg)] hover:border-[var(--accent)] hover:-translate-y-1 hover:shadow-[8px_8px_0_var(--accent)] transition-all duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] flex flex-col cursor-pointer focus-visible:outline-none focus-visible:border-[var(--accent)] focus-visible:ring-1 focus-visible:ring-[var(--accent)] focus-visible:-translate-y-1 focus-visible:shadow-[8px_8px_0_var(--accent)]"
     >
       <div
         className="relative overflow-hidden bg-[var(--bg-2)]"
@@ -222,7 +222,14 @@ function TemplateCard({
           priority={priority}
           loading={priority ? "eager" : "lazy"}
           quality={88}
-          className="w-full h-full object-cover transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-[1.025]"
+          className="w-full h-full object-cover transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-[1.03]"
+        />
+        {/* Subtle bottom scrim — grounds the floating "Use →" pill so it
+            stays legible on any preview palette without dimming the
+            main image. Only ~18% of the card, only at the bottom. */}
+        <span
+          aria-hidden
+          className="absolute inset-x-0 bottom-0 h-[20%] bg-gradient-to-t from-black/30 to-transparent pointer-events-none"
         />
       </div>
       <div className="p-4 flex items-start justify-between gap-3 border-t border-[var(--line)]">
@@ -233,32 +240,25 @@ function TemplateCard({
           <div className="text-[12px] text-[var(--fg-mute)] truncate">{t.category}</div>
         </div>
         <span
-          className={`t-eyebrow normal-case tracking-[0.05em] px-1.5 py-0.5 border ${
+          className={`t-eyebrow normal-case tracking-[0.05em] px-2 py-0.5 shrink-0 ${
             t.tag === "Pro"
-              ? "text-[var(--accent)] border-[var(--accent)]"
-              : "text-[var(--fg-mute)] border-[var(--line-strong)]"
+              ? "bg-[var(--accent)] text-[var(--accent-fg)] border border-[var(--accent)]"
+              : "text-[var(--fg-mute)] border border-[var(--line-strong)]"
           }`}
         >
           {t.tag}
         </span>
       </div>
 
-      {/* Idle "Use →" pill — always visible at idle so the card reads as
-          interactive even on touch devices and pre-hover. Becomes a
-          stronger filled accent on hover/focus. */}
+      {/* Idle "Use →" pill — sits on the bottom scrim so it reads as
+          interactive on any preview. Filled accent on hover/focus. */}
       <span
         aria-hidden
-        className="absolute bottom-3 right-3 inline-flex items-center gap-1.5 px-2.5 py-1 border border-[var(--line-strong)] bg-[var(--bg)]/85 backdrop-blur-[2px] t-mono-xs uppercase tracking-[0.14em] text-[var(--fg-dim)] group-hover:bg-[var(--accent)] group-hover:text-[var(--accent-fg)] group-hover:border-[var(--accent)] group-focus-visible:bg-[var(--accent)] group-focus-visible:text-[var(--accent-fg)] group-focus-visible:border-[var(--accent)] transition-all duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] pointer-events-none"
+        className="absolute bottom-[calc(14%+0.75rem)] right-3 inline-flex items-center gap-1.5 px-2.5 py-1 border border-white/30 bg-black/55 backdrop-blur-[2px] t-mono-xs uppercase tracking-[0.14em] text-white group-hover:bg-[var(--accent)] group-hover:text-[var(--accent-fg)] group-hover:border-[var(--accent)] group-focus-visible:bg-[var(--accent)] group-focus-visible:text-[var(--accent-fg)] group-focus-visible:border-[var(--accent)] transition-all duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] pointer-events-none"
       >
         Use
         <span className="font-bold">→</span>
       </span>
-
-      {/* Tinted hover overlay — clear interaction affordance */}
-      <span
-        aria-hidden
-        className="absolute inset-0 bg-[var(--accent)]/0 group-hover:bg-[var(--accent)]/[0.06] group-focus-visible:bg-[var(--accent)]/[0.06] transition-colors duration-200 pointer-events-none"
-      />
     </Link>
   );
 }

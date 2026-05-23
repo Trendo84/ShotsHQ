@@ -43,10 +43,10 @@ export function Hero() {
           <div className="col-span-12 lg:col-span-7 flex flex-col gap-6 sm:gap-8 min-w-0">
             <HeroRotatingTitle />
 
-            <p className="t-prose-lg max-w-[46ch]">
-              Turn raw iPhone screenshots into a finished App Store pack —
-              headline copy, backdrops, locales, and exact export dimensions
-              included. Drop in the shots. Ship everything else.
+            <p className="t-prose-lg max-w-[46ch] text-[var(--fg)]">
+              Drop in raw iPhone screenshots. Get back a polished App
+              Store pack — headlines, backdrops, every locale, every
+              required dimension. Ship in minutes, not an afternoon.
             </p>
 
             {/* CTA row — primary + secondary on their own line */}
@@ -68,20 +68,21 @@ export function Hero() {
               </Link>
             </div>
 
-            {/* Trust microcopy — own row beneath the buttons. The
-               built-in-public chip + "indie dev solo studio" line moved
-               below the fold (lives in Footer / About) per UX audit
-               P3 #12 — eight elements above-the-fold was overload. */}
-            <div className="flex flex-wrap gap-x-5 gap-y-2 -mt-2 sm:-mt-3 text-[11px] sm:text-[12px] uppercase tracking-[0.16em] text-[var(--fg-mute)]">
-              <span>No card</span>
+            {/* Trust microcopy — three benefits, not four. The fourth
+               (watermark disclosure) was demoted to the pricing page
+               where it actually informs a buying decision. Each item
+               is a buyer-side fact, not an instrument-panel readout. */}
+            <div className="flex flex-wrap gap-x-5 gap-y-2 -mt-2 sm:-mt-3 text-[11px] sm:text-[12px] uppercase tracking-[0.16em] text-[var(--fg-dim)]">
+              <span>No card required</span>
               <span>41 locales</span>
-              <span>3 Apple device classes</span>
-              <span>Free exports include watermark</span>
+              <span>iPhone + iPad</span>
             </div>
 
-            {/* Quiet "also exports" rotator — under the fold of the
-               hero column on desktop, last row before the visual on
-               mobile. Power-user discovery without H1 contention. */}
+            {/* Static "also exports" line — was a rotator that flipped
+               copy every 3.2s. Brief asked for stable hero messaging
+               over a moving target; the rotator chip created
+               inconsistent first impressions for users who landed
+               mid-cycle. The full surface list lives on /tools/web-hero. */}
             <HeroSurfaceRotator />
           </div>
 

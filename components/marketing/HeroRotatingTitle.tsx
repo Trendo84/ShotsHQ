@@ -1,26 +1,18 @@
-"use client";
-
-import { useEffect, useReducer, useRef } from "react";
-
 /**
- * Hero headline (top of fold) + a separate `HeroSurfaceRotator` chip
- * exported below for placement under the CTAs. The rotator used to
- * sit between the headline and the subhead, but per UX audit pass 2
- * (P2 #11) it crammed power-user metadata into the most valuable
- * real estate. New layout: headline → subhead → CTAs → trust line →
- * rotator chip (low-noise "+ also generates" reminder).
+ * Hero headline (top of fold) + a stable surface-list line beneath
+ * the trust microcopy.
+ *
+ * The "rotator" was previously a 3.2s ticker that swapped one of six
+ * non-App-Store surfaces in and out (web hero · press kit · OG card
+ * · Discord banner · Product Hunt gallery · GitHub social card).
+ * Brief: "Simplify any unstable rotating surface copy — prefer one
+ * clear static list." Replaced with a static three-surface line that
+ * names the most-common adjacent outputs in one scan. The full list
+ * lives on /tools/web-hero where it actually belongs.
+ *
+ * `HeroRotatingTitle` keeps its original export name for callsite
+ * stability; the title hasn't ever actually rotated.
  */
-
-const SURFACES: { label: string; spec: string }[] = [
-  { label: "Web hero shots",         spec: "1920×1080 / 2880×1620" },
-  { label: "Press kits",             spec: "ZIP · brand assets"    },
-  { label: "Open Graph cards",       spec: "1200×630"              },
-  { label: "Discord banners",        spec: "1920×640"              },
-  { label: "Product Hunt galleries", spec: "1270×760 × 8"          },
-  { label: "GitHub social cards",    spec: "1280×640"              },
-];
-
-const INTERVAL_MS = 3200;
 
 export function HeroRotatingTitle() {
   return (
@@ -35,41 +27,14 @@ export function HeroRotatingTitle() {
 }
 
 export function HeroSurfaceRotator() {
-  const [idx, tick] = useReducer((s: number) => (s + 1) % SURFACES.length, 0);
-  const paused      = useRef(false);
-
-  useEffect(() => {
-    const reduced =
-      typeof window !== "undefined"
-      && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduced) return;
-    const t = setInterval(() => {
-      if (!paused.current) tick();
-    }, INTERVAL_MS);
-    return () => clearInterval(t);
-  }, []);
-
-  const current = SURFACES[idx]!;
-
   return (
-    <div
-      className="inline-flex items-center gap-2.5 self-start max-w-full t-mono-xs"
-      onMouseEnter={() => { paused.current = true;  }}
-      onMouseLeave={() => { paused.current = false; }}
-      aria-live="polite"
-    >
-      <span className="inline-flex items-center gap-1.5 text-[var(--fg-mute)] uppercase tracking-[0.16em] shrink-0">
-        <span className="block w-1.5 h-1.5 rounded-full bg-[var(--accent)] animate-pulse" />
-        + Also exports
+    <div className="inline-flex items-center gap-2.5 self-start max-w-full t-mono-xs">
+      <span className="inline-flex items-center gap-1.5 text-[var(--fg-dim)] uppercase tracking-[0.16em] shrink-0">
+        <span aria-hidden className="block w-1.5 h-1.5 bg-[var(--accent)]" />
+        Also exports
       </span>
-      <span
-        key={idx}
-        className="hero-rot inline-flex items-baseline gap-2 min-w-0 overflow-hidden"
-      >
-        <span className="text-[var(--fg)] truncate">{current.label}</span>
-        <span className="text-[var(--fg-mute)] tabular-nums hidden sm:inline">
-          · {current.spec}
-        </span>
+      <span className="text-[var(--fg)] truncate">
+        web heroes · press kits · OG cards
       </span>
     </div>
   );

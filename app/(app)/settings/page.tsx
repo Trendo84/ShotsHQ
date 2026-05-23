@@ -11,23 +11,22 @@ const SECTIONS = [
   {
     code:        "01",
     title:       "Profile",
-    description: "Displayed on operator cards, receipts, and the public showcase.",
+    description: "How you show up on operator cards, receipts, and the public showcase.",
   },
   {
     code:        "02",
     title:       "Studio API",
-    description: "Studio + Lifetime plan. v1.1 — REST + webhooks land alongside the server render queue.",
+    description: "Public REST + webhooks. Included with Studio and Lifetime — shipping in v1.1.",
   },
   {
     code:        "03",
     title:       "App Store Connect",
-    description: "v1.1 — direct push of generated assets to App Store Connect.",
+    description: "Direct push of generated assets to App Store Connect — shipping in v1.1.",
   },
   {
     code:        "04",
-    title:       "Danger zone",
-    description: "Operations that cannot be undone.",
-    danger:      true,
+    title:       "Account",
+    description: "Export or delete your data. Email support today; self-serve in v1.1.",
   },
 ] as const;
 
@@ -150,47 +149,56 @@ export default async function SettingsPage() {
           data-settings-section="danger"
         >
           <SectionHeading {...SECTIONS[3]!} />
-          <div className="col-span-12 md:col-span-8 space-y-4 max-w-2xl">
-            <div className="border border-[var(--accent)] p-4 sm:p-5 flex items-center justify-between gap-4 flex-wrap">
-              <div className="min-w-0">
-                <div className="text-[14px] font-medium text-[var(--fg)]">Export all data</div>
-                <div className="text-[12px] text-[var(--fg-mute)] mt-1">
-                  JSON archive — projects, exports, ledger.
-                  <br />
-                  Self-serve export ships in v1.1. Need it today? Email{" "}
-                  <a href="mailto:support@shotshq.com" className="text-[var(--fg-dim)] hover:text-[var(--accent)] underline">support@shotshq.com</a>.
+          <div className="col-span-12 md:col-span-8 max-w-2xl">
+            {/*
+              Danger-zone treatment toned down to plain `--line` borders
+              (was `--accent`) so the page doesn't end on a fire-warning
+              note while self-serve export + delete are still v1.1.
+              When the flows ship and the buttons are actually live,
+              re-promote the Delete card border to `--accent` to mark
+              the destructive action.
+            */}
+            <div className="border border-[var(--line)] divide-y divide-[var(--line)]">
+              <div className="p-4 sm:p-5 flex items-center justify-between gap-4 flex-wrap">
+                <div className="min-w-0">
+                  <div className="text-[14px] font-medium text-[var(--fg)]">Export all data</div>
+                  <div className="text-[12px] text-[var(--fg-dim)] mt-1">
+                    JSON archive of projects, exports, and ledger. Email{" "}
+                    <a href="mailto:support@shotshq.com" className="text-[var(--fg-dim)] hover:text-[var(--accent)] underline">support@shotshq.com</a>{" "}
+                    today; self-serve ships in v1.1.
+                  </div>
                 </div>
+                <Button
+                  variant="ghost"
+                  disabled
+                  title="Self-serve export · coming soon"
+                  aria-label="Request data export — self-serve flow coming soon"
+                  className="text-[11px] tracking-[0.04em] normal-case shrink-0 opacity-50 cursor-not-allowed"
+                >
+                  Export · soon
+                </Button>
               </div>
-              <Button
-                variant="ghost"
-                disabled
-                title="Self-serve export · coming soon"
-                aria-label="Request data export — self-serve flow coming soon"
-                className="text-[11px] tracking-[0.04em] normal-case shrink-0 opacity-50 cursor-not-allowed"
-              >
-                Request export · soon
-              </Button>
-            </div>
-            <div className="border border-[var(--accent)] p-4 sm:p-5 flex items-center justify-between gap-4 flex-wrap">
-              <div className="min-w-0">
-                <div className="text-[14px] font-medium text-[var(--accent)]">Delete account</div>
-                <div className="text-[12px] text-[var(--fg-mute)] mt-1">
-                  Removes all projects, exports, ledger. Irreversible.
-                  <br />
-                  Self-serve deletion ships with a two-step confirmation in v1.1. To delete now, email{" "}
-                  <a href="mailto:support@shotshq.com" className="text-[var(--fg-dim)] hover:text-[var(--accent)] underline">support@shotshq.com</a>{" "}
-                  from your account email.
+              <div className="p-4 sm:p-5 flex items-center justify-between gap-4 flex-wrap">
+                <div className="min-w-0">
+                  <div className="text-[14px] font-medium text-[var(--fg)]">Delete account</div>
+                  <div className="text-[12px] text-[var(--fg-dim)] mt-1">
+                    Removes all projects, exports, and ledger entries. To
+                    delete now, email{" "}
+                    <a href="mailto:support@shotshq.com" className="text-[var(--fg-dim)] hover:text-[var(--accent)] underline">support@shotshq.com</a>{" "}
+                    from your account email. Self-serve confirmation
+                    ships in v1.1.
+                  </div>
                 </div>
+                <Button
+                  variant="ghost"
+                  disabled
+                  title="Self-serve delete · coming soon (email support to delete now)"
+                  aria-label="Delete account — self-serve flow coming soon, email support to delete now"
+                  className="text-[11px] tracking-[0.04em] normal-case shrink-0 opacity-50 cursor-not-allowed"
+                >
+                  Delete · soon
+                </Button>
               </div>
-              <Button
-                variant="destructive"
-                disabled
-                title="Self-serve delete · coming soon (email support to delete now)"
-                aria-label="Delete account — self-serve flow coming soon, email support to delete now"
-                className="text-[11px] tracking-[0.04em] normal-case shrink-0 opacity-50 cursor-not-allowed"
-              >
-                Delete · soon
-              </Button>
             </div>
           </div>
         </section>

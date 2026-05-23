@@ -41,12 +41,40 @@ export default function PricingPage() {
               </h1>
             </div>
             <div className="col-span-12 md:col-span-5">
-              <p className="t-prose-lg max-w-md">
-                Pick the lane that matches your launch cadence. Credits
-                never expire; Studio subscriptions cancel anytime via the
-                Stripe billing portal — no email gauntlet.
+              <p className="t-prose-lg max-w-md text-[var(--fg)]">
+                Three lanes, picked by launch cadence. Credits never
+                expire; Studio cancels anytime from the Stripe portal.
               </p>
             </div>
+          </div>
+
+          {/* Buyer framing — three plain-language one-liners under the
+              H1 so a visitor can pick a lane in one scan, before the
+              card grid. Was previously buried in plan descriptions. */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 mt-10 lg:mt-12">
+            {[
+              { lane: "Free",   pitch: "Try the full editor.",        sub: "Watermarked exports · no card." },
+              { lane: "Packs",  pitch: "Pay per launch.",             sub: "Buy credits, ship a pack, done.", flag: true },
+              { lane: "Studio", pitch: "Ongoing production workflow.", sub: "Unmetered AI · $29 / month." },
+            ].map((row) => (
+              <div
+                key={row.lane}
+                className={`border p-4 ${
+                  row.flag
+                    ? "border-[var(--accent)] bg-[var(--bg)]"
+                    : "border-[var(--line)] bg-[var(--bg)]"
+                }`}
+              >
+                <div className="flex items-baseline justify-between gap-3 mb-1">
+                  <span className="t-eyebrow t-eyebrow-accent">{row.lane}</span>
+                  {row.flag && (
+                    <span className="t-mono-xs text-[var(--accent)] uppercase tracking-[0.14em]">Most pick this</span>
+                  )}
+                </div>
+                <div className="text-[15px] font-medium text-[var(--fg)] leading-snug">{row.pitch}</div>
+                <div className="text-[12.5px] text-[var(--fg-dim)] mt-1">{row.sub}</div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -85,17 +113,17 @@ export default function PricingPage() {
             </ul>
           </div>
 
-          <div className="grid grid-cols-12 gap-8 mb-10">
+          <div className="grid grid-cols-12 gap-8 mb-8">
             <div className="col-span-12 md:col-span-5">
-              <div className="t-eyebrow t-eyebrow-accent mb-3">Credit cost table</div>
-              <h2 className="t-display text-[clamp(2rem,4.5vw,3.5rem)] leading-[0.95] text-balance">
-                What each operation costs.
+              <div className="t-eyebrow t-eyebrow-accent mb-3">Credit reference</div>
+              <h2 className="t-display text-[clamp(1.5rem,3vw,2.25rem)] leading-[0.95] text-balance normal-case tracking-[-0.02em]">
+                What each AI run costs.
               </h2>
             </div>
             <div className="col-span-12 md:col-span-6 md:col-start-7 flex items-end">
-              <p className="t-prose">
-                Studio subscribers skip credits entirely — usage is metered
-                internally for abuse prevention only.
+              <p className="t-prose text-[var(--fg-dim)]">
+                Studio subscribers skip credits entirely. The table below is
+                a reference, not a buying decision — pick a lane up top.
               </p>
             </div>
           </div>

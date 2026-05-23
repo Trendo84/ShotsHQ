@@ -29,19 +29,19 @@ const CATEGORIES = [
 type StepNum = 1 | 2 | 3;
 const STEP_META: Record<StepNum, { eyebrow: string; title: [string, string]; body: string }> = {
   1: {
-    eyebrow: "Step 01 · Project metadata",
-    title:   ["Commission", "project."],
-    body:    "Four fields, one intake. This metadata seeds copy generation, ASO hints, and the initial editor state.",
+    eyebrow: "Step 01 · About your app",
+    title:   ["Tell us", "what ships."],
+    body:    "App name, one-line pitch, App Store category. We use these to seed AI copy and pre-fill the editor — nothing is published anywhere.",
   },
   2: {
     eyebrow: "Step 02 · Device targets",
     title:   ["Pick the", "devices."],
-    body:    "Every device you target gets all Apple-required screenshot dimensions rendered automatically.",
+    body:    "Pick every device you intend to submit. Each one gets all Apple-required screenshot dimensions, ready to drop into App Store Connect.",
   },
   3: {
-    eyebrow: "Step 03 · Upload screens (optional)",
+    eyebrow: "Step 03 · Upload screens",
     title:   ["Drop your", "screens."],
-    body:    "Commit the project first, then drop raw .PNGs — we auto-bucket each by dimension into the right device slot. Uploading is optional here; you can always add screens from inside the editor after committing.",
+    body:    "Commit the project, then drop raw .PNGs straight from Xcode or the Simulator. We auto-bucket each by dimension into the right device slot. You can also skip and add screens from inside the editor later.",
   },
 };
 

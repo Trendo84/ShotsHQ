@@ -27,8 +27,13 @@ export default async function DashboardPage() {
           <div className="min-w-0">
             <div className="t-eyebrow t-eyebrow-accent mb-2">Welcome back</div>
             <h1 className="t-display text-[clamp(1.75rem,4vw,3.5rem)] leading-[0.95] text-balance">
-              Today&apos;s queue.
+              {projects.length === 0 ? "Let's ship your first pack." : "Today's queue."}
             </h1>
+            {projects.length > 0 && (
+              <p className="t-prose mt-2 max-w-md text-[var(--fg-dim)]">
+                Pick up where you left off, or commission a new project from the top right.
+              </p>
+            )}
           </div>
           <div className="flex gap-3 flex-wrap">
             <Link href="/projects/new" className="btn btn-accent"><Plus size={13} /> New project</Link>

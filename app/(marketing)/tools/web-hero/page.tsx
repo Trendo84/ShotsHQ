@@ -15,9 +15,9 @@ export const metadata: Metadata = {
 };
 
 const VARIANTS = [
-  { id: "1920x1080", label: "Standard", spec: "1920 × 1080" },
-  { id: "2880x1620", label: "Retina",   spec: "2880 × 1620" },
-  { id: "3840x2160", label: "4K",       spec: "3840 × 2160" },
+  { id: "1920x1080", label: "Standard", spec: "1920 × 1080", use: "Marketing pages · blog headers"  },
+  { id: "2880x1620", label: "Retina",   spec: "2880 × 1620", use: "Apple-grade displays · brand sites" },
+  { id: "3840x2160", label: "4K",       spec: "3840 × 2160", use: "Press kits · 4K product reels" },
 ];
 
 const STYLES = [
@@ -41,15 +41,15 @@ export default function WebHeroDesignerPage() {
                 ▸ Tool · Web hero designer
               </div>
               <h1 className="t-display text-[clamp(2.25rem,6.5vw,5rem)] leading-[0.92] text-balance">
-                Marketing hero shots
+                One brand.
                 <br />
-                <span className="text-[var(--accent)]">in every dimension.</span>
+                <span className="text-[var(--accent)]">Every hero shot.</span>
               </h1>
               <p className="t-prose-lg max-w-[46ch] mt-5 text-[var(--fg)]">
-                Pick a style, paste your brand URL, get back wide hero
-                images at every dimension your stack needs — 1920×1080,
-                2880×1620, 4K. Same engine that ships your App Store
-                pack today.
+                Paste your brand URL. Pick a direction. Get back
+                site-ready hero images at every dimension — standard,
+                retina, 4K. Same engine that already ships your App
+                Store pack.
               </p>
               <div className="flex flex-wrap items-center gap-3 mt-7">
                 <Link
@@ -112,14 +112,25 @@ export default function WebHeroDesignerPage() {
                 key={v.id}
                 as="li"
                 delay={i * 80}
-                className="bg-[var(--bg)] p-6 flex flex-col gap-3 min-h-[160px]"
+                className="bg-[var(--bg)] p-6 flex flex-col gap-3 min-h-[180px] relative overflow-hidden hover:bg-[var(--bg-2)] transition-colors group"
               >
-                <div className="t-eyebrow t-eyebrow-accent">{v.label}</div>
-                <div className="t-display text-[clamp(1.5rem,3vw,2.25rem)] leading-none t-numeric mt-auto">
+                {/* Accent rule on the left — pulls the eye into each card
+                    and adds depth without going glossy. */}
+                <span
+                  aria-hidden
+                  className="absolute left-0 top-0 bottom-0 w-[3px] bg-[var(--accent)] opacity-0 group-hover:opacity-100 transition-opacity"
+                />
+                <div className="flex items-baseline justify-between gap-3">
+                  <div className="t-eyebrow t-eyebrow-accent">{v.label}</div>
+                  <div className="t-mono-xs text-[var(--fg-mute)] uppercase tracking-[0.14em]">
+                    PNG · sRGB
+                  </div>
+                </div>
+                <div className="t-display text-[clamp(1.75rem,3.5vw,2.5rem)] leading-none t-numeric mt-auto text-[var(--fg)]">
                   {v.spec}
                 </div>
-                <div className="t-mono-xs text-[var(--fg-dim)] uppercase tracking-[0.14em]">
-                  Lossless PNG · sRGB
+                <div className="text-[12.5px] text-[var(--fg-dim)] leading-snug">
+                  {v.use}
                 </div>
               </Reveal>
             ))}
@@ -148,20 +159,24 @@ export default function WebHeroDesignerPage() {
                 key={s.id}
                 as="article"
                 delay={(i % 3) * 60}
-                className="bg-[var(--bg)] p-6 flex flex-col gap-3"
+                className="bg-[var(--bg)] p-6 flex items-start gap-4 group hover:bg-[var(--bg-2)] transition-colors min-h-[140px]"
               >
-                <div className="flex items-center justify-between">
-                  <span className="t-eyebrow">{s.id.toUpperCase()}</span>
-                  <span
-                    aria-hidden
-                    className="inline-block w-3 h-3 border border-[var(--line-strong)]"
-                    style={{ background: s.accent }}
-                  />
+                {/* Accent swatch — bigger now, anchors each style card
+                    visually so the grid reads like a curated palette
+                    instead of a spec list. */}
+                <span
+                  aria-hidden
+                  className="block w-12 h-12 shrink-0 border border-[var(--line-strong)] group-hover:border-[var(--fg)] transition-colors"
+                  style={{ background: s.accent }}
+                />
+                <div className="min-w-0 flex-1">
+                  <h3 className="t-display text-[clamp(1.25rem,2.5vw,1.625rem)] leading-tight normal-case tracking-[-0.02em]">
+                    {s.label}
+                  </h3>
+                  <p className="text-[13px] text-[var(--fg-dim)] mt-1 leading-snug">
+                    {s.sub}
+                  </p>
                 </div>
-                <h3 className="t-display text-[clamp(1.25rem,2.5vw,1.75rem)] leading-tight">
-                  {s.label}
-                </h3>
-                <p className="t-mono-sm text-[var(--fg-dim)]">{s.sub}</p>
               </Reveal>
             ))}
           </div>
