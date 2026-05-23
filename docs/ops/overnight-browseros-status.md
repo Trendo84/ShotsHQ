@@ -1,5 +1,167 @@
 # ShotsHQ overnight BrowserOS status
 
+## 2026-05-23 12:40 AEST · cycle #6
+
+### What shipped this cycle
+
+**`fix(app): Studio export full loop + Topbar hydration mismatch + e2e stability`** (commit `3e0ce20`, pushed to `origin/main`).
+
+Started as the cycle #5 handoff item: verify the Studio export full loop end-to-end. The audit immediately surfaced two stacked bugs *plus* a pervasive hydration mismatch on every authenticated route. All three shipped together because they all flow through the same surfaces.
+
+#### 1. Studio export full loop (the original cycle target)
+
+**Two stacked bugs:**
+
+(a) **Canvas-taint via R2 GET CORS.** R2 bucket public URL serves bytes correctly but has no CORS rule — GET responses lack `Access-Control-Allow-Origin`, OPTIONS preflights 403. Browser refuses to use the bytes in a `<canvas>` with `<img crossOrigin="anonymous">`, so `toDataURL` (which `html-to-image`'s `toPng` calls) throws. The exporter silently failed — no PNG ever downloaded.
+
+   **Fix:** New `app/api/r2-proxy/route.ts` — same-origin read proxy. Strict key-regex validation (only `users/<uuid>/(projects/<uuid>|uploads)/<nanoid>.<ext>`), content-type allowlist, 12 MB cap, immutable cache headers. New `lib/studio/r2-proxy-url.ts` — pure rewriter `https://pub-X.r2.dev/...` → `/api/r2-proxy?key=...` (10 unit specs). `components/studio/DeviceFrame.tsx` rewrites remote URLs at render time + drops `crossOrigin` for same-origin sources.
+
+(b) **Pixel-ratio double-scaling.** Once canvas-taint was unmasked, the PNG actually downloaded — at 3782 px wide instead of 1290. `html-to-image` multiplies `canvasWidth` by `pixelRatio` when both are set; `pixelRatio = 1290 / 440 = 2.93` × `canvasWidth = 1290` → `3782`. The dim bug was always there but silent because the export was failing earlier in the pipeline.
+
+   **Fix:** `components/studio/export.ts` — removed redundant `canvasWidth`/`canvasHeight` opts. Single source of truth: `node CSS width × pixelRatio = output px width`. Inline comment documents the trap.
+
+#### 2. Topbar hydration mismatch
+
+Browser console + dev logs showed `Hydration failed because the server rendered HTML didn't match the client` on `/dashboard`, `/projects`, `/projects/new`, `/projects/[id]`, `/projects/[id]/studio`, `/projects/[id]/exports`, `/billing`, `/settings`. Stack pointed at `Topbar.tsx` around `<UserButton />` / `ClerkHostRenderer`.
+
+**Root cause:** Clerk's `<UserButton />` renders different DOM during SSR (no session) vs. post-hydration (avatar + session-aware affordances). Two-pass diff fails.
+
+**Fix:** `components/app/Topbar.tsx` — new local `<UserButtonSlot />` with a mount-gate. SSR + first client render emit a stable `aria-hidden` placeholder matching the eventual avatar-box dimensions (`h-8 w-8 border`, no layout shift). After `useEffect` post-hydration, swap to real `<UserButton />` (or no-Clerk fallback). Exposes `data-userbutton-slot="placeholder|clerk|no-clerk"` for testability.
+
+#### 3. E2E stability hardening
+
+`playwright.config.ts` — cap workers at 2 locally (was unbounded → CPU count → dev-server saturation under heavy R2 paths) + 1 retry on local runs (smooths rare autosave-timing flakes). CI keeps the stricter 1 worker / 2 retries.
+
+### Files touched
+
+```
+A  app/api/r2-proxy/route.ts            (same-origin R2 proxy)
+A  e2e/no-hydration-errors.spec.ts      (1 spec, 8 routes)
+A  e2e/studio-export-loop.spec.ts       (1 spec, sharp-measured PNG)
+A  lib/studio/r2-proxy-url.ts           (pure URL rewriter)
+A  tests/studio/r2-proxy-url.test.ts    (10 unit specs)
+M  components/app/Topbar.tsx            (UserButtonSlot mount-gate)
+M  components/studio/DeviceFrame.tsx    (route remote URLs through proxy)
+M  components/studio/export.ts          (drop redundant canvasWidth/Height)
+M  playwright.config.ts                 (workers + retries)
+```
+
+### Verification (all green, on commit `3e0ce20`)
+
+```
+pnpm typecheck   → clean
+pnpm test        → 205 passed across 20 files (+10 r2-proxy-url)
+pnpm test:e2e    → 21 / 21 passed
+                     - 1 new hydration smoke
+                     - 1 new export-loop
+                     - 5 list-surfaces          (cycle #5)
+                     - 3 project-overview       (cycle #4)
+                     - 4 export-readiness       (cycle #2)
+                     - 3 studio-device-switch   (cycle #1)
+                     - 2 studio-upload-persistence (cycle #3)
+                     - 2 wizard
+pnpm build       → clean
+git push         → f0b3c41..3e0ce20 main -> main
+```
+
+### Acceptance-criteria status
+
+**Export loop:**
+1. ✅ Export current downloads a PNG (the canvas-taint fix makes this actually happen).
+2. ✅ Exact 1290×2796 dimensions (sharp-measured in the e2e spec — would have caught both bugs).
+3. ✅ Persisted screenshot visible inside the composition (file size > 20 KB defends against tainted-blank fallback).
+4. ✅ Studio export log reports Exact + exact dims, no silent fail.
+5. ✅ `/dashboard` + `/projects` + `/projects/[id]` all show READY consistently for the exported project (cross-surface assertion in the e2e).
+
+**Hydration:**
+1. ✅ Zero hydration mismatch errors on all 8 Topbar-using routes (pinned by the new `no-hydration-errors.spec.ts` — fails on any console/pageerror matching the React #418/#421/#423/#425 codes or text).
+2. ✅ Topbar preserves layout, theme switcher, notifications stub, user affordance — placeholder skeleton during SSR, swaps to UserButton post-mount with no shift.
+3. ✅ Dev overlay no longer fires from this error on those routes.
+4. ✅ Export-loop work stays intact — sharp-measured PNG + cross-surface READY both pass.
+5. ✅ Automated regression net for both fixes.
+
+### Blockers
+
+None code-side. Operator items carried forward:
+
+- **R2 bucket CORS** — Cloudflare R2 needs the CORS rule applied per the cycle #3 status doc. The same-origin proxy now ships uploads + exports without it, so this is no-rush but worth doing eventually.
+- **Clerk live-key swap** in Vercel production env.
+
+### Highest-priority next target
+
+The truthful core flow is now end-to-end: upload → persistence → readiness signal → export → exact PNG → cross-surface READY → no hydration noise. Remaining shippability gaps:
+
+1. **Public changelog catch-up** — `/changelog` stops at `v0.7` (2026-04-30) while five cycles of work shipped since. Pre-launch site claims "real ship dates, honest status" but is silent on v0.8 (audit batch), v0.9 (Studio engine + persistence), v0.10 (truthful surfaces), v0.11 (this cycle). One coordinated writeup catches everything up. Pure-doc cycle.
+
+2. **Studio's other control groups parity** — Frame style / Theme preset / Layout / Background mode each have the same selected-styling shape as the device-class buttons (cycle #1 used `aria-pressed` + `data-active` + text-color flip). Should be quick browser QA to confirm they behave like device-class does post-fix; if any are lying, the same pattern applies.
+
+3. **CaptureDropzone parity with /api/upload/direct** — CaptureDropzone in `/projects/new` Step 3 still uses the presigned-PUT path that's blocked by missing R2 CORS. Either migrate it to `/api/upload/direct` for consistency, or wait for the operator R2 CORS fix. Low priority because the wizard is optional and current dropzone behavior is "upload fails inline with an honest error message," not a silent lie.
+
+4. **`/billing` and `/settings` content audit** — both are in the hydration-route list, so we know they SSR cleanly now. But have they been audited for actual truthfulness like the rest? They're behind auth so easy to miss.
+
+### Next BrowserOS prompt (paste verbatim next hour)
+
+```
+Continue the overnight loop in /Volumes/NVME EXT/Ivan/CODEX/ShotsHQ.
+Read docs/ops/overnight-browseros-loop.md (operating rules) and
+the top entry of docs/ops/overnight-browseros-status.md (latest
+cycle — yours).
+
+Focus this cycle: catch the public /changelog up to what actually
+shipped between v0.7 (2026-04-30) and the cycle-#6 end-state.
+Cycles since v0.7:
+
+  cycle #1 (2026-05-23 04:10) — Studio device-class switch
+       Commit 0114147 fix(studio): device-class switch + reducer
+  cycle #2 (2026-05-23 05:05) — Truthful export funnel
+       Commit 37344fb fix(export): readiness funnel shared model
+  cycle #3 (2026-05-23 06:10) — Studio upload persistence
+       Commit 22fac24 fix(studio): same-origin proxy + readiness
+                                    requires durable storage
+  cycle #4 (2026-05-23 11:10) — Truthful project overview
+       Commit 719039f fix(overview): real shot grid + status
+  cycle #5 (2026-05-23 12:10) — Truthful /dashboard + /projects
+       Commit e46e651 fix(list): shared project-status helper
+  cycle #6 (2026-05-23 12:40) — Export full loop + hydration
+       Commit 3e0ce20 fix(app): export loop + Topbar hydration
+
+Write 3-4 honest changelog entries covering this work. Match the
+v0.7-and-earlier honest-rule format in
+`app/(marketing)/changelog/page.tsx` — strict honesty, real ship
+dates, no marketing language, channels (PRE-LAUNCH / PREVIEW /
+INTERNAL) per change.
+
+Suggested groupings:
+  v0.8 — Truthful surfaces sweep (cycles #2 / #4 / #5: export
+         funnel + project overview + dashboard/projects list,
+         shared readiness reducer powering all of them)
+  v0.9 — Studio engine (the multi-panel filmstrip work that
+         already happened between v0.7 and cycle #1 in
+         commits b395ec5 → 3102bd4 → 388e2fa, plus cycle #1's
+         device-switch fix)
+  v0.10 — Persistence + export full loop (cycle #3 upload
+          persistence, cycle #6 R2 same-origin proxy + export
+          pixel-ratio fix)
+  v0.11 — App-shell stability (cycle #6 Topbar hydration fix +
+          e2e stability cap)
+
+(Or whatever grouping reads honestly. Don't over-fragment, don't
+over-aggregate.)
+
+If browser QA also catches Studio's other control groups (Frame
+style / Theme / Layout / Background) lying about selected state,
+fix THAT instead and defer the changelog one more cycle — broken
+core flow beats doc work.
+
+Re-run pnpm typecheck / pnpm test / pnpm test:e2e / pnpm build.
+Update docs/ops/overnight-browseros-status.md and reply with a
+ship report.
+
+Treat the repo + git state as truth. Don't trust session memory.
+```
+
+---
+
 ## 2026-05-23 12:10 AEST · cycle #5
 
 ### What shipped this cycle
