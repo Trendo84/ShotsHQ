@@ -1,5 +1,139 @@
 # ShotsHQ overnight BrowserOS status
 
+## 2026-05-23 13:05 AEST · cycle #7
+
+### What shipped this cycle
+
+**`docs(changelog): catch /changelog up to v0.8–v0.11 (cycles #1–#6)`** (commit `429cd11`, pushed to `origin/main`).
+
+BrowserOS audit confirmed cycles #1–#6 are holding in browser (no hydration errors, Studio control groups behave correctly, export loop works). Identified the public `/changelog` as the next honesty gap — site copy claims "real ship dates, honest status" but the page hadn't been updated since v0.7 on 2026-04-30 while six overnight cycles shipped real user-facing work between then and now. That made the build-in-public promise look like marketing.
+
+Wrote four new entries, all PRE-LAUNCH (deployed code behind the WIP banner). Newest first; the index aside on the changelog page auto-derives from the `ENTRIES` array so anchors and the date column update with no extra changes.
+
+#### v0.11 — App-shell stability
+
+- Topbar `<UserButton />` wrapped in a mount-gate (cycle #6). Eliminates `Hydration failed because the server rendered HTML didn't match the client` on all 8 authenticated routes.
+- `e2e/no-hydration-errors.spec.ts` pins the regression net.
+- Playwright workers capped at 2 + 1 retry → 21/21 e2e consistently.
+
+#### v0.10 — Persistence + export full loop
+
+- `/api/upload/direct` — same-origin proxied multipart upload to R2; sidesteps missing bucket-CORS (cycle #3).
+- `/api/r2-proxy` — same-origin read proxy that lets `html-to-image`'s canvas.drawImage read R2 bytes without taint (cycle #6).
+- Readiness rule tightened to require `screenshotRemote === true` — blob-only screenshots no longer claim READY (they vanish on reload, so the prior signal was lying) (cycle #3).
+- Export pixel-ratio double-scaling fixed (3782 → 1290) — dropped redundant `canvasWidth`/`canvasHeight`, single source of truth is `node CSS width × pixelRatio` (cycle #6).
+- `e2e/studio-export-loop.spec.ts` — sharp-measured PNG validation + cross-surface READY assertion.
+- `e2e/studio-upload-persistence.spec.ts` — proves uploads survive autosave + reload.
+
+#### v0.9 — Truthful surfaces sweep
+
+- `lib/studio/readiness.ts` — single source of truth (`evaluateStudio` → `statusOf` → empty/blocked/partial/ready) consumed by every surface.
+- `lib/studio/project-status.ts` — wraps readiness for per-project status + state-aware next-action across list + overview surfaces.
+- Studio + `/exports` + `/projects/[id]` + `/dashboard` + `/projects` all stopped lying about status (cycles #2 / #4 / #5).
+- Cross-surface consistency spec asserts the same project reports the same status on all surfaces.
+
+#### v0.8 — Screenshot Studio engine
+
+- ASOForge-style constrained pack builder replaces the Fabric.js freeform editor; `/editor` redirects to `/studio`.
+- Multi-panel filmstrip with ordered selection, duplication, reordering, deletion, bulk export naming.
+- Device-class switch UI lie fixed with `aria-pressed` + `aria-checked` + `data-active` + role=radio + active text-color flip (cycle #1).
+- Pure reducer extracted with 12 unit specs + 3 Playwright specs covering click, filmstrip metadata, reload persistence.
+
+### Files touched
+
+```
+M  app/(marketing)/changelog/page.tsx   (+51 lines, 4 new entries; ENTRIES newest-first)
+M  docs/ops/overnight-browseros-status.md (this update)
+```
+
+Roadmap section left untouched — none of the listed items (Stripe checkout live, Clerk live keys, translate UI, real template previews, lift WIP banner) have shipped.
+
+### Verification (all green, on commit `429cd11`)
+
+```
+pnpm typecheck   → clean
+pnpm test        → 205 passed across 20 files (no test code touched this cycle)
+pnpm test:e2e    → 21 / 21 passed
+pnpm build       → clean
+git push         → 2357014..429cd11 main -> main
+```
+
+### Acceptance-criteria status
+
+1. ✅ 3–4 honest changelog entries covering shipped work after v0.7 (4 entries: v0.8 / v0.9 / v0.10 / v0.11).
+2. ✅ Matches the existing v0.7-and-earlier tone (rev/date/channel/note/changes array shape, `ADD`/`FIX`/`PERF`/`REM` tags, strict-honesty prose).
+3. ✅ Real ship dates only — all 2026-05-23 per `git log --date=short` truth.
+4. ✅ No roadmap / future tense in shipped entries — every change refers to landed code with file paths or behavior callouts.
+5. ✅ Channel labels honest — all PRE-LAUNCH (deployed code, WIP banner still up). No PREVIEW (no items waiting on operator config except Stripe/Clerk which remain on the roadmap section).
+6. ✅ Index anchors update automatically — the existing `ENTRIES.map((e) => …)` on line 186 of the page derives the index aside from the entries array, so adding entries to the top updates anchors + dates with no extra changes.
+
+### Blockers
+
+None code-side. Operator items still carried forward (unchanged from cycle #6 because no new code interacts with them):
+
+- **R2 bucket CORS** — operator-side; the same-origin proxy now ships uploads + exports without it, so this is no-rush.
+- **Clerk live-key swap** in Vercel production env.
+
+### Highest-priority next target
+
+A few candidates, in roughly decreasing leverage:
+
+1. **Studio's other control groups parity** (Frame style / Theme preset / Layout / Background mode / Align / Font tone). Cycle #6's BrowserOS QA confirmed they behave correctly visually but they lack the `aria-pressed` + `data-active` parity that the device-class fix landed. They aren't lying today, but they would regress silently if any contributor "improves" the cycle-#1 markers. Apply the same pattern proactively + add a parameterized e2e that visits each panel and asserts the contract. Low-risk quality-of-implementation pass.
+
+2. **CaptureDropzone parity with `/api/upload/direct`**. The wizard's Step 3 dropzone still uses the presigned-PUT path that's CORS-blocked. Either migrate it to `/api/upload/direct` (works today, immediate fix) or wait for the operator R2 CORS rule. Low priority because the wizard is optional and the dropzone fails inline with an honest error, but it would be nice to have the upload path consistent.
+
+3. **`/billing` and `/settings` content audit**. Both routes are in the hydration-route list, so we know they SSR cleanly now. But have they been audited for the same readiness-lie shape that the cycles-#2-through-#5 sweep caught? They might have hardcoded plan badges, billing status, etc. Worth a browser walkthrough.
+
+4. **Surface the v0.11 release to social / followers**. Not code work — but the whole point of catching the changelog up is so the next /changelog reader actually sees the truth. A short post-launch note on Twitter/Bluesky/discord linking the page is the natural next step. (Out of scope for an overnight code cycle.)
+
+### Next BrowserOS prompt (paste verbatim next hour)
+
+```
+Continue the overnight loop in /Volumes/NVME EXT/Ivan/CODEX/ShotsHQ.
+Read docs/ops/overnight-browseros-loop.md (operating rules) and the
+top entry of docs/ops/overnight-browseros-status.md (latest cycle —
+yours).
+
+Focus this cycle: proactively apply the cycle-#1 selected-state
+pattern (aria-pressed + aria-checked + data-active + role=radio +
+active text-color flip) to Studio's other selector groups so they
+match the device-class fix and can't silently regress.
+
+Concrete groups, all in components/studio/StudioClient.tsx:
+  - Frame style buttons
+  - Theme preset buttons
+  - Layout buttons (text top / text bottom / device only / angled)
+  - Align buttons (left / center / right)
+  - Font tone buttons (display / sans / mono)
+  - Background mode buttons (radial / linear / solid)
+
+For each:
+  1. Add aria-pressed + data-active + role="radio" / role="radiogroup".
+  2. Ensure the active class includes both a border AND a text-color
+     change so the cue stays unambiguous (the cycle-#1 bug was that
+     border-only contrast could read identical depending on theme).
+  3. Add a parameterized e2e spec that visits Studio, clicks each
+     option in each group, asserts the clicked option's data-active
+     flips to "true" and the others flip to "false". One spec per
+     group, parameterised via Playwright's test.describe.
+
+Don't extract pure reducers for these — they're trivial setState
+updates, not state-machine-shaped like the device switch was.
+
+If browser QA also catches a regressing core flow during this pass
+(uploads silently failing, status surfaces lying, etc.), fix THAT
+instead and defer the parity work one cycle — broken-or-misleading
+flow beats consistency work.
+
+Re-run pnpm typecheck / pnpm test / pnpm test:e2e / pnpm build.
+Update docs/ops/overnight-browseros-status.md and reply with a ship
+report.
+
+Treat the repo + git state as truth. Don't trust session memory.
+```
+
+---
+
 ## 2026-05-23 12:40 AEST · cycle #6
 
 ### What shipped this cycle
