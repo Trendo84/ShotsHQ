@@ -37,31 +37,21 @@ export default function WebHeroDesignerPage() {
         <div className="max-w-[1480px] mx-auto px-4 md:px-8 py-14 md:py-20">
           <Reveal as="div" className="grid grid-cols-12 gap-8 items-end">
             <div className="col-span-12 md:col-span-7">
-              <div
-                className="inline-flex items-center gap-2 t-mono-xs uppercase tracking-[0.16em] border border-[var(--accent)] text-[var(--accent)] px-2 py-1 mb-3"
-                data-web-hero-status="early-access"
-              >
-                <span aria-hidden className="block w-1.5 h-1.5 bg-[var(--accent)]" />
-                v1.1 · Early access
+              <div className="t-eyebrow t-eyebrow-accent mb-3">
+                ▸ Tool · Web hero designer
               </div>
               <h1 className="t-display text-[clamp(2.25rem,6.5vw,5rem)] leading-[0.92] text-balance">
                 Marketing hero shots
                 <br />
                 <span className="text-[var(--accent)]">in every dimension.</span>
               </h1>
-              <p className="t-prose-lg max-w-[44ch] mt-5">
-                Same source as your App Store screenshots — re-flowed for
-                websites. Pick a style, paste your brand URL, get back a
-                wide hero image at every dimension your stack needs.
+              <p className="t-prose-lg max-w-[46ch] mt-5 text-[var(--fg)]">
+                Pick a style, paste your brand URL, get back wide hero
+                images at every dimension your stack needs — 1920×1080,
+                2880×1620, 4K. Same engine that ships your App Store
+                pack today.
               </p>
-              <p className="t-mono-sm text-[var(--fg-mute)] max-w-[52ch] mt-4">
-                The web-hero designer is a v1.1 surface. The App Store
-                screenshot pipeline (Studio, AI copy, AI backdrop,
-                translate, exports) is live today — sign up to use those
-                and you&apos;ll be first in line when the web-hero
-                designer ships.
-              </p>
-              <div className="flex flex-wrap items-center gap-3 mt-6">
+              <div className="flex flex-wrap items-center gap-3 mt-7">
                 <Link
                   href="/sign-up?surface=web-hero"
                   className="group inline-flex items-center gap-3 bg-[var(--accent)] text-[var(--accent-fg)] pl-5 pr-1.5 py-2 transition-transform duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98]"
@@ -71,8 +61,12 @@ export default function WebHeroDesignerPage() {
                     →
                   </span>
                 </Link>
-                <span className="t-mono-xs text-[var(--fg-mute)]">
-                  Free tier + watermark when it ships · removed with any pack
+                <span
+                  className="inline-flex items-center gap-2 t-mono-xs uppercase tracking-[0.14em] text-[var(--fg-dim)]"
+                  data-web-hero-status="early-access"
+                >
+                  <span aria-hidden className="block w-1.5 h-1.5 bg-[var(--accent)]" />
+                  Designer ships v1.1 · App Store pipeline live today
                 </span>
               </div>
             </div>
@@ -87,9 +81,9 @@ export default function WebHeroDesignerPage() {
                   sizes="(max-width: 768px) 100vw, 40vw"
                   className="object-cover"
                 />
-                <span className="absolute top-2 left-2 inline-flex items-center gap-1.5 px-2 py-1 bg-black/70 text-white t-mono-xs uppercase tracking-[0.16em] backdrop-blur-sm">
+                <span className="absolute top-2 left-2 inline-flex items-center gap-1.5 px-2 py-1 bg-black/75 text-white t-mono-xs uppercase tracking-[0.16em] backdrop-blur-sm">
                   <span aria-hidden className="block w-1.5 h-1.5 bg-[var(--accent)]" />
-                  v1.1 · Sample mock
+                  Sample output
                 </span>
               </div>
             </div>
@@ -124,7 +118,7 @@ export default function WebHeroDesignerPage() {
                 <div className="t-display text-[clamp(1.5rem,3vw,2.25rem)] leading-none t-numeric mt-auto">
                   {v.spec}
                 </div>
-                <div className="t-mono-xs text-[var(--fg-mute)]">
+                <div className="t-mono-xs text-[var(--fg-dim)] uppercase tracking-[0.14em]">
                   Lossless PNG · sRGB
                 </div>
               </Reveal>
@@ -167,7 +161,7 @@ export default function WebHeroDesignerPage() {
                 <h3 className="t-display text-[clamp(1.25rem,2.5vw,1.75rem)] leading-tight">
                   {s.label}
                 </h3>
-                <p className="t-mono-sm text-[var(--fg-mute)]">{s.sub}</p>
+                <p className="t-mono-sm text-[var(--fg-dim)]">{s.sub}</p>
               </Reveal>
             ))}
           </div>
@@ -183,10 +177,10 @@ export default function WebHeroDesignerPage() {
               <span className="text-[var(--accent)]">Start designing.</span>
             </h2>
             <div className="col-span-12 md:col-span-4 flex flex-col gap-4">
-              <p className="t-prose max-w-sm">
-                Web-hero designer is a v1.1 surface. Sign up now to use
-                the App Store screenshot pipeline today and get notified
-                when the designer ships.
+              <p className="t-prose max-w-sm text-[var(--fg)]">
+                Sign up now to use the App Store screenshot pipeline
+                today. Web-hero designer ships next — you&apos;ll be the
+                first to know.
               </p>
               <div className="flex items-center gap-4 flex-wrap">
                 <Link

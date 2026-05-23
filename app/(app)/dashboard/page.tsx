@@ -211,22 +211,44 @@ function QuickStart({
 
 function EmptyProjectsCard() {
   return (
-    <div className="border border-dashed border-[var(--line-strong)] p-6 sm:p-8 text-center">
-      <div className="t-eyebrow t-eyebrow-accent mb-2">Empty deck</div>
-      <h3 className="t-display text-[clamp(1.25rem,3vw,1.75rem)] leading-[0.95] mb-2">
-        First project on the house.
-      </h3>
-      <p className="t-prose text-[13px] mb-5 max-w-md mx-auto">
-        Drop in iOS screenshots, pick devices and surfaces. Your first
-        project takes about ninety seconds.
-      </p>
-      <Link
-        href="/projects/new"
-        className="group inline-flex items-center gap-3 bg-[var(--accent)] text-[var(--accent-fg)] pl-5 pr-1.5 py-2 transition-transform duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98]"
-      >
-        <span className="btn-label">Start a project</span>
-        <span className="inline-grid place-items-center w-9 h-9 bg-[var(--accent-fg)] text-[var(--accent)] transition-transform group-hover:translate-x-0.5 font-bold">→</span>
-      </Link>
+    <div className="border border-dashed border-[var(--line-strong)] p-6 sm:p-10">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+        <div>
+          <div className="t-eyebrow t-eyebrow-accent mb-2">Empty deck</div>
+          <h3 className="t-display text-[clamp(1.5rem,3vw,2rem)] leading-[0.95] mb-3 normal-case tracking-[-0.02em] text-balance">
+            First project on the house.
+          </h3>
+          <p className="t-prose text-[14px] mb-5 max-w-md text-[var(--fg)]">
+            Drop in iOS screenshots, pick devices, ship. Your first
+            project takes about ninety seconds — no card required.
+          </p>
+          <div className="flex flex-wrap items-center gap-4">
+            <Link
+              href="/projects/new"
+              className="group inline-flex items-center gap-3 bg-[var(--accent)] text-[var(--accent-fg)] pl-5 pr-1.5 py-2 transition-transform duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98]"
+            >
+              <span className="btn-label">Start a project</span>
+              <span className="inline-grid place-items-center w-9 h-9 bg-[var(--accent-fg)] text-[var(--accent)] transition-transform group-hover:translate-x-0.5 font-bold">→</span>
+            </Link>
+            <Link
+              href="/templates"
+              className="text-[13px] text-[var(--fg-dim)] hover:text-[var(--accent)] underline underline-offset-4 decoration-[var(--line-strong)] hover:decoration-[var(--accent)] transition-colors"
+            >
+              … or pick from a template
+            </Link>
+          </div>
+        </div>
+        {/*
+          Concrete first-run signal: a static three-step recipe so the
+          empty state isn't just a CTA + filler copy. Same ninety-second
+          path the welcome flow walks through.
+        */}
+        <ol className="space-y-2.5 t-mono-sm text-[var(--fg-dim)] leading-relaxed border-l border-[var(--line)] pl-5">
+          <li><span className="text-[var(--accent)] mr-2">01</span> Pick devices · iPhone 6.9″ / 6.7″ / iPad 13″</li>
+          <li><span className="text-[var(--accent)] mr-2">02</span> Drop raw PNGs · auto-bucketed by dimension</li>
+          <li><span className="text-[var(--accent)] mr-2">03</span> Compose in Studio · export at App Store-exact dims</li>
+        </ol>
+      </div>
     </div>
   );
 }

@@ -26,6 +26,40 @@ import { test, expect } from "@playwright/test";
  */
 
 test.describe("Public-surfaces honesty contract", () => {
+  test("public pages do NOT mount the WIP / pre-launch banner", async ({ page }) => {
+    // Overnight redesign: the hazard-stripe `Work in progress · Pre-launch
+    // build · Some features still wiring up` banner was unmounted from
+    // the root layout. Pin its absence across the four most-visited
+    // public surfaces so it can't sneak back in.
+    for (const url of ["/", "/pricing", "/docs", "/templates"]) {
+      await page.goto(url);
+      await expect(
+        page.locator('[aria-label="Work in progress notice"]'),
+      ).toHaveCount(0);
+      await expect(page.locator('body')).not.toContainText(
+        /Some features still wiring up/i,
+      );
+    }
+  });
+
+  test("landing-page Reveal sections are visible at first paint (no opacity-0 gaps)", async ({ page }) => {
+    // The Reveal component used to start at opacity:0 and rely on
+    // IntersectionObserver to flip visible. That meant any user with
+    // JS disabled, a slow IO callback, or an ad blocker saw large blank
+    // gaps. Reveal now renders visible by default and animates only
+    // below-the-fold after mount.
+    await page.goto("/");
+    // The Templates compact section (now the second block on landing)
+    // is the most reliable "did Reveal hide me" signal — the gallery
+    // contains the templates eyebrow text.
+    await expect(page.locator('text=/Browse all templates/i').first()).toBeVisible();
+    // CTA at the bottom — far below the fold; with the fixed Reveal
+    // it should still render visible once the user scrolls to it.
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    // The footer / final CTA renders concrete copy that we can pin.
+    await expect(page.locator('body')).toContainText(/Stop designing|Start free|Ship App Store/i);
+  });
+
   test("/pricing does not promise 'cancel from settings'", async ({ page }) => {
     await page.goto("/pricing");
     const body = page.locator("body");

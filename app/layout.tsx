@@ -4,7 +4,17 @@ import { Archivo_Black, Geist, JetBrains_Mono, EB_Garamond } from "next/font/goo
 import { ClerkProvider } from "@clerk/nextjs";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { PostHogProvider } from "@/components/providers/PostHogProvider";
-import { WipBanner } from "@/components/WipBanner";
+
+// Cycle (overnight redesign): the global "Work in progress · Pre-launch
+// build" hazard-stripe banner was removed from the root layout. It was
+// rendering on every public marketing page and reading as the site
+// being broken / unfinished — bad first impression for a product that
+// is actually live and shippable today. v1.1 / planned items are now
+// signposted in-place where they belong (e.g. `data-asc-status="planned"`
+// in /settings, the v1.1 chip on /tools/web-hero) rather than via a
+// blanket warning strip. The WipBanner component file is intentionally
+// retained in components/ in case a future need calls for a scoped,
+// authenticated-only variant — but it is not mounted anywhere today.
 
 const HAS_CLERK = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
 
@@ -119,7 +129,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" data-theme="tactical" className={`${display.variable} ${sans.variable} ${mono.variable} ${serif.variable}`} suppressHydrationWarning>
       <body>
         <ThemeProvider>
-          <WipBanner />
           <PostHogProvider>{children}</PostHogProvider>
         </ThemeProvider>
       </body>

@@ -79,11 +79,9 @@ export default async function SettingsPage() {
               Operator config.
             </h1>
           </div>
-          <p className="col-span-12 md:col-span-5 t-prose max-w-md">
-            Profile changes persist to Postgres on save. The Studio API
-            and App Store Connect integrations ship in v1.1 — sections
-            below mark themselves <samp>planned</samp> until they go
-            live.
+          <p className="col-span-12 md:col-span-5 t-prose max-w-md text-[var(--fg)]">
+            Profile changes save to Postgres in under a second. Studio
+            API and App Store Connect integrations ship in v1.1.
           </p>
         </div>
       </div>

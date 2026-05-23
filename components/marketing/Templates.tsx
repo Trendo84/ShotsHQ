@@ -72,7 +72,16 @@ export function Templates({ compact = false }: { compact?: boolean }) {
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
           {list.map((t, i) => (
-            <TemplateCard key={t.slug} t={t} dense={i % 5 === 2} />
+            <TemplateCard
+              key={t.slug}
+              t={t}
+              dense={i % 5 === 2}
+              // First four cards are above-the-fold on every viewport
+              // (lg: 4-col, md: 3-col, mobile: 2-col → row 1 + half of
+              // row 2). Mark them priority for LCP — the gallery should
+              // feel instant, not greyed.
+              priority={i < 4}
+            />
           ))}
         </div>
 
@@ -157,7 +166,15 @@ function FilterTab({
   );
 }
 
-function TemplateCard({ t, dense: _dense = false }: { t: Template; dense?: boolean }) {
+function TemplateCard({
+  t,
+  dense: _dense = false,
+  priority = false,
+}: {
+  t: Template;
+  dense?: boolean;
+  priority?: boolean;
+}) {
   // Belt-and-suspenders cursor + interaction affordance:
   // Inline `cursor: pointer` defeats any Tailwind purge edge case, browser
   // default `<a>` style under SSR-before-hydration, or parent CSS reset
@@ -178,6 +195,13 @@ function TemplateCard({ t, dense: _dense = false }: { t: Template; dense?: boole
     isSignedIn: Boolean(isSignedIn),
   });
 
+  // Card index hint controls which previews get LCP priority. The first
+  // four cards (above-the-fold on every common viewport) get
+  // `priority` + eager-loading; the rest defer. Sized at the source
+  // aspect (3:4) with explicit `width` / `height` so next/image doesn't
+  // emit the "fill + parent has no explicit height" warning that was
+  // showing up in dev console — and so the layout reserves space
+  // before the bytes arrive (no LCP shift).
   return (
     <Link
       href={href}
@@ -185,13 +209,20 @@ function TemplateCard({ t, dense: _dense = false }: { t: Template; dense?: boole
       style={{ cursor: "pointer" }}
       className="group relative border border-[var(--line)] bg-[var(--bg)] hover:border-[var(--accent)] hover:-translate-y-0.5 hover:shadow-[6px_6px_0_var(--accent)] transition-all duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] flex flex-col cursor-pointer focus-visible:outline-none focus-visible:border-[var(--accent)] focus-visible:ring-1 focus-visible:ring-[var(--accent)] focus-visible:-translate-y-0.5"
     >
-      <div className="aspect-[3/4] relative overflow-hidden bg-[var(--bg-2)]">
+      <div
+        className="relative overflow-hidden bg-[var(--bg-2)]"
+        style={{ aspectRatio: "3 / 4" }}
+      >
         <Image
           src={`/templates/preview/template-preview-${t.slug}.png`}
           alt={`${t.name} App Store screenshot preview`}
-          fill
+          width={600}
+          height={800}
           sizes="(max-width: 767px) 50vw, (max-width: 1279px) 33vw, 25vw"
-          className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-[1.025]"
+          priority={priority}
+          loading={priority ? "eager" : "lazy"}
+          quality={88}
+          className="w-full h-full object-cover transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-[1.025]"
         />
       </div>
       <div className="p-4 flex items-start justify-between gap-3 border-t border-[var(--line)]">
