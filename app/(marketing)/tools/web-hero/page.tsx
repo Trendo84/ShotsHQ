@@ -183,19 +183,20 @@ export default function WebHeroDesignerPage() {
         </div>
       </section>
 
-      {/* CTA */}
+      {/* CTA — copy reframed for early-access truth. The page used to
+         end on "Stop screenshotting. Start designing." which reads as
+         a live-product call to action; this is a waitlist surface. */}
       <section className="relative overflow-hidden border-t border-[var(--line)]">
         <div className="relative z-10 max-w-[1480px] mx-auto px-4 md:px-8 py-16 md:py-24">
           <div className="grid grid-cols-12 gap-8 items-end">
             <h2 className="col-span-12 md:col-span-8 t-display text-[clamp(2.25rem,6vw,5rem)] leading-[0.92] text-balance">
-              Stop screenshotting.<br />
-              <span className="text-[var(--accent)]">Start designing.</span>
+              Want this when it ships?<br />
+              <span className="text-[var(--accent)]">Get on the list.</span>
             </h2>
             <div className="col-span-12 md:col-span-4 flex flex-col gap-4">
               <p className="t-prose max-w-sm text-[var(--fg)]">
-                Sign up now to use the App Store screenshot pipeline
-                today. Web-hero designer ships next — you&apos;ll be the
-                first to know.
+                Use the live App Store screenshot pipeline today. We&apos;ll
+                email you the moment the web-hero designer goes live.
               </p>
               <div className="flex items-center gap-4 flex-wrap">
                 <Link

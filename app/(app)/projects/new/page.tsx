@@ -59,12 +59,24 @@ export default function NewProjectPage() {
   const seededTemplate = templateSlug ? TEMPLATES_BY_SLUG[templateSlug] ?? null : null;
 
   const [step, setStep] = useState<StepNum>(1);
-  const [name, setName] = useState(
-    seededTemplate ? `${seededTemplate.slug}-launch` : "",
-  );
+  // App name is the only required textual identity field at first
+  // contact. The "internal" project name auto-derives from it (kebab-
+  // cased + "-launch" suffix); the user can override but doesn't have
+  // to. This drops the cognitive load on Step 1 from four fields to
+  // three for a "ship in minutes" promise.
   const [appName, setAppName] = useState(
     seededTemplate ? seededTemplate.name : "",
   );
+  const [nameOverride, setNameOverride] = useState<string | null>(
+    seededTemplate ? `${seededTemplate.slug}-launch` : null,
+  );
+  const derivedName = appName
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  const name = nameOverride ?? (derivedName ? `${derivedName}-launch` : "");
+
   const [description, setDescription] = useState(
     seededTemplate ? seededTemplate.subhead : "",
   );
@@ -76,6 +88,9 @@ export default function NewProjectPage() {
       : CATEGORIES[0],
   );
   const [targets, setTargets] = useState<string[]>(DEFAULT_PROJECT_DEVICES);
+  // Surface the auto-derived internal name as an optional "advanced"
+  // override — collapsed by default so Step 1 reads as 3 fields, not 4.
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   // Step 3 wires the CaptureDropzone (drag-drop screen intake) once
   // the project has been created. Two phases:
@@ -194,27 +209,44 @@ export default function NewProjectPage() {
       {step === 1 && (
         <section className="grid grid-cols-12 border-b border-[var(--line)]">
           <div className="col-span-12 md:col-span-7 border-r border-[var(--line)] p-6 md:p-10 space-y-5">
+            {/*
+              Step 1 was four fields with "Project name (internal)" up
+              top — cognitive load that fought a "ship in minutes"
+              promise. Now: app name is the lead (it's what users
+              actually think about first), description and category
+              follow, and the internal project slug lives in an
+              optional disclosure (auto-derived if untouched).
+            */}
             <div>
-              <Label htmlFor="project-name">PROJECT NAME (INTERNAL)</Label>
-              <Input id="project-name" name="projectName" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. tideline-spring-launch" />
+              <Label htmlFor="app-name">App name</Label>
+              <Input
+                id="app-name"
+                name="appName"
+                value={appName}
+                onChange={(e) => setAppName(e.target.value)}
+                placeholder="e.g. Tideline"
+                autoFocus
+              />
+              <p className="t-mono-xs text-[var(--fg-mute)] mt-1.5">
+                ▸ How your app appears on the App Store.
+              </p>
             </div>
             <div>
-              <Label htmlFor="app-name">APP NAME (PUBLIC)</Label>
-              <Input id="app-name" name="appName" value={appName} onChange={(e) => setAppName(e.target.value)} placeholder="Tideline" />
-            </div>
-            <div>
-              <Label htmlFor="app-description">ONE-LINE DESCRIPTION (AI INPUT)</Label>
+              <Label htmlFor="app-description">One-line description</Label>
               <Textarea
                 id="app-description"
                 name="description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="The fastest local surf forecast. Wave height, tide, wind. Apple Watch sync."
+                placeholder="e.g. The fastest local surf forecast. Wave height, tide, wind. Apple Watch sync."
                 rows={3}
               />
+              <p className="t-mono-xs text-[var(--fg-mute)] mt-1.5">
+                ▸ Seeds AI headline + backdrop generation. You can edit anything in the editor later.
+              </p>
             </div>
             <div>
-              <div id="category-label" className="text-[12px] text-[var(--fg-mute)] block mb-1.5 font-medium">APP STORE CATEGORY</div>
+              <div id="category-label" className="text-[12px] text-[var(--fg)] block mb-1.5 font-medium">App Store category</div>
               <div role="radiogroup" aria-labelledby="category-label" className="grid grid-cols-2 sm:grid-cols-3 gap-1">
                 {CATEGORIES.map((c) => {
                   const isActive = category === c;
@@ -237,6 +269,34 @@ export default function NewProjectPage() {
                 })}
               </div>
             </div>
+
+            {/* Optional internal-name override — collapsed by default. */}
+            <div>
+              <button
+                type="button"
+                onClick={() => setShowAdvanced((v) => !v)}
+                aria-expanded={showAdvanced}
+                className="t-mono-xs text-[var(--fg-mute)] hover:text-[var(--accent)] inline-flex items-center gap-2 transition-colors"
+              >
+                <span aria-hidden>{showAdvanced ? "▾" : "▸"}</span>
+                {showAdvanced ? "Hide advanced" : "Advanced"}
+              </button>
+              {showAdvanced && (
+                <div className="mt-3">
+                  <Label htmlFor="project-name">Internal project name</Label>
+                  <Input
+                    id="project-name"
+                    name="projectName"
+                    value={name}
+                    onChange={(e) => setNameOverride(e.target.value)}
+                    placeholder={derivedName ? `${derivedName}-launch` : "e.g. tideline-spring-launch"}
+                  />
+                  <p className="t-mono-xs text-[var(--fg-mute)] mt-1.5">
+                    ▸ Auto-derived from your app name. Override only if you need a specific identifier.
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
           <aside className="col-span-12 md:col-span-5 p-6 md:p-10 flex flex-col justify-between gap-6">
             <div className="border border-[var(--line)] p-5">
@@ -249,11 +309,23 @@ export default function NewProjectPage() {
                 {description || "Short product description seeds the GPT-5 prompt for headline generation."}
               </div>
             </div>
-            <div className="flex justify-between">
-              <Link href="/dashboard" className="btn">Cancel</Link>
-              <Button variant="accent" onClick={() => setStep(2)} disabled={!name || !appName}>
-                Next ›
-              </Button>
+            <div className="space-y-2">
+              {!appName.trim() && (
+                <p className="t-mono-xs text-[var(--fg-mute)] text-right">
+                  ▸ Add your app name to continue.
+                </p>
+              )}
+              <div className="flex justify-between">
+                <Link href="/dashboard" className="btn">Cancel</Link>
+                <Button
+                  variant="accent"
+                  onClick={() => setStep(2)}
+                  disabled={!name || !appName.trim()}
+                  title={!appName.trim() ? "Add your app name to continue" : undefined}
+                >
+                  Next ›
+                </Button>
+              </div>
             </div>
           </aside>
         </section>

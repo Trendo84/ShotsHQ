@@ -20,8 +20,10 @@ test.describe("New project wizard navigation", () => {
   test("step 01 → step 02 → step 03 → commit", async ({ page }) => {
     await page.goto("/projects/new");
 
-    // Step 1 → 2
-    await page.locator("#project-name").fill("e2e-test-project");
+    // Step 1 → 2. The internal project name is auto-derived from
+    // the app name now (morning-finish friction pass — internal slug
+    // lives in an "Advanced" disclosure that defaults closed). Only
+    // App name is required to advance.
     await page.locator("#app-name").fill("Tideline");
     await page.getByRole("button", { name: /^Next/ }).click();
 
@@ -65,7 +67,6 @@ test.describe("New project wizard navigation", () => {
 
   test("right-rail steps are clickable from any step", async ({ page }) => {
     await page.goto("/projects/new");
-    await page.locator("#project-name").fill("e2e-test");
     await page.locator("#app-name").fill("Test");
     await page.getByRole("button", { name: /^Next/ }).click();
     await page.getByRole("button", { name: /^Next/ }).click();
@@ -76,7 +77,21 @@ test.describe("New project wizard navigation", () => {
 
     // Click step 01 in the right rail.
     await page.getByRole("button", { name: /01 · PROJECT METADATA/ }).click();
-    await expect(page.locator("#project-name")).toBeVisible();
+    // App name is the leading field on Step 1 now; the internal project
+    // name lives behind the "Advanced" disclosure.
+    await expect(page.locator("#app-name")).toBeVisible();
+  });
+
+  test("step 01: internal project name auto-derives from app name", async ({ page }) => {
+    await page.goto("/projects/new");
+    await page.locator("#app-name").fill("Tideline");
+    // Open the Advanced disclosure to reveal the auto-derived slug.
+    await page.getByRole("button", { name: /Advanced/ }).click();
+    // The internal-name field should now be visible AND prefilled with
+    // a kebab-cased derivation of the app name + "-launch" suffix.
+    const internal = page.locator("#project-name");
+    await expect(internal).toBeVisible();
+    await expect(internal).toHaveValue("tideline-launch");
   });
 });
 

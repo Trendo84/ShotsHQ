@@ -149,10 +149,10 @@ export function PipelineDiagram() {
               How a raw screenshot becomes <span className="text-[var(--accent)]">a finished listing</span>.
             </h2>
           </div>
-          <p className="col-span-12 md:col-span-5 t-prose max-w-md">
-            Every stage refunds credits if it fails — even a single locale
-            inside the 41-way translate fan-out. Independently observable,
-            independently retryable.
+          <p className="col-span-12 md:col-span-5 t-prose max-w-md text-[var(--fg)]">
+            Failures refund credits automatically — even a single locale
+            inside the 41-way translate fan-out. Retry just the part that
+            broke, never the whole pack.
           </p>
         </div>
 

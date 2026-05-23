@@ -10,7 +10,12 @@ type Plan = {
   flag?: string;
   cta: string;
   ctaHref: string;
+  /** Core bullets — only what's live today. The buying scan path. */
   perks: string[];
+  /** Optional secondary note for future-state perks. Renders muted
+   *  beneath the live bullets — keeps the honesty without competing
+   *  with the buying decision. */
+  comingNext?: string;
 };
 
 const PLANS: Plan[] = [
@@ -19,14 +24,14 @@ const PLANS: Plan[] = [
     name: "Free",
     price: "$0",
     cadence: "forever",
-    description: "Unlimited editor, 1080p exports with watermark.",
-    cta: "Open console",
+    description: "Try the workflow. Watermarked exports.",
+    cta: "Start free",
     ctaHref: "/sign-up",
     perks: [
       "Unlimited project editor",
-      "1080p watermarked exports",
       "All device frames",
-      "Local-only project storage",
+      "Cloud project storage",
+      "Watermarked exports",
     ],
   },
   {
@@ -34,15 +39,15 @@ const PLANS: Plan[] = [
     name: "Indie pack",
     price: "$19",
     cadence: "one-off",
-    description: "100 credits — roughly 6-8 full sets. Never expires.",
+    description: "Pay per launch. 100 credits — roughly 6-8 full packs. Never expires.",
     cta: "Buy pack",
     ctaHref: "/sign-up?plan=indie",
     perks: [
       "100 credits, never expire",
+      "6-8 full App Store packs",
       "Watermark removed",
-      "6-8 full sets per pack",
       "Cloud project storage",
-      "Export at every App Store dimension",
+      "Every required dimension included",
     ],
   },
   {
@@ -50,34 +55,34 @@ const PLANS: Plan[] = [
     name: "Pro pack",
     price: "$49",
     cadence: "one-off",
-    description: "300 credits — roughly 20-25 full sets. Best value for serial launchers.",
+    description: "Pay per launch. 300 credits — roughly 20-25 packs. Best value for serial launchers.",
     flag: "Best value",
     cta: "Buy pack",
     ctaHref: "/sign-up?plan=pro",
     perks: [
       "300 credits, never expire",
-      "20-25 full sets per pack",
+      "20-25 full App Store packs",
       "Watermark removed",
       "Cloud project storage",
-      "Direct App Store Connect push · v1.1",
     ],
+    comingNext: "Direct App Store Connect push",
   },
   {
     id: "studio",
     name: "Studio",
     price: "$29",
     cadence: "per month",
-    description: "Unmetered AI. Cancel anytime via the Stripe billing portal — projects stay readable for 30 days.",
+    description: "Ongoing production workflow. Unmetered AI. Cancel anytime from the Stripe portal.",
     highlight: true,
-    cta: "Subscribe",
+    cta: "Start Studio",
     ctaHref: "/sign-up?plan=studio",
     perks: [
       "Unlimited AI generations",
-      "All 41 locales + 3 Apple device frames",
+      "All 41 locales + every device frame",
       "Cloud project storage",
       "Manage subscription via Stripe portal",
-      "Public REST + webhook API · v1.1",
     ],
+    comingNext: "Public REST + webhook API",
   },
   {
     id: "lifetime",
@@ -90,9 +95,9 @@ const PLANS: Plan[] = [
     perks: [
       "Lifetime unmetered AI",
       "All future features included",
-      "Lifetime API access · v1.1",
       "Priority support, named seat",
     ],
+    comingNext: "Lifetime public API access",
   },
 ];
 
@@ -144,6 +149,15 @@ export function PricingTable() {
               </li>
             ))}
           </ul>
+
+          {p.comingNext && (
+            <p className="text-[11.5px] text-[var(--fg-mute)] leading-snug -mt-2">
+              <span className="t-mono-xs uppercase tracking-[0.14em] text-[var(--fg-mute)] mr-1.5">
+                Coming next
+              </span>
+              {p.comingNext}
+            </p>
+          )}
 
           <Link href={p.ctaHref} className={p.highlight ? "btn btn-accent" : "btn"}>
             {p.cta} →

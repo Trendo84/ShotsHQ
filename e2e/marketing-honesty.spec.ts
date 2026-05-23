@@ -114,18 +114,21 @@ test.describe("Public-surfaces honesty contract", () => {
     await expect(page.locator("body")).toContainText(/v1\.1/i);
   });
 
-  test("PricingTable Pro / Studio / Lifetime mark unshipped perks as v1.1", async ({ page }) => {
+  test("PricingTable unshipped perks live under a `Coming next` label, not in the main bullets", async ({ page }) => {
+    // Morning-finish: future-state perks were demoted out of the main
+    // perk list into a muted `Coming next: <perk>` line below the
+    // bullets. The check now is that any mention of ASC push or
+    // public-API is visually adjacent to the "Coming next" eyebrow,
+    // not buried inside the live bullets pretending to be a current
+    // feature.
     await page.goto("/pricing");
-    const html = await page.locator("body").textContent();
-    if (!html) throw new Error("no body text");
-    // If ASC push is listed as a Pro/Lifetime perk, it must read v1.1.
-    if (/App Store Connect push/i.test(html)) {
-      expect(html).toMatch(/App Store Connect push.*v1\.1/i);
+    const body = await page.locator("body").textContent();
+    if (!body) throw new Error("no body text");
+    if (/App Store Connect push/i.test(body)) {
+      expect(body).toMatch(/Coming next[\s\S]{0,60}App Store Connect push/i);
     }
-    // If the public API is listed as a Studio/Lifetime perk, it must
-    // read v1.1 — the route doesn't enforce the contract yet.
-    if (/REST\s*\+\s*webhook API/i.test(html)) {
-      expect(html).toMatch(/REST.*webhook API.*v1\.1/i);
+    if (/REST\s*\+\s*webhook API/i.test(body)) {
+      expect(body).toMatch(/Coming next[\s\S]{0,60}REST\s*\+\s*webhook API/i);
     }
   });
 
