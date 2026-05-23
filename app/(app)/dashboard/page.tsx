@@ -5,6 +5,10 @@ import { Plus, ChevronRight, FileText, Sparkles } from "lucide-react";
 import { requireUser } from "@/lib/auth/clerk";
 import { listProjectsForUser } from "@/lib/db/queries/projects";
 import { getBalance } from "@/lib/db/queries/credits";
+import {
+  projectStatus,
+  projectStatusDisplay,
+} from "@/lib/studio/project-status";
 
 export default async function DashboardPage() {
   const user      = await requireUser();
@@ -55,30 +59,45 @@ export default async function DashboardPage() {
               <EmptyProjectsCard />
             ) : (
               <ul className="border border-[var(--line)]">
-                {projects.slice(0, 5).map((p) => (
-                  <li key={p.id}>
-                    <Link
-                      href={`/projects/${p.id}`}
-                      className="grid grid-cols-12 items-center gap-3 px-4 py-4 border-b border-[var(--line)] last:border-b-0 hover:bg-[var(--bg-2)] transition-colors"
-                    >
-                      <div className="col-span-12 sm:col-span-6 min-w-0">
-                        <div className="t-display text-[18px] sm:text-[20px] leading-tight normal-case tracking-[-0.02em] truncate">
-                          {p.name}
+                {projects.slice(0, 5).map((p) => {
+                  // Derive each project's status from its persisted
+                  // Studio state — same truth source the overview,
+                  // /exports, and Studio use. Audit cycle #5: the
+                  // dashboard previously hardcoded `<Badge>Draft</Badge>`
+                  // on every row regardless of real state.
+                  const info    = projectStatus(p.polotnoJson);
+                  const display = projectStatusDisplay(info, p.id);
+                  return (
+                    <li key={p.id}>
+                      <Link
+                        href={`/projects/${p.id}`}
+                        className="grid grid-cols-12 items-center gap-3 px-4 py-4 border-b border-[var(--line)] last:border-b-0 hover:bg-[var(--bg-2)] transition-colors"
+                        data-project-row={p.id}
+                        data-project-status={info.status}
+                        data-panels-ready={String(info.readiness.readyPanels)}
+                        data-panels-total={String(info.readiness.totalPanels)}
+                      >
+                        <div className="col-span-12 sm:col-span-6 min-w-0">
+                          <div className="t-display text-[18px] sm:text-[20px] leading-tight normal-case tracking-[-0.02em] truncate">
+                            {p.name}
+                          </div>
+                          <div className="text-[12.5px] text-[var(--fg-mute)] mt-0.5 truncate">
+                            {info.readiness.totalPanels === 0
+                              ? (p.category || "Uncategorized")
+                              : `${info.readiness.readyPanels} / ${info.readiness.totalPanels} panels ready`}
+                          </div>
                         </div>
-                        <div className="text-[12.5px] text-[var(--fg-mute)] mt-0.5 truncate">
-                          {p.category ?? "Uncategorized"}
+                        <div className="col-span-7 sm:col-span-3 text-[12.5px] text-[var(--fg-mute)] tabular-nums">
+                          {timeAgo(p.updatedAt)}
                         </div>
-                      </div>
-                      <div className="col-span-7 sm:col-span-3 text-[12.5px] text-[var(--fg-mute)] tabular-nums">
-                        {timeAgo(p.updatedAt)}
-                      </div>
-                      <div className="col-span-5 sm:col-span-3 flex justify-end items-center gap-2">
-                        <Badge>Draft</Badge>
-                        <ChevronRight size={14} className="text-[var(--fg-mute)]" />
-                      </div>
-                    </Link>
-                  </li>
-                ))}
+                        <div className="col-span-5 sm:col-span-3 flex justify-end items-center gap-2">
+                          <Badge variant={display.variant} title={display.help}>{display.label}</Badge>
+                          <ChevronRight size={14} className="text-[var(--fg-mute)]" />
+                        </div>
+                      </Link>
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </section>

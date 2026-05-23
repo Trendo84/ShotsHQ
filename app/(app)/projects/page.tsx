@@ -4,6 +4,10 @@ import { Badge } from "@/components/ui/badge";
 import { Plus } from "lucide-react";
 import { requireUser } from "@/lib/auth/clerk";
 import { listProjectsForUser } from "@/lib/db/queries/projects";
+import {
+  projectStatus,
+  projectStatusDisplay,
+} from "@/lib/studio/project-status";
 
 export default async function ProjectsPage() {
   const user     = await requireUser();
@@ -34,31 +38,48 @@ export default async function ProjectsPage() {
         <EmptyProjects />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 grid-rule">
-          {projects.map((p) => (
-            <Link
-              key={p.id}
-              href={`/projects/${p.id}`}
-              className="p-5 sm:p-6 min-h-[200px] sm:min-h-[220px] flex flex-col justify-between hover:bg-[var(--bg-2)] transition-colors group focus-visible:outline-none focus-visible:bg-[var(--bg-2)] focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-[var(--accent)]"
-            >
-              <header className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="t-mono-xs text-[var(--fg-mute)] truncate">{p.id.slice(0, 8)}</div>
-                  <h2 className="t-display text-[clamp(1.5rem,3vw,1.75rem)] leading-[0.95] mt-1 normal-case tracking-[-0.02em] break-words">
-                    {p.name}
-                  </h2>
-                  <div className="t-mono-xs text-[var(--fg-mute)] mt-1 truncate">
-                    {p.category ?? "Uncategorized"}
+          {projects.map((p) => {
+            // Same truth source as /dashboard and /projects/[id].
+            // Audit cycle #5: this card used to hardcode "DRAFT"
+            // on every project regardless of real state.
+            const info    = projectStatus(p.polotnoJson);
+            const display = projectStatusDisplay(info, p.id);
+            return (
+              <Link
+                key={p.id}
+                href={`/projects/${p.id}`}
+                data-project-card={p.id}
+                data-project-status={info.status}
+                data-panels-ready={String(info.readiness.readyPanels)}
+                data-panels-total={String(info.readiness.totalPanels)}
+                className="p-5 sm:p-6 min-h-[200px] sm:min-h-[220px] flex flex-col justify-between hover:bg-[var(--bg-2)] transition-colors group focus-visible:outline-none focus-visible:bg-[var(--bg-2)] focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-[var(--accent)]"
+              >
+                <header className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="t-mono-xs text-[var(--fg-mute)] truncate">{p.id.slice(0, 8)}</div>
+                    <h2 className="t-display text-[clamp(1.5rem,3vw,1.75rem)] leading-[0.95] mt-1 normal-case tracking-[-0.02em] break-words">
+                      {p.name}
+                    </h2>
+                    <div className="t-mono-xs text-[var(--fg-mute)] mt-1 truncate">
+                      {p.category ?? "Uncategorized"}
+                    </div>
                   </div>
-                </div>
-                <Badge>DRAFT</Badge>
-              </header>
+                  <Badge variant={display.variant} title={display.help}>{display.label}</Badge>
+                </header>
 
-              <dl className="dl-rule mt-4">
-                <div><dt>TARGETS</dt><dd className="t-numeric">{p.storeTargets?.length ?? 0}</dd></div>
-                <div><dt>UPDATED</dt><dd className="t-numeric">{p.updatedAt.toISOString().slice(0, 10)}</dd></div>
-              </dl>
-            </Link>
-          ))}
+                <dl className="dl-rule mt-4">
+                  <div><dt>TARGETS</dt><dd className="t-numeric">{p.storeTargets?.length ?? 0}</dd></div>
+                  <div>
+                    <dt>READY</dt>
+                    <dd className="t-numeric">
+                      {String(info.readiness.readyPanels).padStart(2, "0")} / {String(info.readiness.totalPanels).padStart(2, "0")}
+                    </dd>
+                  </div>
+                  <div><dt>UPDATED</dt><dd className="t-numeric">{p.updatedAt.toISOString().slice(0, 10)}</dd></div>
+                </dl>
+              </Link>
+            );
+          })}
         </div>
       )}
     </>

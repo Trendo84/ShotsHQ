@@ -17,30 +17,14 @@ import { requireUser } from "@/lib/auth/clerk";
 import { getProject } from "@/lib/db/queries/projects";
 import { DEVICES_BY_ID } from "@/lib/devices/catalog";
 import { storeTargetForCatalogId } from "@/lib/devices/store-target";
-import { extractStudioDesignSet } from "@/lib/studio/schema";
 import { deviceById, type StudioDesign, type StudioDesignSet } from "@/components/studio/types";
-
-/**
- * Empty design-set used when a project has no persisted Studio state
- * yet (`polotnoJson.studio` missing or invalid). The overview must NOT
- * fall back to `defaultStudioDesignSet()` here because that materializes
- * a phantom panel in-memory — Studio's auto-seed-on-mount does persist
- * a default panel after the first autosave, but only after the user
- * has actually opened Studio. Until then, the project legitimately has
- * zero panels and the overview should say so.
- */
-const EMPTY_STUDIO_SET: StudioDesignSet = {
-  version:       "2",
-  activePanelId: "",
-  panels:        [],
-};
 import {
-  evaluatePanel,
-  evaluateStudio,
-  statusLabel,
-  statusOf,
-  type ReadinessStatus,
-} from "@/lib/studio/readiness";
+  nextActionFor,
+  projectStatus,
+  projectStatusDisplay,
+  type NextActionId,
+} from "@/lib/studio/project-status";
+import { evaluatePanel } from "@/lib/studio/readiness";
 
 /**
  * Project overview.
@@ -84,14 +68,13 @@ export default async function ProjectOverviewPage({
   const project  = await getProject(id, user.id);
   if (!project) notFound();
 
-  const targets   = project.storeTargets ?? [];
-  const created   = project.createdAt.toISOString().slice(0, 10);
-  const updated   = project.updatedAt.toISOString().slice(0, 16).replace("T", " ");
-  const studio    = extractStudioDesignSet(project.polotnoJson) ?? EMPTY_STUDIO_SET;
-  const readiness = evaluateStudio(studio);
-  const status    = statusOf(readiness);
+  const targets    = project.storeTargets ?? [];
+  const created    = project.createdAt.toISOString().slice(0, 10);
+  const updated    = project.updatedAt.toISOString().slice(0, 16).replace("T", " ");
+  const projectInfo = projectStatus(project.polotnoJson);
+  const { studio, readiness, status } = projectInfo;
+  const display    = projectStatusDisplay(projectInfo, id);
   const nextAction = nextActionFor(id, status);
-  const projectStatusLabel = projectBadgeLabel(status, readiness.empty);
 
   const ACTIONS = [
     { href: `/projects/${id}/studio`,   icon: Smartphone, label: "Open studio", desc: "Constrained screenshot engine", code: "01" },
@@ -109,8 +92,8 @@ export default async function ProjectOverviewPage({
         <div className="col-span-12 md:col-span-7 border-r-0 md:border-r border-[var(--line)] p-5 sm:p-6 md:p-10">
           <div className="flex items-center gap-3 mb-3 flex-wrap">
             <span className="t-mono-xs text-[var(--fg-mute)]">[ {project.id.slice(0, 8)} ]</span>
-            <Badge variant={projectStatusVariant(status)} data-project-status={status}>
-              {projectStatusLabel}
+            <Badge variant={display.variant} data-project-status={status}>
+              {display.label}
             </Badge>
           </div>
           <h1 className="t-display text-[clamp(2rem,6vw,5.5rem)] leading-[0.92] normal-case tracking-[-0.04em] break-words text-balance">
@@ -128,7 +111,7 @@ export default async function ProjectOverviewPage({
               data-next-action={nextAction.id}
               className="group inline-flex items-center gap-3 bg-[var(--accent)] text-[var(--accent-fg)] pl-5 pr-1.5 py-2 transition-transform duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98]"
             >
-              <nextAction.Icon size={14} className="ml-[-2px]" />
+              <NextActionIcon id={nextAction.id} />
               <span className="btn-label">{nextAction.label}</span>
               <span className="inline-grid place-items-center w-9 h-9 bg-[var(--accent-fg)] text-[var(--accent)] transition-transform group-hover:translate-x-0.5 font-bold">→</span>
             </Link>
@@ -269,69 +252,17 @@ function computeTargetStats(catalogId: string, studio: StudioDesignSet): TargetS
   return { total, ready, status, label, spec };
 }
 
-type NextActionId = "upload-in-studio" | "prepare-in-studio" | "open-exports" | "add-targets-in-studio";
-
-type NextAction = {
-  id:    NextActionId;
-  href:  string;
-  label: string;
-  help:  string;
-  Icon:  typeof Upload;
-};
-
-function nextActionFor(projectId: string, status: ReadinessStatus): NextAction {
-  switch (status) {
-    case "empty":
-      return {
-        id:    "add-targets-in-studio",
-        href:  `/projects/${projectId}/studio`,
-        label: "Open studio",
-        help:  "Start by adding a panel in Studio and uploading your first screenshot.",
-        Icon:  Smartphone,
-      };
-    case "blocked":
-      return {
-        id:    "upload-in-studio",
-        href:  `/projects/${projectId}/studio`,
-        label: "Upload in Studio",
-        help:  "Drop a screenshot into the active panel and add a headline to unblock export.",
-        Icon:  Upload,
-      };
-    case "partial":
-      return {
-        id:    "prepare-in-studio",
-        href:  `/projects/${projectId}/studio`,
-        label: "Prepare in Studio",
-        help:  "Some panels still need a screenshot or headline. Finish those to enable Export all.",
-        Icon:  Upload,
-      };
-    case "ready":
-      return {
-        id:    "open-exports",
-        href:  `/projects/${projectId}/exports`,
-        label: "Open Exports",
-        help:  "Every panel is ready. Open Exports to download the App Store-exact pack.",
-        Icon:  Download,
-      };
-  }
-}
-
-function projectBadgeLabel(status: ReadinessStatus, empty: boolean): string {
-  if (empty) return "DRAFT";
-  switch (status) {
-    case "empty":   return "DRAFT";
-    case "blocked": return "DRAFT";
-    case "partial": return "IN PROGRESS";
-    case "ready":   return "READY";
-  }
-}
-
-function projectStatusVariant(status: ReadinessStatus): React.ComponentProps<typeof Badge>["variant"] {
-  switch (status) {
-    case "ready":   return "live";
-    case "partial": return "warn";
-    case "blocked": return "default";
-    case "empty":   return "default";
+/**
+ * Map a next-action id to its lucide icon at the call site. Kept
+ * here (not in the shared util) because the helper stays JSX-free,
+ * and the icon set is a presentation-layer decision per surface.
+ */
+function NextActionIcon({ id }: { id: NextActionId }) {
+  switch (id) {
+    case "add-targets-in-studio": return <Smartphone size={14} className="ml-[-2px]" />;
+    case "upload-in-studio":      return <Upload     size={14} className="ml-[-2px]" />;
+    case "prepare-in-studio":     return <Upload     size={14} className="ml-[-2px]" />;
+    case "open-exports":          return <Download   size={14} className="ml-[-2px]" />;
   }
 }
 
