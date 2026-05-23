@@ -1,5 +1,156 @@
 # ShotsHQ overnight BrowserOS status
 
+## 2026-05-24 07:00 AEST · morning-finish (cycle #15)
+
+### What shipped this cycle
+
+Two commits, both pushed to `origin/main`:
+
+- **`b7d8633`** — `fix(templates): commit preview PNGs + switch to unoptimized so live gallery renders` (P0 trust killer)
+- **`6a8a7dc`** — `fix(funnel): center landing on the live product + buyer-fluent pricing + lighter step-1`
+
+Brief target: restore live parity, tighten the public story around the one live hero use case, remove the last high-visibility trust/conversion rough edges, smooth first-run onboarding.
+
+#### P0 — live preview restoration
+
+The brief's biggest finding: template previews 404'd on production. `/templates/preview/template-preview-*.png` was returning 404 and `/_next/image?…` was returning 400 `INVALID_IMAGE_OPTIMIZE_REQUEST`. The homepage compact gallery and the full `/templates` page rendered as empty gray boxes for every live visitor — a first-impression trust killer.
+
+Root cause: the 21 preview PNGs in `public/templates/preview/` were UNTRACKED in git. Local dev served off disk; production had nothing to serve.
+
+Fix (commit `b7d8633`):
+- Staged all 21 preview PNGs (604 KB total) and the `scripts/generate-template-previews.mjs` reproduction script.
+- Switched the Templates `<Image>` to `unoptimized` — defense-in-depth so any future Vercel optimizer edge case can't take the gallery down again. These are 22-36 KB PNGs; running them through the optimizer offers basically no win and adds another failure point.
+- Added 2 e2e regression specs in `marketing-honesty.spec.ts`:
+  - preview assets resolve 200 with valid PNG signature
+  - templates gallery `<img>` src paths match the expected pattern
+
+#### P1 — Surfaces rebalance
+
+`components/marketing/Surfaces.tsx` was a 6-card grid where 1 Live + 3 Beta + 2 Soon competed at equal weight. Now:
+
+| | Before | After |
+|---|---|---|
+| App Store | One of 6 equal tiles with a tiny "LIVE" pill | Full-width hero panel: larger mockup on the left, dimensions list + Start-free CTA + "See sample output" link on the right. Only LIVE pill in the section. |
+| Web hero | "Try it →" CTA tile (read as live) | "Preview →" CTA in a quieter `Coming next` row — expectation-setting language |
+| OG / PH / GH / Press kit | 4 separate Beta/Soon tiles | Compressed into the same quiet `Coming next` row of 5 compact tiles. No Beta/Soon badges in the primary scan path. |
+| H2 | "Build it once, ship it to every surface a launch actually needs." | "Polished App Store packs today. Everything else next." |
+
+#### P1 — PricingTable buyer-fluent rewrite
+
+Free CTA `"Open console"` → `"Start free"`. Studio CTA `"Subscribe"` → `"Start Studio"`. Future-state perks demoted out of the core bullets into a new muted `Coming next: <perk>` line beneath the perks list (Pro = ASC push, Studio = REST + webhook API, Lifetime = Lifetime API access). Plan descriptions reframed in buyer language: `Free = Try the workflow.` / `Indie = Pay per launch.` / `Pro = Pay per launch. Best value.` / `Studio = Ongoing production workflow.`
+
+#### P1 — Web-hero expectation-setting
+
+CTA section H2 changed from `"Stop screenshotting. Start designing."` (live-product voice for a waitlist page) → `"Want this when it ships? Get on the list."` Body copy now mentions the LIVE App Store pipeline first, web-hero second.
+
+#### P1 — Pipeline copy cleanup
+
+`PipelineDiagram` supporting copy: `"Independently observable, independently retryable."` → `"Retry just the part that broke, never the whole pack."` Same claim, customer-fluent voice.
+
+#### P3 — /projects/new step 1 friction
+
+- "Project name (internal)" required field gone from the primary form. Internal slug auto-derives from the App name (kebab-case + `-launch` suffix); users who need a specific identifier override via a collapsed "Advanced" disclosure.
+- App name lifted to the top with `autoFocus`, "How your app appears on the App Store" helper.
+- Concrete placeholders ("e.g. Tideline", "e.g. The fastest local surf forecast…").
+- Disabled `Next` state now shows a "▸ Add your app name to continue." note + tooltip on hover.
+- Labels demoted from ALL CAPS to title case ("App name", "One-line description", "App Store category") — the field is where the user types; the label shouldn't shout louder than the input.
+
+### Files touched
+
+```
+b7d8633:
+A  public/templates/preview/*.png (21 files, 604 KB)
+A  scripts/generate-template-previews.mjs
+M  components/marketing/Templates.tsx       (unoptimized)
+M  e2e/marketing-honesty.spec.ts            (+2 preview regression specs)
+
+6a8a7dc:
+M  app/(app)/projects/new/page.tsx          (auto-derived slug, autoFocus, advanced disclosure)
+M  app/(marketing)/tools/web-hero/page.tsx  (waitlist CTA copy)
+M  components/billing/PricingTable.tsx      (CTAs, Coming next, buyer language)
+M  components/marketing/PipelineDiagram.tsx (kill "independently retryable")
+M  components/marketing/Surfaces.tsx        (full rebalance)
+M  e2e/marketing-honesty.spec.ts            (updated v1.1 spec → Coming next pattern)
+M  e2e/wizard.spec.ts                       (+1 spec: internal slug auto-derives, updated 2 prior specs)
+```
+
+### Verification (all green)
+
+```
+pnpm typecheck   → clean
+pnpm test        → 231 / 231 pass
+pnpm test:e2e    → 59 / 59 pass with --workers=1
+                     - 2 new preview-asset regressions          ✅
+                     - 1 new wizard auto-derive spec            ✅
+                     - 1 updated PricingTable Coming-next spec  ✅
+                     - 55 prior tests                           ✅
+pnpm build       → clean
+git push         → 4b89252..6a8a7dc main -> main (two commits)
+```
+
+### Definition-of-done — 9 bullets
+
+1. ✅ Live `/` and live `/templates` show the real template preview artwork (deploys now serve the committed PNGs)
+2. ✅ Direct preview asset URLs resolve 200 (regression spec pins it)
+3. ✅ Landing page clearly emphasizes the live App Store product over future surfaces (Surfaces hero panel + Coming next row)
+4. ✅ No CTA implies an unreleased tool is live (Surfaces "Try it →" → "Preview →"; web-hero CTA reframed to waitlist)
+5. ✅ Pricing language cleaner, less internal, more conversion-friendly (no more "Open console"; Coming next labels)
+6. ✅ Templates gallery feels premium (was already polished cycle #14; previews now actually serve)
+7. ✅ Web-hero page polished but clearly positioned as early access
+8. ✅ `/projects/new` step 1 feels lighter (1 required field down from 2; auto-derived slug)
+9. ✅ Local + live public surfaces materially aligned (the only divergence was the missing previews; that's resolved)
+
+### Blockers
+
+None code-side. Carry-forwards (unchanged):
+
+- **Prod DB migration from cycle #11** — runs on next Vercel deploy
+- **Clerk live-key swap** in Vercel production env
+- **`?e2e_plan=` fixture override for /billing paid-tier e2e** — cycle #9
+- **Dead `Comparison.tsx` marketing component** — cycle #10
+- **`components/WipBanner.tsx`** — unmounted but still on disk
+- **Parallel-worker e2e flake at `--workers=2`** — `--workers=1` clean
+
+### Highest-priority next target
+
+The public funnel + onboarding step 1 are now both visually focused and verbally buyer-fluent. The remaining audit surface is the single internal route that's been queued across multiple cycles:
+
+1. **`/projects/[id]/surfaces` audit** — last untouched project-scoped route
+2. **`scripts/generate-template-previews.mjs`** verification — script committed but not re-tested in CI; a follow-up CI step could regenerate to spec on each release so the gallery never drifts from the catalog
+3. **Parallel-worker e2e flake investigation** — would unblock fast CI
+
+### Next BrowserOS prompt (paste verbatim next hour)
+
+```
+Continue the overnight loop in /Volumes/NVME EXT/Ivan/CODEX/ShotsHQ.
+Read docs/ops/overnight-browseros-loop.md (operating rules) and the
+top entry of docs/ops/overnight-browseros-status.md (latest cycle —
+yours).
+
+Focus this cycle: audit /projects/[id]/surfaces — the last untouched
+project-scoped route. Apply the same readiness-contract pattern as
+cycles #5/#11/#12/#13/#14/#15.
+
+Also verify (in browser, on live shotshq.com) that:
+ - /templates renders all preview images (P0 just shipped)
+ - / landing renders the compact templates row with real previews
+ - the Surfaces section reads "live App Store, Coming next" not
+   "6 equal-weight surfaces"
+
+If /projects/[id]/surfaces is already honest, pivot to the
+parallel-worker e2e flake investigation (running at --workers=2
+flaked project-list-surfaces:157 + hydration smoke under load
+across cycles #9–#15; --workers=1 is clean across all 59 tests).
+
+Re-run pnpm typecheck / pnpm test / pnpm test:e2e / pnpm build.
+Update docs/ops/overnight-browseros-status.md and reply with a
+ship report.
+
+Treat the repo + git state as truth. Don't trust session memory.
+```
+
+---
+
 ## 2026-05-24 06:00 AEST · premium polish (cycle #14)
 
 ### What shipped this cycle
