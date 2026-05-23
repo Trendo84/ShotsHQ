@@ -1,3 +1,11 @@
+/**
+ * Legacy presigned-PUT upload route.
+ *
+ * `/api/upload/direct` is the canonical path today because it avoids
+ * the Cloudflare R2 bucket-CORS dependency. Keep this route for the
+ * future browser-direct path once operator-side CORS is configured.
+ */
+
 import { NextRequest } from "next/server";
 import { z } from "zod";
 import { nanoid } from "nanoid";

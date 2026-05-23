@@ -29,8 +29,8 @@ import { DEVICES_BY_ID } from "@/lib/devices/catalog";
  *     no library)
  *   - match dim → marketing device (`pickDeviceByDimensions`) for
  *     display + → StoreTarget (`findStoreTargetByDimensions`) for DB
- *   - presign upload via existing /api/upload
- *   - PUT bytes to R2
+ *   - same-origin multipart POST to `/api/upload/direct`
+ *   - server PUTs bytes to R2 and returns the durable `key`
  *   - batch register all uploads via /api/screenshots/register
  *
  * Brand styling: rigid 90° corners (no border-radius per CLAUDE.md);
@@ -86,6 +86,15 @@ export function CaptureDropzone({
     } catch {
       return null;
     }
+  }
+
+  function fileForDirectUpload(file: File): File {
+    // Folder picks can yield a `.png` file whose browser MIME is blank.
+    // The old presign path hard-coded `contentType: image/png`, so keep
+    // that resilience when switching to multipart `/api/upload/direct`.
+    return file.type === "image/png"
+      ? file
+      : new File([file], file.name, { type: "image/png" });
   }
 
   // ── Drop / pick → preview ─────────────────────────────────────────────────
@@ -161,8 +170,8 @@ export function CaptureDropzone({
     setUploaded(0);
     setGlobalError(null);
 
-    // Per-file: presign → PUT. We mutate `rows` immutably as each
-    // completes so the progress UI ticks.
+    // Per-file: same-origin POST → server-side R2 PUT. We mutate
+    // `rows` immutably as each completes so the progress UI ticks.
     const updated: FileRow[] = [...rows];
 
     for (let i = 0; i < updated.length; i++) {
@@ -170,32 +179,23 @@ export function CaptureDropzone({
       if (!row.storeTarget || !row.width || !row.height) continue;
 
       try {
-        // 1. Presign
-        const presignRes = await fetch("/api/upload", {
-          method:  "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            filename:    row.file.name,
-            contentType: "image/png",
-            projectId,
-          }),
+        // 1. Same-origin multipart upload → server proxies bytes to R2.
+        const form = new FormData();
+        form.append("file", fileForDirectUpload(row.file));
+        form.append("projectId", projectId);
+
+        const uploadRes = await fetch("/api/upload/direct", {
+          method: "POST",
+          body:   form,
         });
-        const presignJson = await presignRes.json().catch(() => null);
-        if (!presignRes.ok || !presignJson?.ok || !presignJson.data?.url) {
-          throw new Error(presignJson?.error ?? `presign_http_${presignRes.status}`);
+        const uploadJson = await uploadRes.json().catch(() => null);
+        if (!uploadRes.ok || !uploadJson?.ok || !uploadJson.data?.key) {
+          throw new Error(uploadJson?.error ?? `upload_http_${uploadRes.status}`);
         }
 
-        const { url, key } = presignJson.data as { url: string; key: string };
+        const { key } = uploadJson.data as { key: string };
 
-        // 2. PUT bytes to R2
-        const putRes = await fetch(url, {
-          method:  "PUT",
-          headers: { "Content-Type": "image/png" },
-          body:    row.file,
-        });
-        if (!putRes.ok) throw new Error(`r2_put_${putRes.status}`);
-
-        updated[i] = { ...row, r2Key: key };
+        updated[i] = { ...row, r2Key: key, error: null };
         setUploaded((n) => n + 1);
       } catch (err) {
         const msg = err instanceof Error ? err.message : "upload_failed";
@@ -255,7 +255,11 @@ export function CaptureDropzone({
   const unmatched = summary.unmatched;
 
   return (
-    <div className="space-y-4">
+    <div
+      className="space-y-4"
+      data-capture-phase={phase}
+      data-capture-matched={String(matched)}
+    >
       {/* DROP ZONE / PREVIEW */}
       {phase === "empty" && (
         <div
@@ -287,6 +291,7 @@ export function CaptureDropzone({
             type="file"
             accept="image/png"
             multiple
+            data-testid="capture-upload-input"
             className="sr-only"
             onChange={(e) => {
               if (e.target.files?.length) void handleFiles(e.target.files);
@@ -299,6 +304,7 @@ export function CaptureDropzone({
             // @ts-expect-error — webkitdirectory is non-standard but supported
             webkitdirectory=""
             multiple
+            data-testid="capture-upload-folder-input"
             className="sr-only"
             onChange={(e) => {
               if (e.target.files?.length) void handleFiles(e.target.files);
@@ -412,6 +418,7 @@ export function CaptureDropzone({
                   type="button"
                   onClick={() => void uploadAndRegister()}
                   disabled={matched === 0}
+                  data-capture-upload="true"
                   className="btn btn-accent"
                 >
                   Upload {matched} → R2

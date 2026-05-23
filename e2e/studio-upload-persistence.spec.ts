@@ -9,8 +9,8 @@ import path from "node:path";
  * `sanitizeStudioDesign` stripped blob URLs on save. Result: a panel
  * looked "ready" in-memory but the screenshot vanished on reload.
  *
- * Fix routes uploads through the existing `/api/upload` presign + R2
- * PUT path, swaps the blob URL with the durable `https:` URL, and
+ * Fix routes uploads through `/api/upload/direct`, swaps the blob URL
+ * with the durable `https:` URL, and
  * flips `screenshotRemote=true`. Autosave persists the durable URL
  * inside `polotnoJson.studio`, and on reload the panel comes back
  * ready.

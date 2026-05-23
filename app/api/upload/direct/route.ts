@@ -15,10 +15,11 @@
  *   credentials we already hold. Slightly more egress on our end,
  *   but it works without operator-side bucket-CORS config.
  *
- * Used by Studio (`components/studio/StudioClient.tsx`) for
- * screenshot uploads. CaptureDropzone keeps using the presigned
- * path — when R2 CORS is configured operator-side, both paths
- * become available; until then this is the reliable one.
+ * Used by Studio (`components/studio/StudioClient.tsx`) and the
+ * project-creation CaptureDropzone (`components/capture/CaptureDropzone.tsx`).
+ * `/api/upload` remains as the legacy presigned-PUT route for a
+ * future v1.1/browser-direct path once R2 bucket CORS is configured,
+ * but `/api/upload/direct` is the canonical upload path today.
  *
  * Request shape: multipart/form-data with:
  *   file       — the image bytes (image/png, image/jpeg, image/webp)

@@ -2,11 +2,12 @@
  * POST /api/screenshots/register — register uploaded PNGs as
  * project screenshot rows.
  *
- * Capture intake. Pairs with the existing presign upload route at
- * `/api/upload`:
+ * Capture intake. Pairs with the canonical bytes-upload route at
+ * `/api/upload/direct` (and accepts keys from the legacy presigned
+ * `/api/upload` path too):
  *
- *   1. Client calls /api/upload → gets a signed PUT URL
- *   2. Client PUTs PNG bytes to R2
+ *   1. Client uploads PNG bytes to /api/upload/direct
+ *   2. Upload route stores the object in R2 and returns a `key`
  *   3. Client calls THIS route with the projectId + per-file
  *      { device, r2Key, width, height, locale } payload
  *   4. Route validates ownership of the project, validates the

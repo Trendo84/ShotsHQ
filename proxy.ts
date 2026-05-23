@@ -39,7 +39,7 @@ const isProtectedRoute = createRouteMatcher([
   "/api/stripe/checkout",
   "/api/stripe/portal",
   "/api/render",
-  "/api/upload",
+  "/api/upload(.*)",
 ]);
 
 const protectedMiddleware = clerkMiddleware(async (auth, req) => {
