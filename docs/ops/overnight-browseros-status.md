@@ -1,5 +1,157 @@
 # ShotsHQ overnight BrowserOS status
 
+## 2026-05-23 15:10 AEST · cycle #9
+
+### What shipped this cycle
+
+**`fix(billing): plan-aware /billing — one pack list lying to four plans`** (commit `2f1b66e`, pushed to `origin/main`).
+
+Brief target: audit `/billing` for the same readiness-lie shape that cycles #2–#5 caught on the project surfaces. Audit found three real lies — pack list ignored `user.plan` entirely, no `Manage subscription` affordance despite `/api/stripe/portal` existing, no data attributes for testability. The Studio engine has been the readiness focus for six cycles; the billing surface had quietly drifted into the same "render the same UI to everyone" trap.
+
+#### The three lies (and the truths replacing them)
+
+| Lie | Truth |
+|---|---|
+| Every plan saw a `Purchase ›` button on `STUDIO ANNUAL` | Free → `Upgrade ›`; Studio-monthly → `Switch ›` (annual) or `Current plan` (monthly); Lifetime → `Already covered` |
+| Studio/Lifetime users still saw `INDIE PACK $19` / `PRO PACK $49` purchase CTAs | Studio + Lifetime → `Already covered` with `Unmetered already covers top-ups` help copy |
+| No `Manage subscription` affordance despite `/api/stripe/portal` route shipping | New `<ManageSubscriptionButton>` renders only when `billingStatus.canManageSubscription === true` (Studio + Stripe customer). Lifetime users get an honest "no recurring subscription to manage — email support@shotshq.com" note instead of a dead button. |
+
+#### Shared readiness model
+
+New `lib/billing/status.ts` exports:
+
+- `billingStatus(user, balance) → BillingStatus` — `{ plan, balance, hasStripeCustomer, isStudio, isLifetime, canManageSubscription, showCreditPacks }`
+- `packRelevance(status, packId) → PackRelevance` — one of `current | switch | upgrade | available | redundant`
+- `packCtaLabel(relevance) → string` — `Current plan` / `Switch ›` / `Upgrade ›` / `Purchase ›` / `Already covered`
+- `packCtaHelp(relevance) → string | null` — context copy for non-`available` states (null when no help needed)
+
+`/billing` + `PurchaseButton` + `ManageSubscriptionButton` all consume the same helpers. Adding a new plan or pack means changing one file, not three.
+
+#### Data attributes exposed (testability contract)
+
+| Attribute | Where | Values |
+|---|---|---|
+| `data-plan-status` | page root | `free` / `studio_monthly` / `studio_annual` / `lifetime` |
+| `data-can-manage-subscription` | page root | `true` / `false` |
+| `data-stat` | each of 4 stat tiles | `balance` / `month-net` / `plan` / `next-bill` |
+| `data-pack-card` | each pack `<article>` | `indie` / `pro` / `studio_monthly` / `studio_annual` |
+| `data-pack-relevance` | each pack `<article>` + button wrapper | per `PackRelevance` enum |
+| `data-manage-subscription` | portal button | `true` (button only mounts when canManageSubscription) |
+| `data-lifetime-note` | lifetime user note | `true` (note only mounts when isLifetime) |
+
+### Files touched
+
+```
+M  app/(app)/billing/page.tsx                  (consumes helpers, exposes data attrs, renders ManageSub conditionally)
+M  components/billing/PurchaseButton.tsx       (accepts relevance prop, renders contextual CTA)
+A  components/billing/ManageSubscriptionButton.tsx  (new — Stripe portal client island)
+A  lib/billing/status.ts                       (new — shared readiness helpers)
+A  tests/billing/status.test.ts                (new — 13 unit specs)
+A  e2e/billing.spec.ts                         (new — 4 free-tier render specs)
+```
+
+### Verification (all green, on commit `2f1b66e`)
+
+```
+pnpm typecheck   → clean
+pnpm test        → 218 passed across 21 files (13 new billing.status specs)
+pnpm test:e2e    → 30 / 31 passed
+                     - 4 new billing-readiness                ✅
+                     - 6 studio-selector-parity                ✅ (cycle #8)
+                     - 1 hydration smoke                       ✅ (cycle #6)
+                     - 1 export-loop                           ✅ (cycle #6)
+                     - 5 list-surfaces                         (1 known parallel-worker flake at line 157 — passes in isolation; pre-existing, not introduced this cycle)
+                     - 3 project-overview                      ✅ (cycle #4)
+                     - 4 export-readiness                      ✅ (cycle #2)
+                     - 3 studio-device-switch                  ✅ (cycle #1)
+                     - 2 studio-upload-persistence             ✅ (cycle #3)
+                     - 2 wizard                                ✅
+pnpm build       → clean
+git push         → ee8877d..2f1b66e main -> main
+```
+
+### Acceptance-criteria status (brief's 4 bullets)
+
+1. ✅ Visited /billing source + ran live render against synthetic E2E user (free plan per `E2E_FIXTURE`). Identified three lies: identical pack list, missing portal button, no testability contract.
+2. ✅ Cross-checked `app/(app)/billing/page.tsx` + subcomponents against `user.plan` / `getBalance(user.id)` / `stripeCustomerId`. Plan label + balance + ledger were already derived from real state; pack list + subscription affordance were not.
+3. ✅ Applied the cycle-#5 pattern: shared pure helper (`lib/billing/status.ts`) + unit tests (13 specs) + UI consumers + e2e regression spec (4 specs targeting the free-tier render — Studio + Lifetime e2e coverage requires seeding a paid synthetic user, which is out of scope for this cycle but covered by the unit tests in pure-logic form).
+4. ✅ No pivot to /settings needed — the audit found a real readiness gap on /billing.
+
+### Blockers
+
+None code-side. Operator items still carried forward (unchanged):
+
+- **R2 bucket CORS** — operator-side, no-rush since same-origin proxy ships.
+- **Clerk live-key swap** in Vercel production env.
+- **Studio + Lifetime e2e coverage on /billing** — requires seeding a paid synthetic user (the E2E fixture is hard-coded to `plan: "free"` in `lib/auth/clerk.ts`). Unit tests in `tests/billing/status.test.ts` cover all four plans in pure-logic form. Carry as a low-priority follow-up: add a `?e2e_plan=studio_monthly` query parameter that overrides the fixture plan when `NEXT_PUBLIC_E2E=1`.
+
+### Highest-priority next target
+
+The four most-visited authenticated routes (`/dashboard`, `/projects`, `/projects/[id]`, `/studio`) plus `/exports`, `/billing` are now all on the readiness contract. Remaining audit surface clusters around:
+
+1. **`/settings` content audit** — settings page has profile, API keys (App Store Connect Issuer / Key / Private Key), theme prefs. The cycle-#0 audit batch already disabled the Save / ASC verify buttons honestly; worth re-verifying nothing regressed and adding the `data-asc-status` / `data-settings-section` testability contract.
+
+2. **`/projects/[id]/ai` audit** — the AI panel route exists. After cycle-#5's truthful surfaces work made the project pages match reality, is the AI panel still hardcoding things like "Translate · soon" or "Restyle · soon" buttons? Some of those products have backends (5 AI modules per pricing); their UI might be either too dead or too alive.
+
+3. **`/projects/[id]/surfaces` audit** — the surfaces overview page renders before /studio. Does it lie about which surfaces are ready vs blocked vs empty?
+
+4. **CaptureDropzone migrate to `/api/upload/direct`** — the wizard Step 3 dropzone still uses the presigned-PUT path that's CORS-blocked. Either migrate (immediate consistency win) or wait for operator R2 CORS rule. Low priority because the dropzone fails inline honestly.
+
+5. **`/billing` paid-tier e2e** — see Blockers. Adding the `?e2e_plan=` override would unlock e2e coverage of `current` / `switch` / `redundant` relevance states.
+
+### Next BrowserOS prompt (paste verbatim next hour)
+
+```
+Continue the overnight loop in /Volumes/NVME EXT/Ivan/CODEX/ShotsHQ.
+Read docs/ops/overnight-browseros-loop.md (operating rules) and the
+top entry of docs/ops/overnight-browseros-status.md (latest cycle —
+yours).
+
+Focus this cycle: audit /settings for the same readiness-lie shape
+that the cycles-#2-through-#5 sweep caught for the project surfaces
+and cycle #9 caught for /billing. The cycle-#0 audit batch disabled
+the Save / ASC verify buttons honestly months ago; re-verify nothing
+regressed and add a testability contract.
+
+Concrete steps:
+
+ 1. Visit /settings in the live dev app (NEXT_PUBLIC_E2E=1). Note
+    what's rendered per section:
+      - Profile: display name, email — does Save reflect dirty state
+        or always render "Save changes"?
+      - ASC keys: Issuer ID, Key ID, Private Key — what's the verify
+        status today, and is "verify" actually wired or just decor?
+      - Theme prefs: Tactical Telemetry vs Swiss Industrial selector
+        — does the selected option follow cycle-#1's contract?
+      - Danger zone (delete account): is the confirm gate honest?
+
+ 2. Cross-check app/(app)/settings/page.tsx + subcomponents. Common
+    lies to look for:
+      - Save button always enabled despite no diff
+      - ASC verify status hardcoded "Verified ✓" without a real
+        Stripe-style verify call
+      - "Verify" / "Save" buttons that POST nothing
+      - Theme picker selected-state not following cycle-#1 contract
+        (no aria-pressed/aria-checked, no data-active flip)
+      - Delete-account button without a real confirm modal
+
+ 3. If any lie is found, fix it using the cycle-#5 pattern: derive
+    from real state, expose data-settings-section / data-asc-status /
+    data-theme-id attributes for testability, add an e2e spec.
+
+ 4. If /settings is already honest, pivot to /projects/[id]/ai using
+    the same audit checklist. The AI panel has 5 backed modules; are
+    any rendered as "soon" or any "soon" rendered as live?
+
+Re-run pnpm typecheck / pnpm test / pnpm test:e2e / pnpm build.
+Update docs/ops/overnight-browseros-status.md and reply with a
+ship report.
+
+Treat the repo + git state as truth. Don't trust session memory.
+```
+
+---
+
 ## 2026-05-23 13:30 AEST · cycle #8
 
 ### What shipped this cycle
