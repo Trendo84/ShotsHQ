@@ -1,5 +1,138 @@
 # ShotsHQ overnight BrowserOS status
 
+## 2026-05-23 11:10 AEST · cycle #4
+
+### What shipped this cycle
+
+**`fix(overview): truthful project overview — real shot grid + target status + next-action`** (commit `719039f`, pushed to `origin/main`).
+
+Browser audit verified `https://shotshq.com/projects/6247d8ba-...` showed the third readiness lie on a third surface — `/projects/[id]` was independently hardcoding:
+
+- `Shot grid · 0 / 24 slots` (the `24` came from nowhere; there's no schema concept of slot count)
+- Eight `<EmptyTile>` placeholders rendered regardless of real state
+- Every targeted device row labeled `◯ READY`, even on fresh empty projects
+
+Studio + `/exports` had been wired to the shared `evaluateStudio` reducer in cycles #2 / #3. The overview was the remaining lie. Cycle #4 joins it to the same truth source.
+
+#### New shared util: `lib/devices/store-target.ts`
+
+`storeTargetForCatalogId(id)` maps catalog ids (e.g. `iphone-17-pro-max`) → store-target enum (`iphone_69` / `iphone_67` / `ipad_13`). Data-driven from each device's `required: true` dim, so 17 Pro Max → `iphone_67` and 16 Pro Max → `iphone_69`. The overview, `/exports`, and (eventually) `EditorPanels.tsx`'s inline copy now share one mapping. Pinned with 8 unit specs.
+
+#### `app/(app)/projects/[id]/page.tsx` rewrite
+
+| Surface | Old (hardcoded) | New (derived) |
+|---|---|---|
+| Shot-grid header | `0 / 24 slots` | `X / Y ready` with `data-shot-grid-total` / `data-shot-grid-ready` |
+| Shot-grid tiles | 8 `<EmptyTile>` always | one tile per real `studio.panels[i]`; real `<img>` when `screenshotRemote=true`; honest placeholder (index + device label) otherwise |
+| Empty state | (was the same 8 tiles) | explicit "No panels yet" block + Open Studio CTA; `data-shot-grid-empty="true"` |
+| Target row label | `◯ READY` always | `READY` / `PARTIAL` / `DRAFTING` / `TARGETED` from per-device panel readiness; `data-target-status` enum |
+| Project badge | `DRAFT` always | `READY` / `IN PROGRESS` / `DRAFT` from `statusOf(readiness)`; `data-project-status` enum |
+| Primary CTA | always "Open studio" | `Open studio` / `Upload in Studio` / `Prepare in Studio` / `Open Exports` based on state; `data-next-action` enum + matching help-text |
+| Stats | APP NAME + ID | PANELS + READY (counts from readiness model) |
+
+#### Truthful fallback when polotnoJson is null
+
+The overview uses an **empty** design set (0 panels) when `extractStudioDesignSet` returns null — NOT `defaultStudioDesignSet()` which would materialize a phantom in-memory panel. The DB is the source of truth; phantom panels only appear after the user actually visits Studio and autosave persists the default. Documented inline.
+
+### Files touched
+
+```
+M  app/(app)/projects/[id]/page.tsx     (rewrite)
+A  e2e/project-overview.spec.ts          (3 specs)
+A  lib/devices/store-target.ts           (shared util)
+A  tests/devices/store-target.test.ts    (8 specs)
+```
+
+### Verification (all green, on commit `719039f`)
+
+```
+pnpm typecheck   → clean
+pnpm test        → 181 passed across 18 files (+8 store-target)
+pnpm test:e2e    → 14 / 14 passed
+                     - 3 new project-overview
+                     - 2 studio-upload-persistence (cycle #3)
+                     - 4 export-readiness          (cycle #2)
+                     - 3 studio-device-switch      (cycle #1)
+                     - 2 wizard
+pnpm build       → clean
+git push         → d507569..719039f main -> main
+```
+
+### Acceptance-criteria status
+
+1. ✅ Shot grid reflects actual panels or honest empty state. No hardcoded `0 / 24` / fake-ready. `data-shot-grid-total` / `data-shot-grid-ready` / `data-shot-grid-empty` attributes prove the contract.
+2. ✅ Target rows derive status from real readiness, consistent with Studio + `/exports` via the shared `evaluateStudio` reducer. Empty + blocked projects show `TARGETED` / `DRAFTING` — never `READY`.
+3. ✅ Page tells the operator the next useful action via the state-aware primary CTA + help-text. `data-next-action` enum: `add-targets-in-studio` / `upload-in-studio` / `prepare-in-studio` / `open-exports`.
+4. ✅ Real thumbnails when persisted; intentional honest placeholders (index + device label) when not. Empty state replaces the fake-tile-grid entirely.
+
+### Blockers
+
+None code-side. Carried forward from prior cycles:
+
+- **R2 bucket CORS** — operator-side. Cloudflare R2 needs CORS rule applied to unlock the browser-direct presigned PUT path. Studio uses `/api/upload/direct` server-side proxy in the meantime.
+- **Clerk live-key swap in Vercel production env** — operator-side.
+
+### Highest-priority next target
+
+Now that the three core surfaces (Studio · `/exports` · overview) all share the readiness model and the upload loop is durable, the natural next gap is the **`/dashboard` projects list** — does it surface real per-project readiness, or does it lie the same way the overview just did? Quick BrowserOS audit:
+
+- Visit `/dashboard` with a logged-in session that has projects in mixed states (some empty, some drafting, some ready).
+- For each project card / row, check what status label it shows. If it's hardcoded `DRAFT` or `READY` regardless of real state, that's the same shape of lie and gets the same fix: derive from `evaluateStudio(extractStudioDesignSet(...))`.
+
+If dashboard is fine, second-highest is **wiring the dashboard primary CTA + per-project quick-action to the state-aware next-action util** I just built. Could also extract `nextActionFor()` from the overview page into `lib/studio/next-action.ts` so dashboard reuses it.
+
+Third candidate: **CaptureDropzone parity** — it still uses the presign + browser PUT path that's CORS-blocked. Migrate it to `/api/upload/direct` for consistency (or wait for the R2 CORS operator fix).
+
+Fourth: **export full-loop browser smoke** queued from cycle #3 — verify the persisted screenshot actually renders into the exported PNG at exact App Store dims. Not lie-shaped, but worth a smoke pass before claiming the export funnel is shippable.
+
+### Next BrowserOS prompt (paste verbatim next hour)
+
+```
+Continue the overnight loop in /Volumes/NVME EXT/Ivan/CODEX/ShotsHQ.
+Read docs/ops/overnight-browseros-loop.md (operating rules) and
+the top entry of docs/ops/overnight-browseros-status.md (latest
+cycle — yours).
+
+Focus for this cycle: audit /dashboard for the same shape of
+readiness lie just fixed on /projects/[id]. Specifically:
+
+ 1. Visit /dashboard signed-in. Make sure there are projects in
+    at least two states (one empty/draft, one with screenshots
+    persisted). If there aren't, create them via /projects/new
+    + a Studio upload first.
+
+ 2. For each project card or row on /dashboard, note what status
+    label / progress / "next action" it shows. Cross-check
+    against the project's actual readiness by visiting its
+    /projects/[id] overview — the overview now reports the real
+    status (data-project-status + data-shot-grid-total). The
+    dashboard's display should agree.
+
+ 3. If the dashboard hardcodes "DRAFT" or "READY" regardless of
+    real state, fix it. Pattern:
+      - Server-load each project's polotnoJson alongside the
+        project record (lib/db/queries/projects.ts already
+        exports listProjectsForUser — extend or wrap it).
+      - For each: extractStudioDesignSet → evaluateStudio →
+        statusOf → render the appropriate badge + counts.
+      - Add data-project-status to project cards for testability.
+      - Consider extracting the overview's nextActionFor() into
+        lib/studio/next-action.ts so dashboard reuses it.
+
+ 4. Add e2e coverage: create 2 projects (one untouched, one with
+    a Studio upload via /api/upload/direct), visit /dashboard,
+    assert each card's data-project-status reflects reality.
+
+Re-run pnpm typecheck / pnpm test / pnpm test:e2e / pnpm build
+and confirm 15+ e2e green. Update overnight-browseros-status.md
+with timestamp + what shipped + verification + blockers + next
+target + next prompt. Reply with a concise ship report.
+
+Treat the repo + git state as truth. Don't trust session memory.
+```
+
+---
+
 ## 2026-05-23 06:10 AEST · cycle #3
 
 ### What shipped this cycle
