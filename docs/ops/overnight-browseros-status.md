@@ -1,5 +1,165 @@
 # ShotsHQ overnight BrowserOS status
 
+## 2026-05-23 20:30 AEST · cycle #12
+
+### What shipped this cycle
+
+**`fix(ai): add Restyle dispatch UI + AI panel honesty contract`** (commit `7770668`, pushed to `origin/main`).
+
+Brief target: audit `/projects/[id]/ai` for the same readiness-lie shape that cycles #2–#11 caught for the other surfaces. The AI panel is the surface where 11 cycles of marketing honesty actually have to be served to a clicking user — and it had been quietly drifting since the panel was first built.
+
+#### Two lies caught
+
+| Lie | Repo-truth anchor | Fix |
+|---|---|---|
+| Header read "Three modules. One credit ledger." | Four sections rendered (Copy + AI backdrop-disabled + Template set + Translate) and `/pricing` advertised five | Header now reads "Four live modules. One credit ledger." with an explicit v1.1 callout for AI backdrop. Stat tile reads `MODELS LIVE · 4 · copy · set · restyle · translate`. |
+| **Restyle module backend was fully shipped, but the UI surface didn't exist.** | `app/api/ai/restyle/route.ts` (Zod-validated POST) + `trigger/tasks/ai-restyle.ts` (debit + Flux call + Stripe meter + automatic refund on failure) — all there. `lib/utils/credits.ts` defines `ai_restyle: 3`. Pricing advertises "AI restyle from ref · 3 cr/gen". FeatureGrid markets it. But `AiModulesClient.tsx` never rendered a dispatch surface. | Added the Restyle dispatch UI: reference image URL input + style prompt + target device radio + dispatch button + result panel. Wired through the existing run-poller pattern. |
+
+The AI backdrop disabled-button is HONEST and stays — `lib/ai/background.ts` only exports `birefnetMatte`; there is no `app/api/ai/backdrop` route nor a `aiBackdrop` Trigger task. Cycle #12 keeps it `disabled` and now marks it `data-ai-status="planned"` so the contract is testable.
+
+#### Restyle module — what's wired
+
+```
+Reference image URL ─┐
+Style prompt (≤500c) ─┼─► POST /api/ai/restyle
+Target device        ─┘     │
+                            ├─► aiRestyle Trigger.dev task
+                            │       │
+                            │       ├─► debitCredits(3 cr, reason="ai_restyle")
+                            │       ├─► falFlux(prompt, refUrl, device dims)
+                            │       ├─► fireMeterEvent("ai_generation") (paying customers)
+                            │       └─► creditCredits(refund) on any failure
+                            │
+                            └─► poll /api/ai/runs/[id] every 1.5s
+                                    │
+                                    └─► RestyleOutput { ok: true; images: [{ url }] }
+                                            │
+                                            └─► render images in RunPanel
+```
+
+The reference URL input accepts any public URL (Imgur link, stock photo, an asset the user uploaded elsewhere). v1.1 will add a file picker that uploads to R2 first — honestly labelled in the placeholder note.
+
+#### Testability contract added
+
+| Hook | Location | Values |
+|---|---|---|
+| `data-ai-module` | each `<section>` | `copy` / `backdrop` / `template-set` / `restyle` / `translate` |
+| `data-ai-status` | each `<section>` | `idle` / `dispatching` / `running` / `completed` / `failed` (live modules) · `planned` (backdrop) |
+| `data-ai-cost` | each `<section>` | numeric credit cost; matches `lib/utils/credits.ts` (copy=1, backdrop=2, template-set=8, restyle=3, translate=`<active locale count>`) |
+| `data-restyle-device` | each device-radio option | `iphone_69` / `iphone_67` / `ipad_13` — `data-active="true|false"` flips per the cycle-#1 selected-state contract |
+| `data-ai-dispatch` | dispatch button | `restyle` (room for `copy` / `template-set` / `translate` in future tightening) |
+
+### Files touched
+
+```
+M  components/ai/AiModulesClient.tsx     (Restyle section, data-ai-* hooks, header copy, helper function)
+A  e2e/ai-panel.spec.ts                  (6 regression specs)
+```
+
+### Verification (all green)
+
+```
+pnpm typecheck   → clean
+pnpm test        → 231 / 231 pass across 22 files
+pnpm test:e2e    → 6 new ai-panel specs all pass
+                     - all five module sections exist with data attrs   ✅
+                     - live modules start in idle, backdrop=planned     ✅
+                     - credit costs match lib/utils/credits.ts          ✅
+                     - header copy: no "Three modules" lie              ✅
+                     - Restyle dispatch button dirty-state contract     ✅
+                     - Restyle device radio data-active flip            ✅
+                   Full-suite saw 5 parallel-worker timing flakes
+                   (cycle #9 known on project-list-surfaces, plus
+                   hydration smoke + studio-export-loop under suite
+                   load) — ALL pass cleanly in isolation with
+                   --workers=1. No real failures introduced by
+                   cycle #12.
+pnpm build       → clean
+git push         → ab819d9..7770668 main -> main
+```
+
+### Acceptance-criteria status (brief's 4 bullets)
+
+1. ✅ Visited `/projects/[id]/ai` and audited all 5 modules. Identified two real lies (3-vs-4-vs-5 module count + missing Restyle UI). AI backdrop is honestly v1.1 (no route + task pair).
+2. ✅ Cross-checked `lib/ai/*` + `trigger/tasks/*`. Restyle backend was fully shipped (debit + AI call + meter + refund); panel had no dispatch surface. AI backdrop is honestly absent end-to-end.
+3. ✅ Applied the cycle-#5 / cycle-#11 pattern: derived from real state (the Trigger.dev run polling), exposed `data-ai-module` / `data-ai-status` / `data-ai-cost` for testability, added 6 e2e specs.
+4. ✅ No pivot needed — `/projects/[id]/ai` had real lies to fix.
+
+### Blockers
+
+None code-side. Carry-forwards:
+
+- **R2 bucket CORS** — operator-side, no-rush since same-origin proxy ships.
+- **Clerk live-key swap** in Vercel production env.
+- **Prod DB migration from cycle #11** — `pnpm db:migrate` runs on next Vercel deploy.
+- **`?e2e_plan=` fixture override for /billing paid-tier e2e** — carried from cycle #9.
+- **Dead `Comparison.tsx` marketing component** — carried from cycle #10.
+- **Parallel-worker e2e flakes** — `project-list-surfaces:116/143/157`, `no-hydration-errors:55`, `studio-export-loop:83`, `project-overview:144`, `studio-upload-persistence:56` all pass clean in `--workers=1` but flake at `--workers=2` under load. Pre-existing across multiple cycles; investigating could be a dedicated cycle if it gets worse. For now they're known-amber.
+
+### Highest-priority next target
+
+Every authenticated surface AND every public surface is now on the readiness contract. Two cleaner targets remain:
+
+1. **CaptureDropzone migrate to `/api/upload/direct`** — wizard Step 3 dropzone still uses the presigned-PUT path that's CORS-blocked. Studio uses the proxy (cycle #3). After cycle #10 documented the proxy as canonical, this is now the only path in the app still inconsistent with the docs. Material UX win (the dropzone fails inline today; would actually work after).
+
+2. **`/projects/[id]/surfaces` audit** — the surfaces overview page renders before /studio. Untouched since the cycle-#5 sweep. Does it lie about which surfaces are ready vs blocked vs empty?
+
+3. **Parallel-worker flake investigation** — would unblock a fast CI loop and is the only thing keeping `pnpm test:e2e` from being a one-shot gate.
+
+4. **`?e2e_plan=` fixture override + `Comparison.tsx` cleanup** — small follow-up debt.
+
+### Next BrowserOS prompt (paste verbatim next hour)
+
+```
+Continue the overnight loop in /Volumes/NVME EXT/Ivan/CODEX/ShotsHQ.
+Read docs/ops/overnight-browseros-loop.md (operating rules) and the
+top entry of docs/ops/overnight-browseros-status.md (latest cycle —
+yours).
+
+Focus this cycle: migrate the wizard's CaptureDropzone (Step 3 of
+/projects/new) from the presigned-PUT R2 path to the same-origin
+/api/upload/direct proxy that Studio has been using since cycle #3.
+The presigned path is CORS-blocked against the live R2 bucket; the
+proxy works. After cycle #10's docs rewrite, the docs already
+describe /api/upload/direct as the canonical path — this cycle
+aligns the actual code.
+
+Concrete steps:
+
+ 1. Find components/capture/CaptureDropzone.tsx (or wherever the
+    Step 3 dropzone lives) and the /api/upload route. Confirm the
+    presigned PUT is still the current path.
+
+ 2. Switch the upload path to POST /api/upload/direct (multipart
+    form upload, proxied to R2 by the server). Reuse the existing
+    /api/screenshots/register call — only the BYTES upload step
+    changes.
+
+ 3. Drop the dead path if /api/upload/route.ts is no longer used
+    anywhere; otherwise leave a comment pointing to /api/upload/direct
+    as the canonical path with a v1.1 note about R2 CORS unblocking
+    the presigned approach.
+
+ 4. Verify with a manual smoke (drop a real PNG, watch it land in
+    R2, then trigger Studio render to confirm the asset is reachable).
+    Add an e2e spec exercising the dropzone if practical — file-system
+    drag-drop is fragile in headless browsers per CaptureDropzone's
+    original commit message, so a contract test on the upload
+    handler is fine as a fallback.
+
+ 5. If the migration is faster than expected, pivot to
+    /projects/[id]/surfaces audit using the same checklist as
+    cycle #11 / #12.
+
+Re-run pnpm typecheck / pnpm test / pnpm test:e2e / pnpm build.
+Update docs/ops/overnight-browseros-status.md and reply with a
+ship report.
+
+Treat the repo + git state as truth. Don't trust session memory.
+```
+
+---
+
 ## 2026-05-23 18:25 AEST · cycle #11
 
 ### What shipped this cycle
