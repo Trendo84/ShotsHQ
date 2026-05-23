@@ -1,5 +1,151 @@
 # ShotsHQ overnight BrowserOS status
 
+## 2026-05-23 17:45 AEST · cycle #10
+
+### What shipped this cycle
+
+**`fix(marketing): align public copy with shipped product — kill the v1.1 overclaims`** (commit `16842ab`, pushed to `origin/main`).
+
+Brief target: do a truthful public-surfaces sweep across marketing / docs / pricing / tool pages. After six cycles of honesty work on the authenticated app, the public site had quietly drifted into selling capabilities the live app labels v1.1 / soon — a trust break right at the top of the funnel.
+
+#### Four families of overclaim repaired
+
+| Lie | Repo truth (the audit anchor) | Where it lived | Now reads |
+|---|---|---|---|
+| "The render pipeline is server-authoritative — client canvas exports are never used as final assets" | Studio renders the active panel in-browser via html-to-image (cycle #6 export-loop spec proves the exact 1290×2796 PNG output). Server render queue is a v1.1 target. | `/docs/quickstart`, `/docs/editor`, `/docs/export`, pricing credit cost table, PipelineDiagram steps 06+07 | "Studio renders today at App Store-exact dimensions. Server render queue ships in v1.1." |
+| "Direct App Store Connect upload" as a live paid feature | `app/(app)/projects/[id]/exports/page.tsx:145` renders `ASC · v1.1` and disables the button | `/docs/asc` (whole entry), `/docs/export`, PricingTable Pro / Lifetime perks, pricing credit cost table | All four sites flagged `· v1.1` |
+| "Every mutating request must send an `Idempotency-Key` header" + full live public REST contract | `app/api/projects/route.ts:12` literally says `Idempotency: not implemented yet`. `/settings` has no API key UI. | `/docs/api` (entire body), `/docs` index sub copy, PricingTable Studio + Lifetime perks | `/docs/api` now opens with a `▸ v1.1 target — not live yet` disclaimer; every section header is `(v1.1)` |
+| "Cancel anytime from settings" | Cycle #9 ships `ManageSubscriptionButton` wired to `/api/stripe/portal` on `/billing`. `/settings` has no cancel affordance. | Pricing intro, PricingTable Studio description, `/docs/terms`, `/docs/about` | "Cancel anytime via the Stripe billing portal" + link to `/billing` |
+
+#### `/tools/web-hero` honesty banner
+
+The tool page was marketed as a shipped designer with `Open the designer` CTAs landing on `/sign-up`. There's no `/web-hero` editor route. Added a `v1.1 · Early access` chip at the top, changed CTA copy to `Join the early-access list`, reworded the sample preview badge from `Sample output` to `v1.1 · Sample mock`. The chip exposes `data-web-hero-status="early-access"` as a stable testability hook independent of copy.
+
+### Files touched
+
+```
+M  app/(marketing)/docs/[...slug]/page.tsx     (7 DOCS entries reworded)
+M  app/(marketing)/docs/page.tsx               (index sub copy: Export, Public API, ASC)
+M  app/(marketing)/pricing/page.tsx            (intro paragraph + credit cost table row)
+M  app/(marketing)/tools/web-hero/page.tsx     (early-access banner, CTA copy, sample badge)
+M  components/billing/PricingTable.tsx         (Pro / Studio / Lifetime perks + Studio description)
+M  components/marketing/PipelineDiagram.tsx    (step 06+07 detail copy)
+A  e2e/marketing-honesty.spec.ts               (9 regression specs)
+```
+
+### Verification (all green, on commit `16842ab`)
+
+```
+pnpm typecheck   → clean
+pnpm test        → 218 / 218 pass across 21 files
+pnpm test:e2e    → 40 / 40 pass
+                     - 9 new marketing-honesty                ✅
+                     - 4 billing-readiness                    ✅ (cycle #9)
+                     - 6 studio-selector-parity                ✅ (cycle #8)
+                     - 1 hydration smoke                       ✅ (cycle #6)
+                     - 1 export-loop                           ✅ (cycle #6)
+                     - 5 list-surfaces                         ✅ (cycle #5)  [parallel-worker flake did NOT re-trigger this run]
+                     - 3 project-overview                      ✅ (cycle #4)
+                     - 4 export-readiness                      ✅ (cycle #2)
+                     - 3 studio-device-switch                  ✅ (cycle #1)
+                     - 2 studio-upload-persistence             ✅ (cycle #3)
+                     - 2 wizard                                ✅
+pnpm build       → clean
+git push         → 30323de..16842ab main -> main
+```
+
+### Acceptance-criteria status (brief's 5 bullets)
+
+1. ✅ Audited all six required surfaces — homepage already honest, pricing+docs+pricing-table+web-hero+pipeline-diagram all had material overclaims.
+2. ✅ Removed / reworded every claim from the brief's example list (server-authoritative export, direct ASC push, public REST API, mandatory Idempotency-Key, "cancel from settings", presigned-PUT-only upload wording).
+3. ✅ Preserved ambition by marking future-state honestly — every dropped overclaim is replaced with a "v1.1 target" / "ships in v1.1" framing rather than deleted outright.
+4. ✅ Regression net is a Playwright spec (`e2e/marketing-honesty.spec.ts`) — 9 specs pinning absence of known-bad phrases + presence of v1.1 markers on the corrected surfaces.
+5. ✅ Status doc updated with the audit + verification + next target + next BrowserOS prompt (this entry).
+
+### Blockers
+
+None code-side. Operator items still carried forward (unchanged):
+
+- **R2 bucket CORS** — operator-side, no-rush since same-origin proxy ships.
+- **Clerk live-key swap** in Vercel production env.
+- **Studio + Lifetime e2e coverage on /billing** — requires seeding a paid synthetic user; unit tests cover all four plans in pure-logic form.
+- **Dead `Comparison.tsx` marketing component** — not imported anywhere in `app/` but still lives in `components/marketing/`. The Comparison row "Direct App Store Connect upload — Yes" would re-introduce the cycle #10 lie if anyone re-mounted it. Low-priority follow-up: either delete the component or align its rows with the v1.1 markers.
+
+### Highest-priority next target
+
+Public surfaces now match shipped product. Remaining gaps cluster around the auth-gated surfaces that haven't had a cycle yet, plus a follow-up to the cycle #9 paid-tier e2e gap:
+
+1. **`/settings` content audit** — the cycle-#0 audit disabled the Save / ASC verify buttons honestly months ago; worth re-verifying nothing regressed and adding the `data-settings-section` / `data-asc-status` / `data-theme-id` testability contract that every other surface now has.
+
+2. **`/projects/[id]/ai` audit** — the AI panel route exists. The pricing page advertises 5 AI modules (copy, backdrop, template set, restyle, translate). Are any of them rendered as "soon" in the panel? Any rendered as live but actually failing?
+
+3. **`/projects/[id]/surfaces` audit** — the surfaces overview page renders before /studio. Does it lie about which surfaces are ready vs blocked vs empty?
+
+4. **CaptureDropzone migrate to `/api/upload/direct`** — the wizard Step 3 dropzone still uses the presigned-PUT path that's CORS-blocked; Studio uses the proxy. The cycle #10 quickstart docs now describe the proxy path — would be good to actually use it everywhere so the docs aren't just describing one of two paths.
+
+5. **`?e2e_plan=` fixture override** — adding this would unlock /billing e2e coverage of `current` / `switch` / `redundant` relevance states (carried from cycle #9).
+
+6. **Delete `Comparison.tsx`** — dead component still holds an ASC overclaim. Either delete or update.
+
+### Next BrowserOS prompt (paste verbatim next hour)
+
+```
+Continue the overnight loop in /Volumes/NVME EXT/Ivan/CODEX/ShotsHQ.
+Read docs/ops/overnight-browseros-loop.md (operating rules) and the
+top entry of docs/ops/overnight-browseros-status.md (latest cycle —
+yours).
+
+Focus this cycle: audit /settings for the same readiness-lie shape
+that the cycles-#2-through-#5 sweep caught for the project surfaces,
+cycle #9 caught for /billing, and cycle #10 caught for the public
+marketing surfaces. The cycle-#0 audit batch disabled the Save / ASC
+verify buttons honestly months ago; re-verify nothing regressed and
+add a testability contract.
+
+Concrete steps:
+
+ 1. Visit /settings in the live dev app (NEXT_PUBLIC_E2E=1). Note
+    what's rendered per section:
+      - Profile: display name, email — does Save reflect dirty state
+        or always render "Save changes"?
+      - ASC keys: Issuer ID, Key ID, Private Key — what's the verify
+        status today, and is the button copy honest (it should not
+        claim live verification since the ASC integration is v1.1
+        per cycle #10)?
+      - Theme prefs: Tactical Telemetry vs Swiss Industrial selector
+        — does the selected option follow cycle-#1's contract?
+      - Danger zone (delete account): is the confirm gate honest?
+        Cycle #0 work disabled it; verify the "Delete · soon"
+        treatment is intact.
+
+ 2. Cross-check app/(app)/settings/page.tsx + subcomponents. Common
+    lies to look for:
+      - Save button always enabled despite no diff
+      - ASC verify status hardcoded "Verified ✓" without a real
+        verify call (ASC is v1.1; this should be honest)
+      - "Verify" / "Save" buttons that POST nothing
+      - Theme picker selected-state not following cycle-#1 contract
+        (no aria-pressed/aria-checked, no data-active flip)
+      - Delete-account button without a real confirm modal
+
+ 3. If any lie is found, fix it using the cycle-#5 pattern: derive
+    from real state, expose data-settings-section / data-asc-status /
+    data-theme-id attributes for testability, add an e2e spec.
+
+ 4. If /settings is already honest, pivot to /projects/[id]/ai using
+    the same audit checklist. The AI panel has 5 modules per the
+    cycle-#10-corrected pricing page; are any rendered as "soon" or
+    any "soon" rendered as live?
+
+Re-run pnpm typecheck / pnpm test / pnpm test:e2e / pnpm build.
+Update docs/ops/overnight-browseros-status.md and reply with a
+ship report.
+
+Treat the repo + git state as truth. Don't trust session memory.
+```
+
+---
+
 ## 2026-05-23 15:10 AEST · cycle #9
 
 ### What shipped this cycle
