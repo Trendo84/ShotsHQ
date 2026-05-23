@@ -1,5 +1,136 @@
 # ShotsHQ overnight BrowserOS status
 
+## 2026-05-24 06:00 AEST · premium polish (cycle #14)
+
+### What shipped this cycle
+
+**`fix(polish): premium feel across app shell, marketing, dashboard, settings`** (commit `0210198`, pushed to `origin/main`).
+
+Brief target: make ShotsHQ feel like a real product that is live now — not a promising product still visibly assembling itself. Keep the brutalist/tactical identity and the honesty contract; remove the staging-build energy. Eight surface passes in a single coordinated commit.
+
+#### What changed, in one table
+
+| Surface | Before | After |
+|---|---|---|
+| **App shell** (`components/app/Topbar.tsx`) | Disabled Search input + disabled Notifications bell in prime header slot | Live affordances only: section · breadcrumb · theme · UserButton. Search + bells return when their back-ends ship. |
+| **Landing hero** (`components/marketing/Hero.tsx`) | 4 trust chips ("No card · 41 locales · 3 Apple device classes · Free exports include watermark"), `var(--fg-mute)` body copy | 3 chips ("No card required · 41 locales · iPhone + iPad"), body copy bumped to `var(--fg)`, outcome-led rewrite ("Drop in raw iPhone screenshots. Get back a polished App Store pack…") |
+| **Hero rotator** (`components/marketing/HeroRotatingTitle.tsx`) | 3.2s ticker swapping 6 surface labels | Static three-item line: "Also exports · web heroes · press kits · OG cards". Component downgraded server-render. |
+| **Pricing buyer-framing** (`app/(marketing)/pricing/page.tsx`) | H1 → PricingTable → FAQ → cost table | H1 → **new 3-lane buyer grid** (Free / Packs / Studio with plain-language pitches and "Most pick this" tag) → PricingTable → FAQ → cost table |
+| **Pricing cost table** | H2 clamp(2rem,4.5vw,3.5rem) "What each operation costs." with primary weight | H2 dropped to clamp(1.5rem,3vw,2.25rem) "What each AI run costs.", reframed as "Credit reference, not a buying decision" |
+| **Web-hero H1** (`app/(marketing)/tools/web-hero/page.tsx`) | "Marketing hero shots in every dimension." | "One brand. Every hero shot." — shorter, aspirational |
+| **Web-hero dimension cards** | Spec + "Lossless PNG · sRGB" footer | Spec + per-card use-case ("Marketing pages · blog headers", "Apple-grade displays · brand sites", "Press kits · 4K product reels") + accent left-rule on hover |
+| **Web-hero style cards** | Small 3×3 swatch + ALL-CAPS slug | 48×48 swatch on the left, two-column layout (swatch · label/sub) — palette-gallery feel |
+| **Templates gallery** (`components/marketing/Templates.tsx`) | Hover lift -0.5, 6px shadow, bordered Pro chip, line-strong "Use →" pill | Hover lift -1, 8px shadow, filled accent Pro chip, "Use →" pill sits on a 20%-tall bottom scrim gradient with white/30 border (fills accent on hover) |
+| **Templates image quality warning** | `next.config.ts` qualities `[75, 90, 95, 100]` — Templates' `quality={88}` warned | Added 88 to qualities; warning gone |
+| **Dashboard H1** (`app/(app)/dashboard/page.tsx`) | "Today's queue." regardless of state | "Let's ship your first pack." when empty deck; "Today's queue." + subhead when projects exist |
+| **Settings — planned surfaces** (`components/settings/SettingsForms.tsx`) | Three-paragraph blocks with "V1.1 · PLANNED" eyebrow, `--line-strong` border, p-5 | Two-line notes, `--line` border, p-4, no PLANNED eyebrow (header already says v1.1) |
+| **Settings — danger zone** (`app/(app)/settings/page.tsx`) | Two separate red-bordered cards with "Caution" eyebrow + accent title | Single divided list with `--line` border, eyebrow gone, section renamed "Danger zone" → "Account" |
+| **New-project wizard step copy** (`app/(app)/projects/new/page.tsx`) | "Project metadata · Commission project." (internal language) | "About your app · Tell us what ships." (buyer language) + explicit "nothing is published anywhere" reassurance + named Xcode/Simulator as upload sources |
+
+### Files touched
+
+```
+M  app/(app)/dashboard/page.tsx                   (empty-deck H1)
+M  app/(app)/projects/new/page.tsx                (step copy → buyer language)
+M  app/(app)/settings/page.tsx                    (compressed planned surfaces + toned danger zone)
+M  app/(marketing)/pricing/page.tsx               (3-lane buyer grid + cost-table demotion)
+M  app/(marketing)/tools/web-hero/page.tsx        (aspirational H1, designed cards)
+M  components/app/Topbar.tsx                      (Search + Notifications removed)
+M  components/marketing/Hero.tsx                  (outcome-led copy, 3-chip trust row)
+M  components/marketing/HeroRotatingTitle.tsx     (static line, server-render)
+M  components/marketing/Templates.tsx             (premium gallery polish)
+M  components/settings/SettingsForms.tsx          (compressed planned blocks)
+M  next.config.ts                                 (images.qualities += 88)
+```
+
+### Verification (all green)
+
+```
+pnpm typecheck   → clean
+pnpm test        → 231 / 231 pass across 22 files
+pnpm test:e2e    → 56 / 56 pass with --workers=1 (no flakes, no skips)
+pnpm build       → clean
+git push         → de9c1a2..0210198 main -> main
+```
+
+### Definition-of-done — 10 bullets
+
+1. ✅ App shell no longer exposes prominent disabled placeholder controls
+2. ✅ Landing page cleaner, clearer, more premium (3-chip trust row, outcome-led copy)
+3. ✅ Pricing easier to understand at a glance (3-lane buyer grid up top)
+4. ✅ Templates feels like a polished gallery + image-quality warning gone (88 added)
+5. ✅ Web Hero feels intentional and aspirational (palette swatches, per-dimension use cases)
+6. ✅ Dashboard gives a strong next action on first run ("Let's ship your first pack.")
+7. ✅ New-project flow uses buyer language + explicit reassurance
+8. ✅ Settings highlights profile; planned surfaces calm + compact; danger zone toned
+9. ✅ Responsive/mobile cleanup — every new layout uses `grid-cols-1 [breakpoint]:grid-cols-N`; trust microcopy is `flex-wrap`
+10. ✅ Tests/build remain green (56/56 e2e, 231/231 unit, build clean)
+
+### Blockers
+
+None code-side. Carry-forwards (unchanged):
+
+- **Prod DB migration from cycle #11** — runs on next Vercel deploy
+- **Clerk live-key swap** in Vercel production env
+- **`?e2e_plan=` fixture override for /billing paid-tier e2e** — cycle #9
+- **Dead `Comparison.tsx` marketing component** — cycle #10
+- **Parallel-worker e2e flake at `--workers=2`** — `--workers=1` clean, ~3× slower
+- **`components/WipBanner.tsx`** — file retained on disk but no longer mounted anywhere (cycle #13). Safe to delete in a follow-up.
+
+### Highest-priority next target
+
+The whole funnel — public marketing → pricing → sign-up → dashboard → new-project → studio → exports → billing → settings — is now both honest AND premium. Remaining audit surface is narrow:
+
+1. **`/projects/[id]/surfaces` audit** — still the last untouched project-scoped route (carried since cycle #12)
+2. **Parallel-worker e2e flake investigation** — would unblock fast CI
+3. **WipBanner + Comparison.tsx cleanup** — small file-deletion follow-up
+4. **`?e2e_plan=` fixture override** — unlocks /billing paid-tier e2e coverage
+
+### Next BrowserOS prompt (paste verbatim next hour)
+
+```
+Continue the overnight loop in /Volumes/NVME EXT/Ivan/CODEX/ShotsHQ.
+Read docs/ops/overnight-browseros-loop.md (operating rules) and the
+top entry of docs/ops/overnight-browseros-status.md (latest cycle —
+yours).
+
+Focus this cycle: audit /projects/[id]/surfaces — the last untouched
+project-scoped route. Apply the same readiness-contract pattern as
+cycles #5/#11/#12/#13: derive from real state, expose
+data-surface-id / data-surface-status hooks for testability, add an
+e2e regression spec.
+
+Concrete steps:
+
+ 1. Visit /projects/[id]/surfaces with NEXT_PUBLIC_E2E=1 and audit
+    for both an empty project and a ready project. Common lies:
+      - Hardcoded "READY" badges
+      - "Render now" CTAs that POST nothing
+      - Surface count / status drifted from the readiness model
+
+ 2. Cross-check app/(app)/projects/[id]/surfaces/page.tsx against
+    lib/studio/readiness.ts and lib/studio/project-status.ts. The
+    readiness model is already canonical — the page should be
+    deriving from it.
+
+ 3. If lies are found, fix them and add an e2e spec.
+
+ 4. If /projects/[id]/surfaces is already honest, pivot to the
+    parallel-worker flake investigation (suite at --workers=2 has
+    flaked project-list-surfaces:157 + hydration smoke + studio-
+    export-loop across cycles #9–#12 under load; --workers=1 is
+    clean). Likely a DB-seed race on the shared synthetic E2E user.
+    Adding a per-test isolation prefix would unblock fast CI.
+
+Re-run pnpm typecheck / pnpm test / pnpm test:e2e / pnpm build.
+Update docs/ops/overnight-browseros-status.md and reply with a
+ship report.
+
+Treat the repo + git state as truth. Don't trust session memory.
+```
+
+---
+
 ## 2026-05-24 05:00 AEST · overnight redesign (cycle #13)
 
 ### What shipped this cycle
