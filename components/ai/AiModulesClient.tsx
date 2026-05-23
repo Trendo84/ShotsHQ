@@ -7,11 +7,22 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 
 /**
- * AI dispatch client. Three modules wired end-to-end via Trigger.dev:
+ * AI dispatch client. FOUR modules wired end-to-end via Trigger.dev,
+ * plus one explicitly v1.1-planned surface:
  *
- *   1. Copy      → POST /api/ai/generate-copy   → poll /api/ai/runs/[id]
- *   2. Backdrop  → POST /api/ai/template-set    → poll /api/ai/runs/[id]
- *   3. Translate → POST /api/ai/translate       → poll /api/ai/runs/[id]
+ *   1. Copy        → POST /api/ai/generate-copy   → poll /api/ai/runs/[id]
+ *   2. Template set→ POST /api/ai/template-set    → poll /api/ai/runs/[id]
+ *   3. Restyle     → POST /api/ai/restyle         → poll /api/ai/runs/[id]
+ *   4. Translate   → POST /api/ai/translate       → poll /api/ai/runs/[id]
+ *   5. AI backdrop → v1.1 target (no route + task pair yet)
+ *
+ * Cycle #12 — added the Restyle module to the panel. Backend was
+ * already shipped (`/api/ai/restyle` POST + the `aiRestyle` Trigger
+ * task with debit + refund + meter event), but no UI surface existed,
+ * so the user couldn't actually invoke a module the pricing page
+ * advertises. Header copy also corrected — used to claim "Three
+ * modules" with four sections actually rendering and five marketed
+ * on /pricing.
  *
  * Polling is the v1 streaming strategy — Trigger.dev's realtime hook
  * (useRealtimeRun) requires a public access token issued at dispatch
@@ -22,6 +33,16 @@ import { Badge } from "@/components/ui/badge";
  * the dispatch button stays disabled until Copy has produced output. If
  * a user re-runs Copy, Translate output is cleared so the two stay in
  * sync.
+ *
+ * Testability contract (cycle #12):
+ *   - each module section exposes `data-ai-module="<id>"` so e2e can
+ *     pin its existence independently of copy
+ *   - each module section exposes `data-ai-status="<state>"` —
+ *     `idle|dispatching|running|completed|failed` for live modules,
+ *     `planned` for the v1.1 backdrop
+ *   - each module section exposes `data-ai-cost="<credits>"` —
+ *     numeric credit cost so the credit-ledger advertised cost can be
+ *     pinned in a regression spec
  *
  * Casing follows the rule in CLAUDE.md: button labels in Title Case,
  * tags / micro-labels at ≤12px in ALL CAPS, descriptive copy in
@@ -58,6 +79,24 @@ type RunState =
 type CopyOutput        = { ok: true; headline: string };
 type TemplateSetOutput = { ok: true; url: string; cost?: number; newBalance?: number };
 type TranslateOutput   = { ok: true; results: Record<string, string>; failures: number };
+type RestyleOutput     = { ok: true; images: Array<{ url: string }> };
+
+const DEVICE_OPTIONS = [
+  { id: "iphone_69" as const, label: "iPhone 6.9″", spec: "1290×2796" },
+  { id: "iphone_67" as const, label: "iPhone 6.7″", spec: "1320×2868" },
+  { id: "ipad_13"   as const, label: "iPad 13″",    spec: "2064×2752" },
+];
+type RestyleDevice = typeof DEVICE_OPTIONS[number]["id"];
+
+/**
+ * Map the union RunState `phase` to the cycle-#12 data-ai-status hook.
+ * Returns the raw phase verbatim for the live-module statuses; the
+ * AI-backdrop section uses a hard-coded `planned` since it never
+ * enters this state machine (no dispatch path yet).
+ */
+function statusOf(s: RunState): "idle" | "dispatching" | "running" | "completed" | "failed" {
+  return s.phase;
+}
 
 export function AiModulesClient({
   projectId,
@@ -143,6 +182,46 @@ export function AiModulesClient({
     setBgState({ phase: "running", runId: json.data.runId });
   }
 
+  // ── Restyle module ───────────────────────────────────────────────────────
+  // Backend was fully shipped before cycle #12 (route + Trigger task +
+  // debit/refund + meter event) — only the UI surface was missing.
+  const [restyleRef,    setRestyleRef]    = useState("");
+  const [restylePrompt, setRestylePrompt] = useState("");
+  const [restyleDevice, setRestyleDevice] = useState<RestyleDevice>("iphone_69");
+  const [restyleState,  setRestyleState]  = useState<RunState>({ phase: "idle" });
+
+  const isValidUrl = (() => {
+    if (!restyleRef.trim()) return false;
+    try { new URL(restyleRef.trim()); return true; } catch { return false; }
+  })();
+  const isPromptValid = restylePrompt.trim().length >= 1 && restylePrompt.trim().length <= 500;
+  const canRestyle =
+    isValidUrl &&
+    isPromptValid &&
+    !isInFlight(restyleState);
+
+  async function dispatchRestyle() {
+    if (!canRestyle) return;
+    setRestyleState({ phase: "dispatching" });
+
+    const res = await fetch("/api/ai/restyle", {
+      method:  "POST",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify({
+        projectId,
+        referenceUrl: restyleRef.trim(),
+        prompt:       restylePrompt.trim(),
+        device:       restyleDevice,
+      }),
+    });
+    const json = await res.json().catch(() => null);
+    if (!res.ok || !json?.ok || !json.data?.runId) {
+      setRestyleState({ phase: "failed", error: errorMessage(res.status, json?.error) });
+      return;
+    }
+    setRestyleState({ phase: "running", runId: json.data.runId });
+  }
+
   // ── Translate module ─────────────────────────────────────────────────────
   // Default selection drops English (the source) — picking the user's most
   // common launch markets. They can toggle to any subset of the 41.
@@ -199,12 +278,14 @@ export function AiModulesClient({
   // ── Poll runs ───────────────────────────────────────────────────────────
   useRunPoller(copyState,      setCopyState);
   useRunPoller(bgState,        setBgState);
+  useRunPoller(restyleState,   setRestyleState);
   useRunPoller(translateState, setTranslateState);
 
   // ── Queue counter ───────────────────────────────────────────────────────
   const activeCount =
     (isInFlight(copyState)      ? 1 : 0) +
     (isInFlight(bgState)        ? 1 : 0) +
+    (isInFlight(restyleState)   ? 1 : 0) +
     (isInFlight(translateState) ? 1 : 0);
 
   return (
@@ -213,14 +294,19 @@ export function AiModulesClient({
         <div className="col-span-12 md:col-span-7 border-r border-[var(--line)] p-6 md:p-10">
           <div className="t-eyebrow t-eyebrow-accent mb-2">Project · AI modules</div>
           <h1 className="t-display t-h-2 text-balance">
-            Three modules. One credit ledger.
+            Four live modules. One credit ledger.
           </h1>
+          <p className="t-mono-sm text-[var(--fg-mute)] mt-3 max-w-md leading-relaxed">
+            ▸ Copy, Template set, Restyle, and Translate are all wired
+            end-to-end. AI backdrop (single-frame Flux 2 regen) ships
+            in v1.1.
+          </p>
         </div>
         <aside className="col-span-12 md:col-span-5 p-5 sm:p-6 md:p-10 grid grid-cols-2 gap-3 content-end border-t md:border-t-0 border-[var(--line)]">
           <div className="border border-[var(--line)] p-3 sm:p-4">
-            <div className="t-mono-xs text-[var(--fg-mute)]">MODELS</div>
+            <div className="t-mono-xs text-[var(--fg-mute)]">MODELS LIVE</div>
             <div className="t-display text-[clamp(1.5rem,3vw,2.25rem)] t-numeric mt-1 leading-none">4</div>
-            <div className="t-mono-xs text-[var(--fg-mute)] mt-1">copy · backdrop · set · translate</div>
+            <div className="t-mono-xs text-[var(--fg-mute)] mt-1">copy · set · restyle · translate</div>
           </div>
           <div className="border border-[var(--line)] p-3 sm:p-4">
             <div className="t-mono-xs text-[var(--fg-mute)]">QUEUE</div>
@@ -233,7 +319,12 @@ export function AiModulesClient({
       </div>
 
       {/* ── Copy module ───────────────────────────────────────────────────── */}
-      <section className="grid grid-cols-12 border-b-2 border-[var(--line-strong)]">
+      <section
+        className="grid grid-cols-12 border-b-2 border-[var(--line-strong)]"
+        data-ai-module="copy"
+        data-ai-status={statusOf(copyState)}
+        data-ai-cost="1"
+      >
         <div className="col-span-12 lg:col-span-7 border-r border-[var(--line)] p-6 md:p-10">
           <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
             <div className="t-eyebrow t-eyebrow-accent">Module · Copy</div>
@@ -313,7 +404,13 @@ export function AiModulesClient({
          docs/audits/2026-04-30-comet-sonnet-editor.md #3.
          The dispatch wiring lands when ai-background gets its own
          Trigger.dev task — until then this section is locked. */}
-      <section id="ai-backdrop" className="grid grid-cols-12 border-b-2 border-[var(--line-strong)]">
+      <section
+        id="ai-backdrop"
+        className="grid grid-cols-12 border-b-2 border-[var(--line-strong)]"
+        data-ai-module="backdrop"
+        data-ai-status="planned"
+        data-ai-cost="2"
+      >
         <div className="col-span-12 lg:col-span-7 border-r border-[var(--line)] p-6 md:p-10">
           <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
             <div className="t-eyebrow t-eyebrow-accent">Module · AI backdrop</div>
@@ -348,7 +445,13 @@ export function AiModulesClient({
       </section>
 
       {/* ── Template set module ─────────────────────────────────────────── */}
-      <section id="template-set" className="grid grid-cols-12 border-b-2 border-[var(--line-strong)]">
+      <section
+        id="template-set"
+        className="grid grid-cols-12 border-b-2 border-[var(--line-strong)]"
+        data-ai-module="template-set"
+        data-ai-status={statusOf(bgState)}
+        data-ai-cost="8"
+      >
         <div className="col-span-12 lg:col-span-7 border-r border-[var(--line)] p-6 md:p-10">
           <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
             <div className="t-eyebrow t-eyebrow-accent">Module · Template set</div>
@@ -436,8 +539,157 @@ export function AiModulesClient({
         </aside>
       </section>
 
+      {/* ── Restyle module ──────────────────────────────────────────────────
+         Reference URL + prompt + device → POST /api/ai/restyle. The Flux
+         endpoint expects a public reference image URL. v1.1 will add a
+         file picker that uploads to R2 first; until then the user pastes
+         a URL (their existing asset, an Imgur link, a stock photo). */}
+      <section
+        id="restyle"
+        className="grid grid-cols-12 border-b-2 border-[var(--line-strong)]"
+        data-ai-module="restyle"
+        data-ai-status={statusOf(restyleState)}
+        data-ai-cost="3"
+      >
+        <div className="col-span-12 lg:col-span-7 border-r border-[var(--line)] p-6 md:p-10">
+          <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
+            <div className="t-eyebrow t-eyebrow-accent">Module · Restyle</div>
+            <Badge variant="warn">3 cr / gen</Badge>
+          </div>
+          <h2 className="t-display t-h-3 mb-4">Restyle from ref · Flux</h2>
+          <p className="t-prose text-[var(--fg-dim)] leading-relaxed">
+            Paste a reference image URL — a moodboard pin, a competitor
+            screenshot, a stock photo. Flux lifts the palette, mood,
+            and lighting and applies it to a fresh render at the target
+            App Store dimensions. Refunded automatically on failure.
+          </p>
+
+          <Label htmlFor="ai-restyle-ref" className="mt-5 block">Reference image URL</Label>
+          <input
+            id="ai-restyle-ref"
+            type="url"
+            value={restyleRef}
+            onChange={(e) => setRestyleRef(e.target.value)}
+            placeholder="https://… (paste a reference image URL)"
+            className="w-full px-3 py-2 border border-[var(--line-strong)] bg-[var(--bg)] text-[14px] focus-visible:outline-none focus-visible:border-[var(--accent)]"
+            aria-invalid={restyleRef.length > 0 && !isValidUrl ? "true" : undefined}
+          />
+          <p className="t-mono-xs text-[var(--fg-mute)] mt-1.5">
+            ▸ v1.1: pick from your uploaded assets / drag-drop a file.
+          </p>
+
+          <Label htmlFor="ai-restyle-prompt" className="mt-4 block">Style prompt</Label>
+          <Textarea
+            id="ai-restyle-prompt"
+            rows={3}
+            value={restylePrompt}
+            onChange={(e) => setRestylePrompt(e.target.value)}
+            placeholder="warm editorial palette, soft natural light, off-white background, NYT Cooking energy"
+            maxLength={500}
+            aria-invalid={restylePrompt.length > 0 && !isPromptValid ? "true" : undefined}
+          />
+          <p className="t-mono-xs text-[var(--fg-mute)] mt-1.5">
+            ▸ {restylePrompt.length} / 500
+          </p>
+
+          <Label className="mt-4 block">Target device</Label>
+          <div role="radiogroup" aria-label="Restyle target device" className="grid grid-cols-3 gap-1 mt-1">
+            {DEVICE_OPTIONS.map((d) => {
+              const active = restyleDevice === d.id;
+              return (
+                <button
+                  key={d.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  data-restyle-device={d.id}
+                  data-active={active ? "true" : "false"}
+                  onClick={() => setRestyleDevice(d.id)}
+                  className={`t-mono-xs uppercase tracking-[0.12em] border px-3 py-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)] ${
+                    active
+                      ? "bg-[var(--accent)] text-[var(--accent-fg)] border-[var(--accent)]"
+                      : "border-[var(--line)] text-[var(--fg-mute)] hover:text-[var(--fg)] hover:border-[var(--accent)]"
+                  }`}
+                >
+                  {d.label}
+                  <div className="t-mono-xs opacity-70 normal-case mt-0.5">{d.spec}</div>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="mt-5 flex gap-3 items-center flex-wrap">
+            <Button
+              variant="accent"
+              disabled={!canRestyle}
+              aria-busy={isInFlight(restyleState)}
+              onClick={dispatchRestyle}
+              data-ai-dispatch="restyle"
+              title={
+                !isValidUrl
+                  ? "Paste a valid reference image URL first."
+                  : !isPromptValid
+                  ? "Describe the target style in 1-500 characters."
+                  : undefined
+              }
+            >
+              {restyleState.phase === "dispatching"
+                ? "Dispatching…"
+                : restyleState.phase === "running"
+                ? "Restyling…"
+                : "Dispatch · Flux · 3 cr"}
+            </Button>
+            <span className="t-mono-xs text-[var(--fg-mute)]">
+              REFUND ON FAILURE · METER FIRES ON SUCCESS
+            </span>
+          </div>
+
+          <RunPanel
+            label="Restyle run"
+            state={restyleState}
+            renderResult={(output) => {
+              const o = output as RestyleOutput | null;
+              if (!o?.images?.length) return null;
+              return (
+                <div className="mt-4 space-y-3">
+                  <div className="t-mono-xs text-[var(--fg-mute)]">RESULT · {o.images.length} image{o.images.length === 1 ? "" : "s"}</div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {o.images.map((img, i) => (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        key={i}
+                        src={img.url}
+                        alt={`Restyle output ${i + 1}`}
+                        className="w-full border border-[var(--line)] block"
+                      />
+                    ))}
+                  </div>
+                </div>
+              );
+            }}
+          />
+        </div>
+
+        <aside className="col-span-12 lg:col-span-5 p-5 sm:p-6 md:p-10 border-t lg:border-t-0 border-[var(--line)]">
+          <div className="t-eyebrow t-eyebrow-accent mb-3">How it routes</div>
+          <ol className="space-y-2 t-mono-sm text-[var(--fg-dim)] leading-relaxed">
+            <li>1 · Pre-flight balance check (debit happens in the task)</li>
+            <li>2 · Dispatch <code>ai-restyle</code> to Trigger.dev</li>
+            <li>3 · Task debits 3 cr → Flux generates at device dims</li>
+            <li>4 · Stripe meter event fires for paying customers</li>
+            <li>5 · On any failure: credits refund automatically</li>
+          </ol>
+        </aside>
+      </section>
+
       {/* ── Translate module ──────────────────────────────────────────────── */}
-      <section id="i18n" className="grid grid-cols-12 border-b-2 border-[var(--line-strong)]">
+      <section
+        id="i18n"
+        className="grid grid-cols-12 border-b-2 border-[var(--line-strong)]"
+        data-ai-module="translate"
+        data-ai-status={statusOf(translateState)}
+        data-ai-cost={String(activeLocales.length)}
+      >
         <div className="col-span-12 md:col-span-5 border-r border-[var(--line)] p-6 md:p-10">
           <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
             <div className="t-eyebrow t-eyebrow-accent">Module · Translate</div>
