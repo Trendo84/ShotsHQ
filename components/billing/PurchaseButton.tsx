@@ -2,6 +2,11 @@
 
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
+import {
+  packCtaHelp,
+  packCtaLabel,
+  type PackRelevance,
+} from "@/lib/billing/status";
 
 /**
  * Client-side island that wires a billing pack card to Stripe checkout.
@@ -11,6 +16,15 @@ import { Loader2 } from "lucide-react";
  *   2. Server returns a checkout URL (signed, single-use)
  *   3. Client navigates with `window.location.assign` so the back button
  *      returns to /billing instead of into Stripe's hosted page state.
+ *
+ * Cycle-#9 update — the button now respects per-pack relevance:
+ *   - `current`   — user is on this plan. Disabled + "Current plan".
+ *   - `switch`    — same tier, different cadence. Active + "Switch ›"
+ *                   (Stripe checkout handles the proration).
+ *   - `upgrade`   — sensible upgrade path. Active + "Upgrade ›".
+ *   - `available` — normal purchase. Active + "Purchase ›".
+ *   - `redundant` — pack is covered by user's current plan. Disabled
+ *                   + "Already covered" + help copy.
  *
  * Failure modes:
  *   - 401 / unauthorized: shouldn't reach here (page is auth-gated), but
@@ -36,10 +50,17 @@ export function PurchaseButton({
   packId,
   packName,
   accent = false,
+  /**
+   * Plan-aware relevance. Defaults to `available` for backwards
+   * compat with any caller that doesn't (yet) compute relevance.
+   * The /billing page computes it via `packRelevance(status, id)`.
+   */
+  relevance = "available",
 }: {
   packId: string;
   packName: string;
   accent?: boolean;
+  relevance?: PackRelevance;
 }) {
   const plan = PLAN_FROM_ID[packId] ?? null;
   const [loading, setLoading] = useState(false);
@@ -47,15 +68,12 @@ export function PurchaseButton({
 
   // No plan mapping → render "soon" treatment (matches pre-Stripe state).
   if (!plan) {
-    // SOON-quieting per audit triage of #5: drop the `btn-accent` variant
-    // on the disabled state regardless of the `accent` prop — accent on
-    // a disabled CTA was lying about importance. The plain `btn` outline
-    // at opacity-40 reads as "this is here but not active right now"
-    // without the marketing volume.
     return (
       <button
         type="button"
         disabled
+        data-pack-id={packId}
+        data-pack-relevance="unknown"
         title={`${packName} · coming soon`}
         aria-label={`${packName} — coming soon`}
         className="w-full mt-3 text-[10px] py-2 transition-colors btn opacity-40 cursor-not-allowed"
@@ -64,6 +82,10 @@ export function PurchaseButton({
       </button>
     );
   }
+
+  const isPurchasable = relevance === "available" || relevance === "upgrade" || relevance === "switch";
+  const ctaLabel      = packCtaLabel(relevance);
+  const helpCopy      = packCtaHelp(relevance);
 
   async function handleClick() {
     if (loading) return;
@@ -100,22 +122,58 @@ export function PurchaseButton({
     }
   }
 
+  // Non-purchasable states (current / redundant) — disabled CTA with
+  // honest copy + help text. No fetch path; defense-in-depth against
+  // DevTools strip is just "the route returns an error from Stripe."
+  if (!isPurchasable) {
+    return (
+      <div className="mt-3 space-y-1.5" data-pack-id={packId} data-pack-relevance={relevance}>
+        <button
+          type="button"
+          disabled
+          aria-disabled
+          aria-label={`${packName} — ${ctaLabel.toLowerCase()}`}
+          title={helpCopy ?? undefined}
+          className="w-full text-[10px] py-2 transition-colors btn opacity-50 cursor-not-allowed"
+        >
+          {ctaLabel}
+        </button>
+        {helpCopy && (
+          <p className="t-mono-xs text-[var(--fg-mute)] leading-tight">
+            {helpCopy}
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  // Purchasable states (available / upgrade / switch). `upgrade` and
+  // `switch` accent the button to call attention to the meaningful
+  // path; `available` follows the caller's accent preference.
+  const wantsAccent = accent || relevance === "upgrade" || relevance === "switch";
+
   return (
-    <div className="mt-3 space-y-1.5">
+    <div className="mt-3 space-y-1.5" data-pack-id={packId} data-pack-relevance={relevance}>
       <button
         type="button"
         onClick={handleClick}
         disabled={loading}
-        aria-label={`Purchase ${packName}`}
+        aria-label={`${ctaLabel} ${packName}`}
         aria-busy={loading}
+        title={helpCopy ?? undefined}
         className={`w-full text-[10px] py-2 transition-colors disabled:opacity-60 disabled:cursor-progress inline-flex items-center justify-center gap-2 ${
-          accent ? "btn btn-accent" : "btn"
+          wantsAccent ? "btn btn-accent" : "btn"
         }`}
       >
         {loading
           ? <><Loader2 size={11} className="animate-spin" /> Opening…</>
-          : <>Purchase ›</>}
+          : <>{ctaLabel}</>}
       </button>
+      {helpCopy && !loading && (
+        <p className="t-mono-xs text-[var(--fg-mute)] leading-tight">
+          {helpCopy}
+        </p>
+      )}
       {error && (
         <p
           role="alert"
