@@ -1,5 +1,170 @@
 # ShotsHQ overnight BrowserOS status
 
+## 2026-05-23 12:10 AEST · cycle #5
+
+### What shipped this cycle
+
+**`fix(list): truthful /dashboard + /projects rows — shared project-status helper`** (commit `e46e651`, pushed to `origin/main`).
+
+Browser audit + code search caught the two post-auth project-collection surfaces still hardcoding `<Badge>Draft</Badge>`:
+
+- `app/(app)/dashboard/page.tsx:76` — `<Badge>Draft</Badge>` on every row
+- `app/(app)/projects/page.tsx:53` — `<Badge>DRAFT</Badge>` on every card
+
+After cycles #2 / #3 / #4 fixed Studio + `/exports` + `/projects/[id]`, the list surfaces were the last lie. Cycle #5 lands them on the same truth source.
+
+#### New module: `lib/studio/project-status.ts`
+
+Wraps the truth chain `extractStudioDesignSet → evaluateStudio → statusOf` into one call and adds the display layer all four surfaces (Studio, /exports, overview, list) can share:
+
+```ts
+projectStatus(polotnoJson)         // { status, studio, readiness }
+projectStatusDisplay(info, projId) // { label, variant, help, next }
+nextActionFor(projId, status)      // { id, href, label, help }
+```
+
+Refuses to fall back to `defaultStudioDesignSet()` on null persisted state — that's a phantom-panel lie. Empty status means truly empty. 14 unit specs cover every status × every helper.
+
+#### Wiring
+
+| Surface | Old | New |
+|---|---|---|
+| `/dashboard` per-row | `<Badge>Draft</Badge>` always | `display.label` / `display.variant`; sub-line shows `X / Y panels ready` |
+| `/projects` per-card | `<Badge>DRAFT</Badge>` always | same shared helper; dl-rule gains a `READY` count |
+| `/projects/[id]` | Local copies of `nextActionFor` / `projectBadgeLabel` / `projectStatusVariant` | Refactored to consume the shared module; deleted the duplicates |
+
+Every row/card now exposes `data-project-row` (or `data-project-card`) + `data-project-status` + `data-panels-ready` + `data-panels-total` for test stability.
+
+### Files touched
+
+```
+M  app/(app)/dashboard/page.tsx
+M  app/(app)/projects/[id]/page.tsx      (refactor to consume shared module)
+M  app/(app)/projects/page.tsx
+A  e2e/project-list-surfaces.spec.ts     (5 specs)
+A  lib/studio/project-status.ts          (shared helper)
+A  tests/studio/project-status.test.ts   (14 specs)
+```
+
+### Verification (all green, on commit `e46e651`)
+
+```
+pnpm typecheck   → clean
+pnpm test        → 195 passed across 19 files (+14 project-status)
+pnpm test:e2e    → 19 / 19 passed
+                     - 5 new project-list-surfaces
+                     - 3 project-overview          (cycle #4)
+                     - 2 studio-upload-persistence (cycle #3)
+                     - 4 export-readiness          (cycle #2)
+                     - 3 studio-device-switch      (cycle #1)
+                     - 2 wizard
+pnpm build       → clean
+git push         → d394203..e46e651 main -> main
+```
+
+### Acceptance-criteria status (brief's four bullets)
+
+1. ✅ `/dashboard` derives status from real persisted readiness via `projectStatus()`. `data-project-status` exposes the canonical enum.
+2. ✅ Each row shows truthful badge text + sub-line `X / Y panels ready`. `data-panels-ready` + `data-panels-total` for tests.
+3. ✅ `/projects` stops hardcoding DRAFT — same shared helper, same enum, same data attrs.
+4. ✅ Automated coverage on both surfaces for empty + ready states, plus a cross-surface consistency spec that asserts `/dashboard` / `/projects` / `/projects/[id]` all agree on the same project's status.
+
+### Note: e2e helper hardening
+
+The `makeReady` helper needed careful work to wait for the autosave to definitively complete on `/studio` before navigating away. Studio's "Saved" InfoCell is the *initial* state (before any dirty cycle), so the naive `await expect(text="Saved")` matched immediately. New version anchors on the `dirty/saving` sub-copy first ("Waiting for the autosave" or "Writing the panel set") to prove a real cycle started, then waits for the `saved` sub-copy ("Persisted panel set into the project payload"). Critically, we stay on `/studio` so the React unmount on navigation can't cancel the in-flight 900ms save timer. The same hardened helper is reusable for future tests that need a "ready project" fixture.
+
+### Blockers
+
+None code-side. Carried forward from prior cycles:
+
+- **R2 bucket CORS** — operator-side; Studio uses `/api/upload/direct` server-side proxy in the meantime.
+- **Clerk live-key swap** in Vercel production env.
+
+### Highest-priority next target
+
+The shared `projectStatus()` helper covers four surfaces. Remaining canonical surfaces that show projects:
+
+1. **`/dashboard` "In queue" stat** — currently `renderingCount = 0` hardcoded with a `// wire to aiJobs query when render queue is live` comment. Honest enough today (it's literally always 0), but should derive from real `aiJobs` table count once any AI module dispatches start landing. Low priority because it's not actively lying.
+
+2. **Project status surfaced anywhere else** — grep for `<Badge>Draft</Badge>`, `<Badge>READY</Badge>`, etc. to find any remaining hardcoded badges. Likely none after this pass, but worth a quick audit.
+
+3. **`/dashboard` shows TOP 5 projects (`projects.slice(0, 5)`)** — for a user with many projects, the dashboard view is a partial slice. Worth verifying that ordering by `desc(projects.updatedAt)` matches operator expectations (most recently *worked on* first). Probably fine, but worth a browser-side smoke.
+
+4. **Studio export full-loop browser smoke** (queued from cycle #3) — verify the persisted screenshot actually renders into the exported PNG at exact App Store dims. The persistence loop is solid; the render-into-PNG loop is the next leg. If the cross-origin `<img crossOrigin="anonymous">` works against R2 + `html-to-image`'s canvas drawImage, the export pack is shippable.
+
+### Next BrowserOS prompt (paste verbatim next hour)
+
+```
+Continue the overnight loop in /Volumes/NVME EXT/Ivan/CODEX/ShotsHQ.
+Read docs/ops/overnight-browseros-loop.md (operating rules) and
+the top entry of docs/ops/overnight-browseros-status.md (latest
+cycle — yours).
+
+Focus for this cycle: verify the Studio export full loop now that
+upload persistence (cycle #3) and all the truthfulness surfaces
+(cycles #2 / #4 / #5) are wired through one model.
+
+Concrete steps:
+
+ 1. Create a project via /projects/new. Confirm /dashboard and
+    /projects show DRAFT for it. Open it.
+ 2. Visit /studio. Upload a screenshot via the upload control
+    (file input target [data-testid="studio-upload-input"]).
+ 3. Wait for the active panel to show "Screenshot persisted —
+    survives reload" (data-active-panel-screenshot-remote="true").
+ 4. Click `Export current` (it should be enabled now). A PNG
+    should download to your Downloads folder named like
+    `01_iphone_69_<projectslug>.png`.
+ 5. Open the downloaded PNG. Confirm:
+      - dimensions are 1290×2796 (iPhone 6.9″ exact)
+      - the uploaded screenshot is visible inside the device
+        frame, not a placeholder
+      - the headline + subhead are rendered correctly
+ 6. Studio's "Last export run" log should show
+      "Expected 1290×2796 · got 1290×2796"
+      "Exact"
+ 7. Check /dashboard and /projects — the now-ready project should
+    show READY badge (live variant).
+ 8. Open /projects/[id] — data-project-status="ready",
+    next-action="open-exports" links to /exports.
+
+If any step fails, that's the bug to fix. Most-likely break-points:
+
+  - The remote R2 GET might trigger a CORS-tainted canvas, making
+    toDataURL throw. DeviceFrame.tsx sets crossOrigin="anonymous"
+    for remote URLs; R2 public URLs should serve with
+    Access-Control-Allow-Origin: * by default, but worth checking
+    network response headers in DevTools.
+  - The pixelRatio scaling could produce off-by-one dims; the
+    Last-export-run log shows actual vs expected.
+  - If R2's GET CORS is also blocked, this is the same R2-bucket-
+    CORS-config operator item we've been carrying. Recommended
+    bucket-CORS rule is in cycle-#3's blockers section above.
+
+If the full loop works: write a v0.10 changelog entry catching the
+public changelog up. It stops at v0.7; v0.8 was the audit batch,
+v0.9 was Studio engine + persistence, v0.10 is "truthful surfaces"
+(cycles #2 → #5).
+
+If the full loop is broken on the canvas-tainted side, fix the
+GET-CORS path by either:
+  (a) configuring R2 bucket CORS (operator action — document
+      precisely in the status doc)
+  (b) routing the remote screenshot fetch through a same-origin
+      /api/r2-proxy endpoint that streams the bytes back with
+      Access-Control-Allow-Origin: * (covers the no-bucket-CORS
+      case in the meantime — same pattern as /api/upload/direct)
+
+Re-run pnpm typecheck / pnpm test / pnpm test:e2e / pnpm build.
+Update docs/ops/overnight-browseros-status.md with timestamp +
+what shipped + verification + blockers + next target + next prompt
+before stopping. Reply with a concise ship report.
+
+Treat the repo + git state as truth. Don't trust session memory.
+```
+
+---
+
 ## 2026-05-23 11:10 AEST · cycle #4
 
 ### What shipped this cycle
