@@ -42,7 +42,7 @@ const PLANS: Plan[] = [
       "Watermark removed",
       "6-8 full sets per pack",
       "Cloud project storage",
-      "Full export at all dimensions",
+      "Export at every App Store dimension",
     ],
   },
   {
@@ -59,7 +59,7 @@ const PLANS: Plan[] = [
       "20-25 full sets per pack",
       "Watermark removed",
       "Cloud project storage",
-      "Direct App Store Connect upload",
+      "Direct App Store Connect push · v1.1",
     ],
   },
   {
@@ -67,16 +67,16 @@ const PLANS: Plan[] = [
     name: "Studio",
     price: "$29",
     cadence: "per month",
-    description: "Unmetered AI + public API. Cancel anytime from settings — projects stay readable for 30 days.",
+    description: "Unmetered AI. Cancel anytime via the Stripe billing portal — projects stay readable for 30 days.",
     highlight: true,
     cta: "Subscribe",
     ctaHref: "/sign-up?plan=studio",
     perks: [
       "Unlimited AI generations",
-      "Public REST + webhook API",
-      "Priority render queue",
+      "All 41 locales + 3 Apple device frames",
       "Cloud project storage",
-      "All locales + frames",
+      "Manage subscription via Stripe portal",
+      "Public REST + webhook API · v1.1",
     ],
   },
   {
@@ -90,7 +90,7 @@ const PLANS: Plan[] = [
     perks: [
       "Lifetime unmetered AI",
       "All future features included",
-      "Lifetime API access",
+      "Lifetime API access · v1.1",
       "Priority support, named seat",
     ],
   },

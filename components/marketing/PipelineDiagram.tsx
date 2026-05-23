@@ -114,8 +114,8 @@ const STAGES: Stage[] = [
   { id: "03", label: "Copy",      icon: I_COPY,      title: "HEADLINE BANK",   detail: "Eight headline options per screen. Guaranteed well-formed output."          },
   { id: "04", label: "Backdrop",  icon: I_BACKDROP,  title: "ART DIRECTION",   detail: "AI-generated backdrops. A real iPhone frame composites on top."             },
   { id: "05", label: "Translate", icon: I_TRANSLATE, title: "41 LOCALES",      detail: "Every language in parallel. Auto-relayout when copy length changes."        },
-  { id: "06", label: "Render",    icon: I_RENDER,    title: "SERVER EXPORTS",  detail: "Server-side render at every required dimension. Pixel-perfect."             },
-  { id: "07", label: "Deliver",   icon: I_DELIVER,   title: "EXPORT READY",    detail: "Download as a ZIP. Or push direct to App Store Connect."                    },
+  { id: "06", label: "Render",    icon: I_RENDER,    title: "PIXEL-EXACT",     detail: "Studio renders the active panel at App Store-exact dimensions. Pixel-perfect."  },
+  { id: "07", label: "Deliver",   icon: I_DELIVER,   title: "EXPORT READY",    detail: "Download a PNG per panel today. ZIP pack + App Store Connect push land in v1.1." },
 ];
 
 // ── Pacing ───────────────────────────────────────────────────────────────────

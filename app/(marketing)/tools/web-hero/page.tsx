@@ -37,8 +37,12 @@ export default function WebHeroDesignerPage() {
         <div className="max-w-[1480px] mx-auto px-4 md:px-8 py-14 md:py-20">
           <Reveal as="div" className="grid grid-cols-12 gap-8 items-end">
             <div className="col-span-12 md:col-span-7">
-              <div className="t-eyebrow t-eyebrow-accent mb-3">
-                ▸ Tool · Web hero designer
+              <div
+                className="inline-flex items-center gap-2 t-mono-xs uppercase tracking-[0.16em] border border-[var(--accent)] text-[var(--accent)] px-2 py-1 mb-3"
+                data-web-hero-status="early-access"
+              >
+                <span aria-hidden className="block w-1.5 h-1.5 bg-[var(--accent)]" />
+                v1.1 · Early access
               </div>
               <h1 className="t-display text-[clamp(2.25rem,6.5vw,5rem)] leading-[0.92] text-balance">
                 Marketing hero shots
@@ -50,18 +54,25 @@ export default function WebHeroDesignerPage() {
                 websites. Pick a style, paste your brand URL, get back a
                 wide hero image at every dimension your stack needs.
               </p>
+              <p className="t-mono-sm text-[var(--fg-mute)] max-w-[52ch] mt-4">
+                The web-hero designer is a v1.1 surface. The App Store
+                screenshot pipeline (Studio, AI copy, AI backdrop,
+                translate, exports) is live today — sign up to use those
+                and you&apos;ll be first in line when the web-hero
+                designer ships.
+              </p>
               <div className="flex flex-wrap items-center gap-3 mt-6">
                 <Link
                   href="/sign-up?surface=web-hero"
                   className="group inline-flex items-center gap-3 bg-[var(--accent)] text-[var(--accent-fg)] pl-5 pr-1.5 py-2 transition-transform duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98]"
                 >
-                  <span className="btn-label">Open the designer</span>
+                  <span className="btn-label">Join the early-access list</span>
                   <span className="inline-grid place-items-center w-9 h-9 bg-[var(--accent-fg)] text-[var(--accent)] transition-transform duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0.5 font-bold">
                     →
                   </span>
                 </Link>
                 <span className="t-mono-xs text-[var(--fg-mute)]">
-                  Free · watermark on free tier · removed with any pack
+                  Free tier + watermark when it ships · removed with any pack
                 </span>
               </div>
             </div>
@@ -77,8 +88,8 @@ export default function WebHeroDesignerPage() {
                   className="object-cover"
                 />
                 <span className="absolute top-2 left-2 inline-flex items-center gap-1.5 px-2 py-1 bg-black/70 text-white t-mono-xs uppercase tracking-[0.16em] backdrop-blur-sm">
-                  <span className="block w-1.5 h-1.5 rounded-full bg-[var(--accent)]" />
-                  Sample output
+                  <span aria-hidden className="block w-1.5 h-1.5 bg-[var(--accent)]" />
+                  v1.1 · Sample mock
                 </span>
               </div>
             </div>
@@ -173,15 +184,16 @@ export default function WebHeroDesignerPage() {
             </h2>
             <div className="col-span-12 md:col-span-4 flex flex-col gap-4">
               <p className="t-prose max-w-sm">
-                Free tier ships a watermark on outputs. Any paid pack
-                removes it.
+                Web-hero designer is a v1.1 surface. Sign up now to use
+                the App Store screenshot pipeline today and get notified
+                when the designer ships.
               </p>
               <div className="flex items-center gap-4 flex-wrap">
                 <Link
                   href="/sign-up?surface=web-hero"
                   className="group inline-flex items-center gap-3 bg-[var(--accent)] text-[var(--accent-fg)] pl-5 pr-1.5 py-2 transition-transform duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98]"
                 >
-                  <span className="btn-label">Open the designer</span>
+                  <span className="btn-label">Join the early-access list</span>
                   <span className="inline-grid place-items-center w-9 h-9 bg-[var(--accent-fg)] text-[var(--accent)] transition-transform duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0.5 font-bold">
                     →
                   </span>

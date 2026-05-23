@@ -43,8 +43,8 @@ export default function PricingPage() {
             <div className="col-span-12 md:col-span-5">
               <p className="t-prose-lg max-w-md">
                 Pick the lane that matches your launch cadence. Credits
-                never expire; subscriptions cancel from settings, no
-                email friction.
+                never expire; Studio subscriptions cancel anytime via the
+                Stripe billing portal — no email gauntlet.
               </p>
             </div>
           </div>
@@ -107,7 +107,7 @@ export default function PricingPage() {
               { label: "AI template set",          cost: 8, body: "gpt-image-1 generates a cohesive 6-frame App Store carousel from your app metadata." },
               { label: "AI restyle from ref",   cost: 3, body: "Lift palette and mood from a reference, restyle the full pack." },
               { label: "Translate (per locale)",cost: 1, body: "Auto-relayout, RTL-aware, parallel fan-out." },
-              { label: "Export + ASC upload",   cost: 0, body: "Server-side render to every required App Store dimension. Direct push to App Store Connect." },
+              { label: "Export pack",           cost: 0, body: "Studio renders every active panel at App Store-exact dimensions (1290×2796, 1320×2868, 2064×2752). Server render queue + direct App Store Connect push are v1.1 targets." },
             ].map((row) => (
               <div key={row.label} className="bg-[var(--bg)] p-5 flex flex-col gap-3 min-h-[150px]">
                 <div className="flex items-baseline justify-between gap-3">

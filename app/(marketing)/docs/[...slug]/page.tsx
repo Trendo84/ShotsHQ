@@ -28,8 +28,10 @@ const DOCS: Record<string, DocEntry> = {
         <h2>3. Upload screenshots</h2>
         <p>
           Drag in raw <samp>.png</samp> files captured from the simulator or a
-          real device. Files are uploaded directly to Cloudflare R2 via
-          pre-signed URLs — they never traverse our servers.
+          real device. Studio uploads through a same-origin proxy at{" "}
+          <samp>/api/upload/direct</samp> so the browser never has to
+          negotiate cross-origin headers with R2; the bytes land in
+          Cloudflare R2 via our server.
         </p>
         <h2>4. Generate</h2>
         <p>
@@ -39,9 +41,11 @@ const DOCS: Record<string, DocEntry> = {
         </p>
         <h2>5. Export</h2>
         <p>
-          Hit <kbd>EXPORT</kbd>. Choose dimensions and locales. The render
-          pipeline is server-authoritative — client canvas exports are never
-          used as final assets.
+          Hit <kbd>EXPORT</kbd>. Studio renders the active panel
+          in-browser at App Store-exact dimensions today
+          (1290×2796, 1320×2868, 2064×2752) — one PNG download per
+          panel. A server-side render queue with parallel locale fan-out
+          and direct App Store Connect push is the v1.1 target.
         </p>
       </>
     ),
@@ -107,13 +111,17 @@ const DOCS: Record<string, DocEntry> = {
       <>
         <h2>Auto-save</h2>
         <p>
-          Canvas changes are debounced 500ms and flushed to{" "}
-          <samp>projects.canvas_json</samp>.
+          Canvas changes are debounced ~900ms and flushed to{" "}
+          <samp>projects.canvas_json</samp>. The status indicator above
+          the canvas reads <samp>Writing the panel set</samp> while a
+          save is in flight and <samp>Saved</samp> once it lands.
         </p>
-        <h2>Server is authoritative</h2>
+        <h2>Pixel parity today, server queue next</h2>
         <p>
-          The browser never produces final exports. The server re-renders
-          from the JSON canvas state to guarantee pixel parity.
+          Studio renders the active panel at App Store-exact dimensions
+          in-browser via html-to-image — every export is the same pixel
+          shape the App Store expects. A server-side render queue that
+          batches multi-frame and multi-locale fan-out is the v1.1 target.
         </p>
         <h2>Shortcuts</h2>
         <ul>
@@ -182,24 +190,32 @@ const DOCS: Record<string, DocEntry> = {
   },
   api: {
     title: "PUBLIC API",
-    excerpt: "Studio tier. REST + webhooks. Idempotency-key required.",
+    excerpt: "v1.1 target — Studio tier. Preview spec below.",
     body: (
       <>
-        <h2>Auth</h2>
+        <p className="t-mono-xs text-[var(--fg-mute)]">
+          ▸ <strong>v1.1 target — not live yet.</strong> The shape below
+          is the planned public API for Studio subscribers. Internal
+          routes today serve only the first-party web app and don&apos;t
+          enforce the idempotency or rate-limit contract documented
+          here.
+        </p>
+
+        <h2>Auth (v1.1)</h2>
         <p>
-          API keys are issued from <Link href="/settings" className="link-tick">/settings</Link>.
+          API keys will be issued from <Link href="/settings" className="link-tick">/settings</Link>.
           Send the key as <samp>Authorization: Bearer sk_live_...</samp>.
           Base URL: <samp>https://api.shotshq.com/v1</samp>.
         </p>
 
-        <h2>Idempotency</h2>
+        <h2>Idempotency (v1.1)</h2>
         <p>
-          Every mutating request must send an <samp>Idempotency-Key</samp>{" "}
-          header. We retain keys for 24 hours — replays return the original
-          response.
+          Every mutating request will require an{" "}
+          <samp>Idempotency-Key</samp> header. Keys will be retained for
+          24 hours — replays will return the original response.
         </p>
 
-        <h2>Endpoints</h2>
+        <h2>Planned endpoints</h2>
         <ul>
           <li><samp>POST /projects</samp> — create a new project</li>
           <li><samp>GET /projects</samp> — list your projects</li>
@@ -213,19 +229,20 @@ const DOCS: Record<string, DocEntry> = {
           <li><samp>POST /webhooks</samp> — register a webhook URL</li>
         </ul>
 
-        <h2>Webhooks</h2>
+        <h2>Webhooks (v1.1)</h2>
         <p>
-          We POST to your registered URL for these events:
+          We&apos;ll POST to your registered URL for these events:{" "}
           <samp>render.completed</samp>, <samp>render.failed</samp>,{" "}
           <samp>credits.low</samp>, <samp>checkout.completed</samp>.
-          Signed with HMAC-SHA256 in the <samp>X-ShotsHQ-Signature</samp> header.
+          Signed with HMAC-SHA256 in the{" "}
+          <samp>X-ShotsHQ-Signature</samp> header.
         </p>
 
-        <h2>Rate limits</h2>
+        <h2>Rate limits (v1.1)</h2>
         <p>
-          Studio tier: 60 requests/minute. AI endpoints have separate
-          per-user concurrency limits (3 in-flight at once) — additional
-          requests are queued, not rejected.
+          Studio tier: 60 requests/minute. AI endpoints will have
+          separate per-user concurrency limits (3 in-flight at once) —
+          additional requests will be queued, not rejected.
         </p>
       </>
     ),
@@ -289,20 +306,28 @@ const DOCS: Record<string, DocEntry> = {
   },
   asc: {
     title: "APP STORE CONNECT",
-    excerpt: "Direct upload of generated assets.",
+    excerpt: "v1.1 target — direct upload of generated assets.",
     body: (
       <>
-        <h2>Setup</h2>
-        <p>
-          Create an App Store Connect API key with the <samp>Marketing</samp>{" "}
-          role. Paste the issuer ID + key into{" "}
-          <Link href="/settings" className="link-tick">/settings</Link>.
+        <p className="t-mono-xs text-[var(--fg-mute)]">
+          ▸ <strong>v1.1 target — not live yet.</strong> Today exports
+          download as PNG; the App Store Connect direct-push integration
+          ships alongside the server render queue. The exports page
+          inside the authenticated app currently shows{" "}
+          <samp>ASC · v1.1</samp> on this button.
         </p>
-        <h2>Push</h2>
+
+        <h2>Setup (v1.1)</h2>
         <p>
-          From any project, click <kbd>PUSH TO ASC</kbd>. We upload per-locale,
-          per-device, with the App Store's required filename conventions
-          handled.
+          You&apos;ll create an App Store Connect API key with the{" "}
+          <samp>Marketing</samp> role, then paste the issuer ID + key
+          into <Link href="/settings" className="link-tick">/settings</Link>.
+        </p>
+        <h2>Push (v1.1)</h2>
+        <p>
+          From any project, click <kbd>PUSH TO ASC</kbd>. We&apos;ll
+          upload per-locale, per-device, with the App Store&apos;s
+          required filename conventions handled.
         </p>
       </>
     ),
@@ -339,7 +364,9 @@ const DOCS: Record<string, DocEntry> = {
           </li>
           <li>
             <strong>Studio subscription</strong> bills monthly via Stripe.
-            Cancel any time from settings — your subscription remains active
+            Cancel any time via the{" "}
+            <Link href="/billing" className="link-tick">/billing</Link>{" "}
+            page&apos;s Stripe portal — your subscription remains active
             through the end of the paid period. No prorated refunds.
           </li>
           <li>
@@ -610,12 +637,16 @@ const DOCS: Record<string, DocEntry> = {
             spend whenever.
           </li>
           <li>
-            <strong>Cancel from settings</strong> — no email gauntlet, no
-            retention dark patterns.
+            <strong>Cancel via the Stripe portal</strong> — Studio
+            subscriptions open the official Stripe billing portal from{" "}
+            <Link href="/billing" className="link-tick">/billing</Link>.
+            No email gauntlet, no retention dark patterns.
           </li>
           <li>
-            <strong>Server is the truth</strong> — every export renders
-            server-side at App Store-exact dimensions. No browser approximations.
+            <strong>App Store-exact pixels</strong> — Studio renders at
+            the dimensions the App Store actually expects (1290×2796,
+            1320×2868, 2064×2752). Server-side render queue +
+            multi-locale fan-out ship in v1.1.
           </li>
         </ul>
 
@@ -668,45 +699,39 @@ const DOCS: Record<string, DocEntry> = {
 
   export: {
     title:   "EXPORT PIPELINE",
-    excerpt: "Server-side render. Every required dimension. Zero client-side tricks.",
+    excerpt: "Studio renders today; server queue + ASC push are v1.1 targets.",
     body: (
       <>
-        <h2>What you get</h2>
+        <h2>What you get today</h2>
         <p>
-          One click ships a ZIP containing every required App Store
-          dimension for every locale on the project. Files are named with
-          App Store Connect&apos;s expected pattern so you can drop the
-          archive straight into ASC without renaming.
+          Studio renders the currently-active panel in-browser at App
+          Store-exact pixel dimensions and downloads it as a PNG. One
+          click per panel — no resampling, no scaling, no drift between
+          what you see and what you ship.
         </p>
         <ul>
-          <li><strong>Format:</strong> PNG (sRGB), no transparency, optimized.</li>
-          <li><strong>Dimensions:</strong> 1290×2796, 1320×2868, 2064×2752, plus iPad mini and Apple Watch on Studio plan.</li>
-          <li>
-            <strong>Filename:</strong>{" "}
-            <samp>{`{appname}_{locale}_{device}_{frame_index}.png`}</samp>
-          </li>
+          <li><strong>Format:</strong> PNG (sRGB), no transparency.</li>
+          <li><strong>Dimensions:</strong> 1290×2796 (iPhone 6.9″), 1320×2868 (iPhone 6.7″), 2064×2752 (iPad 13″).</li>
+          <li><strong>Filename:</strong> <samp>{`{appname}-{device}.png`}</samp></li>
+          <li><strong>Free tier:</strong> watermarked. Any paid pack removes the watermark.</li>
         </ul>
 
-        <h2>Render time</h2>
+        <h2>v1.1 — server render queue</h2>
         <p>
-          A full pack (3 devices × 8 frames × 1 locale = 24 outputs)
-          renders in 8-15 seconds. Translation fan-out adds a few seconds
-          per locale, in parallel.
+          The next milestone wraps the per-panel render in a Trigger.dev
+          task with R2 streaming so multi-frame and multi-locale fan-out
+          run in parallel server-side. Same pixel-exact output, but a
+          single click ships a ZIP of every panel × locale combination.
         </p>
 
-        <h2>Server-side, always</h2>
+        <h2>v1.1 — direct App Store Connect push</h2>
         <p>
-          The browser editor is a preview — the server is the source of
-          truth. We re-render every export from the canvas JSON to guarantee
-          App Store-exact pixel dimensions. No client-side resampling, no
-          drift between what you see and what you ship.
-        </p>
-
-        <h2>Direct push to App Store Connect</h2>
-        <p>
-          Studio + Lifetime plans can skip the ZIP entirely and push direct
-          to App Store Connect. See{" "}
+          Studio + Lifetime plans will be able to skip the ZIP entirely
+          and push direct to App Store Connect. See{" "}
           <Link href="/docs/asc" className="link-tick">App Store Connect setup</Link>.
+          The exports page inside the authenticated app currently labels
+          this button <samp>ASC · v1.1</samp> so you can see it lined up
+          alongside the live <samp>Export current</samp> action.
         </p>
       </>
     ),

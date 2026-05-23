@@ -19,7 +19,7 @@ const SECTIONS = [
     items: [
       { slug: "editor",       label: "Canvas editor",        sub: "Layers, frames, autosave" },
       { slug: "device-frames",label: "Device frames",        sub: "iPhone 6.9″, 6.7″, iPad 13″" },
-      { slug: "export",       label: "Export pipeline",      sub: "Server render to all dimensions" },
+      { slug: "export",       label: "Export pipeline",      sub: "Studio renders today; server queue v1.1" },
     ],
   },
   {
@@ -35,9 +35,9 @@ const SECTIONS = [
     title: "API & integrations",
     code: "04",
     items: [
-      { slug: "api",          label: "Public API",           sub: "REST, webhooks, idempotency" },
-      { slug: "asc",          label: "App Store Connect",    sub: "Direct upload integration" },
-      { slug: "status",       label: "System status",        sub: "Live infrastructure metrics" },
+      { slug: "api",          label: "Public API",           sub: "v1.1 target — Studio tier" },
+      { slug: "asc",          label: "App Store Connect",    sub: "Direct upload — v1.1 target" },
+      { slug: "status",       label: "System status",        sub: "Liveness endpoint + incident channel" },
     ],
   },
   {
