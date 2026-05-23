@@ -16,12 +16,12 @@ const SECTIONS = [
   {
     code:        "02",
     title:       "Studio API",
-    description: "Studio + Lifetime plan. Rotate any time.",
+    description: "Studio + Lifetime plan. v1.1 — REST + webhooks land alongside the server render queue.",
   },
   {
     code:        "03",
     title:       "App Store Connect",
-    description: "Enable direct push of generated assets.",
+    description: "v1.1 — direct push of generated assets to App Store Connect.",
   },
   {
     code:        "04",
@@ -59,7 +59,13 @@ function SectionHeading({
 export default async function SettingsPage() {
   const user      = await requireUser();
   const isStudio  = user.plan === "studio_monthly" || user.plan === "studio_annual" || user.plan === "lifetime";
-  const handle    = user.email.split("@")[0] ?? "";
+  // Synthetic default for users who never set a custom handle: the
+  // local part of the email, lowercased + cleaned. Suggested only in
+  // the placeholder; never persisted unless the user actually saves.
+  const handleSeed = (user.email.split("@")[0] ?? "")
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]/g, "-")
+    .slice(0, 30);
 
   return (
     <>
@@ -74,8 +80,10 @@ export default async function SettingsPage() {
             </h1>
           </div>
           <p className="col-span-12 md:col-span-5 t-prose max-w-md">
-            Changes persist within five seconds. API keys are encrypted at
-            rest with AES-256.
+            Profile changes persist to Postgres on save. The Studio API
+            and App Store Connect integrations ship in v1.1 — sections
+            below mark themselves <samp>planned</samp> until they go
+            live.
           </p>
         </div>
       </div>
@@ -83,15 +91,35 @@ export default async function SettingsPage() {
       <div className="px-4 sm:px-6 lg:px-10 max-w-[1480px] divide-y divide-[var(--line)]">
 
         {/* Profile */}
-        <section className="grid grid-cols-12 gap-6 lg:gap-8 py-10 lg:py-12">
+        <section
+          className="grid grid-cols-12 gap-6 lg:gap-8 py-10 lg:py-12"
+          data-settings-section="profile"
+        >
           <SectionHeading {...SECTIONS[0]!} />
           <div className="col-span-12 md:col-span-8 max-w-2xl">
-            <ProfileForm email={user.email} handle={handle} />
+            <ProfileForm
+              email={user.email}
+              initial={{
+                displayName: user.displayName,
+                // Seed the input with the handle the user actually
+                // stored — never the synthetic email-local-part guess.
+                // The placeholder still shows the seed so users have a
+                // suggestion to lift verbatim.
+                handle:      user.handle,
+                bio:         user.bio,
+              }}
+            />
+            <p className="t-mono-xs text-[var(--fg-mute)] mt-4">
+              ▸ Suggested handle: <code>{handleSeed || "your-handle"}</code>
+            </p>
           </div>
         </section>
 
         {/* Studio API */}
-        <section className="grid grid-cols-12 gap-6 lg:gap-8 py-10 lg:py-12">
+        <section
+          className="grid grid-cols-12 gap-6 lg:gap-8 py-10 lg:py-12"
+          data-settings-section="api"
+        >
           <SectionHeading {...SECTIONS[1]!} />
           <div className="col-span-12 md:col-span-8 max-w-2xl">
             <StudioApiForm enabled={isStudio} />
@@ -99,7 +127,10 @@ export default async function SettingsPage() {
         </section>
 
         {/* App Store Connect */}
-        <section className="grid grid-cols-12 gap-6 lg:gap-8 py-10 lg:py-12">
+        <section
+          className="grid grid-cols-12 gap-6 lg:gap-8 py-10 lg:py-12"
+          data-settings-section="asc"
+        >
           <SectionHeading {...SECTIONS[2]!} />
           <div className="col-span-12 md:col-span-8 max-w-2xl">
             <AscForm />
@@ -116,7 +147,10 @@ export default async function SettingsPage() {
           email fallback for users who genuinely need data export
           today.
         */}
-        <section className="grid grid-cols-12 gap-6 lg:gap-8 py-10 lg:py-12">
+        <section
+          className="grid grid-cols-12 gap-6 lg:gap-8 py-10 lg:py-12"
+          data-settings-section="danger"
+        >
           <SectionHeading {...SECTIONS[3]!} />
           <div className="col-span-12 md:col-span-8 space-y-4 max-w-2xl">
             <div className="border border-[var(--accent)] p-4 sm:p-5 flex items-center justify-between gap-4 flex-wrap">

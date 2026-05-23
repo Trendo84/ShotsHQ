@@ -1,30 +1,132 @@
 "use client";
 
-import { Check, Eye, EyeOff } from "lucide-react";
-import { useState } from "react";
+import { Check, Loader2 } from "lucide-react";
+import { useMemo, useState } from "react";
 import { Input, Textarea } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 
 /**
- * Client-side forms for the settings page. Each section is a real
- * `<form>` element with proper field IDs, name attributes, autocomplete
- * hints, and (where applicable) value masking.
+ * Client-side forms for the settings page.
  *
- * The App Store Connect .p8 private key uses CSS text-security to mask
- * the key after it's been entered, with an explicit show/hide toggle.
- * Once a real save backend is wired, the form should never re-display
- * the raw key — show "•••••••••••" + a "Rotate key" action instead.
+ * Cycle #11 — first time these forms ship real save flows. Before, the
+ * page exposed a `Save profile · soon` button that was always disabled
+ * and an `ASC verify · soon` button that ditto, against marketing copy
+ * that promised changes "persist within five seconds". This file is
+ * now the honest counterpart.
+ *
+ * - `ProfileForm` POSTs to /api/settings/profile, tracks dirty state,
+ *   and reports idle / saving / saved / error inline. Persisted values
+ *   are passed in from the server component so a reload reads the
+ *   user's actual stored profile rather than the fixture defaults.
+ * - `StudioApiForm` is now an honest v1.1 status surface (Studio plan
+ *   gating still in place, but the placeholder API key + webhook
+ *   inputs are gone — they pretended a key was real).
+ * - `AscForm` is also an honest v1.1 surface — the App Store Connect
+ *   integration ships alongside the server render queue (see the
+ *   `/docs/asc` doc rewritten in cycle #10).
+ *
+ * Each section root carries `data-settings-section` so e2e can pin
+ * structure independently of copy.
  */
 
 // ── Profile section ──────────────────────────────────────────────────────────
 
-export function ProfileForm({ email, handle }: { email: string; handle: string }) {
+const HANDLE_RE = /^[a-z0-9_-]+$/i;
+
+type ProfileState =
+  | { kind: "idle" }
+  | { kind: "saving" }
+  | { kind: "saved"; at: number }
+  | { kind: "error"; message: string };
+
+export function ProfileForm({
+  email,
+  initial,
+}: {
+  email:   string;
+  initial: { displayName: string; handle: string; bio: string };
+}) {
+  // The "snapshot" is the last value we either loaded from the server
+  // or successfully saved. Dirty-state = current ≠ snapshot.
+  const [snapshot,     setSnapshot]     = useState(initial);
+  const [displayName,  setDisplayName]  = useState(initial.displayName);
+  const [handle,       setHandle]       = useState(initial.handle);
+  const [bio,          setBio]          = useState(initial.bio);
+  const [state,        setState]        = useState<ProfileState>({ kind: "idle" });
+
+  const dirty = useMemo(
+    () =>
+      displayName !== snapshot.displayName ||
+      handle      !== snapshot.handle      ||
+      bio         !== snapshot.bio,
+    [displayName, handle, bio, snapshot],
+  );
+
+  const handleError = useMemo(() => {
+    if (handle === "") return null; // empty handle is allowed
+    if (handle.length < 3 || handle.length > 30)
+      return "Handle must be 3-30 characters.";
+    if (!HANDLE_RE.test(handle))
+      return "Handle: letters, digits, _ and - only.";
+    return null;
+  }, [handle]);
+  const displayNameError = displayName.length > 50
+    ? "Display name must be 50 characters or fewer."
+    : null;
+  const bioError = bio.length > 280
+    ? "Bio must be 280 characters or fewer."
+    : null;
+  const valid = !handleError && !displayNameError && !bioError;
+
+  const submitting = state.kind === "saving";
+  const canSubmit  = dirty && valid && !submitting;
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!canSubmit) return;
+    setState({ kind: "saving" });
+    try {
+      const res = await fetch("/api/settings/profile", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ displayName, handle, bio }),
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok || !json?.ok) {
+        const code = json?.error ?? `http_${res.status}`;
+        setState({ kind: "error", message: `Could not save profile (${code}).` });
+        return;
+      }
+      const next = json.data as { displayName: string; handle: string; bio: string };
+      setSnapshot(next);
+      setDisplayName(next.displayName);
+      setHandle(next.handle);
+      setBio(next.bio);
+      setState({ kind: "saved", at: Date.now() });
+    } catch (err) {
+      console.error("[settings.profile] network failure", err);
+      setState({ kind: "error", message: "Network error — please retry." });
+    }
+  }
+
+  const statusValue: "idle" | "dirty" | "saving" | "saved" | "error" = submitting
+    ? "saving"
+    : state.kind === "error"
+      ? "error"
+      : state.kind === "saved" && !dirty
+        ? "saved"
+        : dirty
+          ? "dirty"
+          : "idle";
+
   return (
     <form
-      onSubmit={(e) => { e.preventDefault(); /* TODO: wire to /api/settings/profile */ }}
+      onSubmit={handleSubmit}
       aria-label="Profile settings"
       className="space-y-5"
+      data-profile-status={statusValue}
+      data-profile-dirty={dirty ? "true" : "false"}
     >
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
@@ -36,8 +138,15 @@ export function ProfileForm({ email, handle }: { email: string; handle: string }
             autoComplete="name"
             maxLength={50}
             placeholder="Your name"
-            defaultValue=""
+            value={displayName}
+            onChange={(e) => setDisplayName(e.target.value)}
+            aria-invalid={displayNameError ? "true" : undefined}
           />
+          {displayNameError && (
+            <p className="t-mono-xs text-[var(--accent)] mt-1.5" role="alert">
+              {displayNameError}
+            </p>
+          )}
         </div>
         <div>
           <Label htmlFor="settings-handle">Handle</Label>
@@ -47,9 +156,16 @@ export function ProfileForm({ email, handle }: { email: string; handle: string }
             type="text"
             autoComplete="username"
             maxLength={30}
-            placeholder={`@${handle}`}
-            defaultValue=""
+            placeholder="your-handle"
+            value={handle}
+            onChange={(e) => setHandle(e.target.value)}
+            aria-invalid={handleError ? "true" : undefined}
           />
+          {handleError && (
+            <p className="t-mono-xs text-[var(--accent)] mt-1.5" role="alert">
+              {handleError}
+            </p>
+          )}
         </div>
       </div>
       <div>
@@ -75,20 +191,55 @@ export function ProfileForm({ email, handle }: { email: string; handle: string }
           maxLength={280}
           autoComplete="off"
           placeholder="Tell people what you ship in one or two lines."
-          defaultValue=""
+          value={bio}
+          onChange={(e) => setBio(e.target.value)}
+          aria-invalid={bioError ? "true" : undefined}
         />
+        <p className="t-mono-xs text-[var(--fg-mute)] mt-1.5">
+          ▸ {bio.length} / 280
+        </p>
+        {bioError && (
+          <p className="t-mono-xs text-[var(--accent)] mt-1.5" role="alert">
+            {bioError}
+          </p>
+        )}
       </div>
-      <div className="pt-1">
+      <div className="pt-1 flex items-center gap-3 flex-wrap">
         <Button
           type="submit"
           variant="accent"
-          disabled
-          title="Profile save · coming soon"
-          aria-label="Save profile — coming soon"
-          className="text-[12px] tracking-[0.04em] normal-case opacity-50 cursor-not-allowed"
+          disabled={!canSubmit}
+          aria-label={canSubmit ? "Save profile changes" : dirty ? "Save profile — fix validation errors first" : "Save profile — no changes"}
+          aria-busy={submitting}
+          data-profile-save="true"
+          className="text-[12px] tracking-[0.04em] normal-case inline-flex items-center gap-2"
         >
-          Save profile · soon
+          {submitting && <Loader2 size={12} className="animate-spin" />}
+          {submitting ? "Saving…" : "Save profile"}
         </Button>
+        {state.kind === "saved" && !dirty && (
+          <span
+            className="t-mono-xs uppercase tracking-[0.16em] text-[var(--signal)] inline-flex items-center gap-1.5"
+            data-profile-saved="true"
+            role="status"
+          >
+            <Check size={12} /> Saved
+          </span>
+        )}
+        {state.kind === "error" && (
+          <span
+            className="t-mono-xs text-[var(--accent)]"
+            role="alert"
+            data-profile-error="true"
+          >
+            {state.message}
+          </span>
+        )}
+        {!dirty && state.kind === "idle" && (
+          <span className="t-mono-xs text-[var(--fg-mute)] uppercase tracking-[0.16em]">
+            No changes
+          </span>
+        )}
       </div>
     </form>
   );
@@ -96,196 +247,106 @@ export function ProfileForm({ email, handle }: { email: string; handle: string }
 
 // ── Studio API section ───────────────────────────────────────────────────────
 
-const PLACEHOLDER_API_KEY = "sk_live_•••••••••••••••••••••••";
-
+/**
+ * Studio API surface — cycle #11 rewrite.
+ *
+ * The previous version showed a fake `sk_live_••••` API key and a
+ * webhook form with a fake `whsec_••••` secret. Neither was wired to
+ * anything. Cycle #10 marked the public REST + webhook API as a v1.1
+ * target across the marketing surfaces; the settings section now
+ * reflects the same truth.
+ *
+ * We still distinguish Studio/Lifetime users (who would see the live
+ * surface in v1.1) from free users (who upgrade first), so the page
+ * stays purchase-funnel-aware.
+ */
 export function StudioApiForm({ enabled }: { enabled: boolean }) {
-  const [copied, setCopied] = useState(false);
-
-  async function handleCopy() {
-    try {
-      await navigator.clipboard.writeText(PLACEHOLDER_API_KEY);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1800);
-    } catch {
-      /* clipboard API unavailable; silently no-op */
-    }
-  }
-
   if (!enabled) {
     return (
-      <div className="border border-dashed border-[var(--line-strong)] p-5">
-        <div className="t-mono-xs text-[var(--fg-mute)] mb-1">LOCKED</div>
-        <p className="t-prose text-[14px] mb-3">
-          API access is included with Studio and Lifetime plans.
+      <div
+        className="border border-dashed border-[var(--line-strong)] p-5 space-y-3"
+        data-api-status="locked"
+      >
+        <div className="t-mono-xs text-[var(--fg-mute)]">LOCKED · STUDIO + LIFETIME</div>
+        <p className="t-prose text-[14px]">
+          The public REST + webhook API ships in v1.1 for Studio and
+          Lifetime subscribers. Upgrade now to be in the first wave when
+          it lights up — no migration cost.
         </p>
-        <Button variant="ghost" className="text-[11px] tracking-[0.04em] normal-case">
+        <a
+          href="/billing"
+          className="btn text-[11px] tracking-[0.04em] normal-case inline-flex items-center gap-2"
+        >
           ▸ Upgrade to Studio
-        </Button>
+        </a>
       </div>
     );
   }
 
   return (
-    <form
-      onSubmit={(e) => { e.preventDefault(); /* TODO: wire to /api/settings/api-keys */ }}
-      aria-label="Studio API settings"
-      className="space-y-4"
+    <div
+      className="border border-[var(--line-strong)] p-5 space-y-3"
+      data-api-status="planned"
     >
-      <div>
-        <Label htmlFor="settings-api-key">API key</Label>
-        <div className="flex gap-2 flex-wrap">
-          <Input
-            id="settings-api-key"
-            name="apiKey"
-            readOnly
-            autoComplete="off"
-            defaultValue={PLACEHOLDER_API_KEY}
-            className="flex-1 min-w-0"
-          />
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={handleCopy}
-            aria-label={copied ? "API key copied to clipboard" : "Copy API key to clipboard"}
-            className="text-[11px] tracking-[0.04em] normal-case inline-flex items-center gap-1.5"
-          >
-            {copied ? <Check size={12} /> : null}
-            {copied ? "Copied" : "Copy"}
-          </Button>
-          <Button
-            type="button"
-            variant="destructive"
-            disabled
-            title="Key rotation — coming soon"
-            aria-label="Rotate API key — coming soon"
-            className="text-[11px] tracking-[0.04em] normal-case opacity-60 cursor-not-allowed"
-          >
-            Rotate
-          </Button>
-        </div>
-        <p className="t-mono-xs text-[var(--fg-mute)] mt-1.5">
-          ▸ Shown only once on creation. Lost it? Rotate to issue a new one.
-        </p>
-      </div>
-      <div>
-        <Label htmlFor="settings-webhook-url">Webhook URL</Label>
-        <Input
-          id="settings-webhook-url"
-          name="webhookUrl"
-          type="url"
-          autoComplete="off"
-          placeholder="https://your.app/webhooks/shotshq"
-        />
-      </div>
-      <div>
-        <Label htmlFor="settings-webhook-secret">Webhook secret</Label>
-        <Input
-          id="settings-webhook-secret"
-          name="webhookSecret"
-          readOnly
-          autoComplete="off"
-          defaultValue="whsec_•••••••••••••••••••••"
-        />
-      </div>
-    </form>
+      <div className="t-mono-xs text-[var(--accent)]">V1.1 · PLANNED</div>
+      <p className="t-prose text-[14px]">
+        Your Studio plan includes the public REST + webhook API when it
+        ships in v1.1. Issuing keys, rotating them, and configuring
+        webhook destinations all land in the same release — we&apos;ll
+        email you the day they go live so you don&apos;t have to keep
+        checking.
+      </p>
+      <p className="t-mono-xs text-[var(--fg-mute)]">
+        ▸ See <a href="/docs/api" className="text-[var(--fg-dim)] hover:text-[var(--accent)] underline">/docs/api</a> for the planned contract.
+      </p>
+    </div>
   );
 }
 
 // ── App Store Connect section ────────────────────────────────────────────────
 
+/**
+ * App Store Connect surface — cycle #11 rewrite.
+ *
+ * The previous version exposed a multi-field credential form (Issuer
+ * ID, Key ID, .p8 private key) with a permanently-disabled `Verify
+ * and save · soon` button. A user could paste a real .p8 into the
+ * textarea and walk away thinking it was saved — none of it was.
+ * That's the worst-case dead control: it looks alive enough to
+ * sink real secrets into a do-nothing form.
+ *
+ * Cycle #11 removes the pseudo-actionable form entirely and replaces
+ * it with an honest v1.1 status surface. Cycle #10 had already marked
+ * the ASC integration as v1.1 on the public docs; this aligns the
+ * authenticated surface with the same truth. The data-asc-status hook
+ * is `planned` so any future test that wires up real verification can
+ * advance the status through `disconnected → draft → verifying →
+ * connected → error` without changing the contract shape.
+ */
 export function AscForm() {
-  const [showKey, setShowKey] = useState(false);
-  const [keyValue, setKeyValue] = useState("");
-  const isMasked = !showKey && keyValue.length > 0;
-
   return (
-    <form
-      onSubmit={(e) => { e.preventDefault(); /* TODO: wire to /api/settings/asc */ }}
-      aria-label="App Store Connect credentials"
-      className="space-y-4"
+    <div
+      className="border border-[var(--line-strong)] p-5 space-y-3"
+      data-asc-status="planned"
     >
-      <div>
-        <Label htmlFor="settings-asc-issuer">Issuer ID</Label>
-        <Input
-          id="settings-asc-issuer"
-          name="issuerId"
-          type="text"
-          autoComplete="off"
-          spellCheck={false}
-          placeholder="69a6de7d-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-        />
-        <p className="t-mono-xs text-[var(--fg-mute)] mt-1.5">
-          ▸ App Store Connect → Users and Access → Integrations → API Keys.
-        </p>
-      </div>
-
-      <div>
-        <Label htmlFor="settings-asc-key-id">Key ID</Label>
-        <Input
-          id="settings-asc-key-id"
-          name="keyId"
-          type="text"
-          autoComplete="off"
-          spellCheck={false}
-          placeholder="2X9YABCDEFG"
-        />
-      </div>
-
-      <div>
-        <div className="flex items-baseline justify-between">
-          <Label htmlFor="settings-asc-private-key">Private key (.p8)</Label>
-          <button
-            type="button"
-            onClick={() => setShowKey((v) => !v)}
-            disabled={keyValue.length === 0}
-            className="inline-flex items-center gap-1.5 t-mono-xs uppercase tracking-[0.14em] text-[var(--fg-mute)] hover:text-[var(--fg)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-            aria-label={showKey ? "Hide private key" : "Show private key"}
-            aria-pressed={showKey}
-          >
-            {showKey ? <EyeOff size={12} /> : <Eye size={12} />}
-            {showKey ? "Hide" : "Show"}
-          </button>
-        </div>
-        <Textarea
-          id="settings-asc-private-key"
-          name="privateKey"
-          rows={6}
-          autoComplete="off"
-          spellCheck={false}
-          placeholder="-----BEGIN PRIVATE KEY-----..."
-          value={keyValue}
-          onChange={(e) => setKeyValue(e.target.value)}
-          // CSS-level masking — characters render as •••• when hidden.
-          // This is sensitive cryptographic material; never display by default.
-          style={
-            isMasked
-              ? ({
-                  WebkitTextSecurity: "disc",
-                  MozTextSecurity: "disc",
-                  textSecurity: "disc",
-                } as React.CSSProperties)
-              : undefined
-          }
-        />
-        <p className="t-mono-xs text-[var(--accent)] mt-1.5">
-          ⚠ Sensitive cryptographic material. Never share or screenshot
-          this field. Once saved, the raw key is never shown again — you
-          can rotate to issue a new one.
-        </p>
-      </div>
-
-      <div className="pt-1">
-        <Button
-          type="submit"
-          variant="accent"
-          disabled
-          title="ASC credential verification · coming soon"
-          aria-label="Verify and save App Store Connect credentials — coming soon"
-          className="text-[12px] tracking-[0.04em] normal-case opacity-50 cursor-not-allowed"
-        >
-          Verify and save · soon
-        </Button>
-      </div>
-    </form>
+      <div className="t-mono-xs text-[var(--accent)]">V1.1 · PLANNED</div>
+      <p className="t-prose text-[14px]">
+        Direct push to App Store Connect ships in v1.1 alongside the
+        server render queue. Generated assets will upload per-locale,
+        per-device, with App Store Connect&apos;s required filename
+        conventions handled automatically.
+      </p>
+      <p className="t-prose text-[14px]">
+        We&apos;re not collecting your ASC API key yet — paste-and-pray
+        is exactly how cryptographic material gets lost. When the
+        verify flow ships, you&apos;ll paste the Issuer ID, Key ID, and
+        <samp className="mx-1">.p8</samp> private key once, we&apos;ll
+        validate them against Apple in-flight, and the raw key never
+        re-renders after the first save.
+      </p>
+      <p className="t-mono-xs text-[var(--fg-mute)]">
+        ▸ See <a href="/docs/asc" className="text-[var(--fg-dim)] hover:text-[var(--accent)] underline">/docs/asc</a> for the planned setup flow.
+      </p>
+    </div>
   );
 }

@@ -8,6 +8,13 @@
       "when": 1777391766426,
       "tag": "0000_deep_la_nuit",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1779523196874,
+      "tag": "0001_serious_synch",
+      "breakpoints": true
     }
   ]
 }

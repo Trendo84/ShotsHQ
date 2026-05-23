@@ -22,6 +22,11 @@ function fixtureUser(plan: BillingPlan, stripeCustomerId: string | null = "cus_t
     stripeCustomerId,
     plan,
     creditBalance:    0,
+    // Cycle #11 added these columns to the `users` table; pure-logic
+    // tests don't exercise them, but the User type requires them.
+    displayName:      "",
+    handle:           "",
+    bio:              "",
     createdAt:        new Date(),
     updatedAt:        new Date(),
   };

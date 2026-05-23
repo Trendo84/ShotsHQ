@@ -68,6 +68,14 @@ export const users = pgTable(
     plan:             planEnum("plan").notNull().default("free"),
     /** Cache only — recompute from credit_ledger inside debit transactions. */
     creditBalance:    integer("credit_balance").notNull().default(0),
+    /**
+     * Operator profile fields edited from /settings · Profile.
+     * All optional — Clerk owns email; these are local-only enrichments
+     * for operator cards, receipts, and the public showcase.
+     */
+    displayName:      text("display_name").notNull().default(""),
+    handle:           text("handle").notNull().default(""),
+    bio:              text("bio").notNull().default(""),
     createdAt:        timestamp("created_at", { withTimezone: true }).notNull().$defaultFn(() => new Date()),
     updatedAt:        timestamp("updated_at", { withTimezone: true }).notNull().$defaultFn(() => new Date()),
   },
