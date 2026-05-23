@@ -31,6 +31,57 @@ const ENTRIES: Array<{
   changes: { tag: "ADD" | "FIX" | "PERF" | "REM"; body: string }[];
 }> = [
   {
+    rev:     "v0.11",
+    date:    "2026-05-23",
+    channel: "PRE-LAUNCH",
+    note:    "App-shell stability: Clerk's UserButton was emitting hydration mismatch errors on every authenticated route. The shell now hydrates cleanly + the e2e harness no longer flakes on heavy upload paths.",
+    changes: [
+      { tag: "FIX",  body: "Topbar's <UserButton /> wrapped in a mount-gate (stable aria-hidden placeholder during SSR + first client render, swap to real Clerk widget after useEffect). Eliminates `Hydration failed because the server rendered HTML didn't match the client` errors on /dashboard, /projects, /projects/new, /projects/[id], /studio, /exports, /billing, /settings. Placeholder dims match the eventual avatar box so there's no layout shift." },
+      { tag: "ADD",  body: "e2e/no-hydration-errors.spec.ts — Playwright spec that visits all 8 Topbar routes, listens for any console-error or pageerror matching React #418 / #421 / #423 / #425 codes or `hydrat*` text, fails the build on a regression." },
+      { tag: "PERF", body: "Playwright workers capped at 2 locally + 1 retry (CI keeps 1 worker / 2 retries). The studio upload + autosave path saturates Next dev under unbounded parallelism; the cap drops e2e flakes to zero and the full suite runs 21/21 green." },
+    ],
+  },
+  {
+    rev:     "v0.10",
+    date:    "2026-05-23",
+    channel: "PRE-LAUNCH",
+    note:    "Studio uploads now persist + Export current produces a real exact-pixel App Store PNG. Two stacked bugs were silently masking each other in the pre-fix code.",
+    changes: [
+      { tag: "ADD",  body: "/api/upload/direct — same-origin proxied multipart upload that PUTs to R2 with server credentials. Sidesteps missing R2 bucket-CORS without operator action. Studio's onUpload routes through this; the blob URL is swapped for the durable https URL on success and screenshotRemote flips to true." },
+      { tag: "ADD",  body: "/api/r2-proxy — same-origin read proxy for R2 public URLs. Strict key-regex validation (users/<uuid>/(projects/<uuid>|uploads)/<nanoid>.<ext>), content-type allowlist (PNG/JPEG/WEBP), 12 MB cap, immutable cache headers. Lets html-to-image's canvas.drawImage read R2 bytes without tainting the canvas." },
+      { tag: "FIX",  body: "Studio readiness now requires screenshotRemote === true. A blob URL alone (browser-local, stripped on save) no longer counts as ready — the prior signal lied because panels looked ready but vanished on reload." },
+      { tag: "FIX",  body: "Export pixel-ratio double-scaling. html-to-image multiplies canvasWidth by pixelRatio when both are set; the prior code passed both and produced 3782×… instead of 1290×2796. Dropped the redundant canvasWidth/canvasHeight options — single source of truth is `node CSS width × pixelRatio = output px`." },
+      { tag: "ADD",  body: "e2e/studio-export-loop.spec.ts — sharp-measured PNG validation. Drives upload → autosave → Export current → captured download → sharp.metadata() asserts format=png + exact 1290×2796 dims + file size > 20 KB (rules out tainted blanks). Cross-surface READY asserted on /dashboard + /projects + /projects/[id] after the export." },
+      { tag: "ADD",  body: "e2e/studio-upload-persistence.spec.ts — proves the upload survives autosave + page reload, with the panel still marked READY on the rehydrated /studio surface." },
+    ],
+  },
+  {
+    rev:     "v0.9",
+    date:    "2026-05-23",
+    channel: "PRE-LAUNCH",
+    note:    "Truthful surfaces sweep: Studio, /exports, /projects/[id], /dashboard, and /projects all derive status from one shared readiness model instead of hardcoding `READY` / `DRAFT` regardless of real state.",
+    changes: [
+      { tag: "ADD",  body: "lib/studio/readiness.ts — single source of truth. evaluatePanel + evaluateStudio + statusOf + statusLabel produce a canonical enum (empty / blocked / partial / ready) that every surface consumes." },
+      { tag: "ADD",  body: "lib/studio/project-status.ts — wraps the readiness chain for per-project status across the list + overview surfaces. Same enum, same badge variant, same state-aware next-action (Open studio / Upload in Studio / Prepare in Studio / Open Exports)." },
+      { tag: "FIX",  body: "Studio's `EXPORT READY` InfoCell + Export current / Export all buttons now gate on real readiness. Empty projects no longer claim ready or enable export. Defense-in-depth: if a blocked panel is dispatched anyway (DevTools strip), the run logs a Blocked row with the missing-pieces reason instead of silently no-opping." },
+      { tag: "FIX",  body: "/projects/[id]/exports — dead-end `Render now · coming soon` CTA replaced with state-aware `Prepare in Studio` / `Open Studio to export`. Per-device cards show real PANELS X / READY Y counts derived from studio.panels[].deviceId. Header readiness card matches Studio's data-readiness-status." },
+      { tag: "FIX",  body: "/projects/[id] overview — replaced hardcoded `Shot grid · 0 / 24 slots` + 8 empty placeholders + always-`◯ READY` target rows with real panel-derived state. Per-panel checklist surfaces what's blocking; target rows progress READY / PARTIAL / DRAFTING / TARGETED." },
+      { tag: "FIX",  body: "/dashboard rows + /projects cards no longer hardcode `<Badge>Draft</Badge>` on every entry. Both surfaces consume projectStatus() — data-project-status enum + truthful badge label + truthful `X / Y panels ready` sub-line. Cross-surface consistency spec asserts /dashboard / /projects / /projects/[id] all agree per project." },
+    ],
+  },
+  {
+    rev:     "v0.8",
+    date:    "2026-05-23",
+    channel: "PRE-LAUNCH",
+    note:    "Screenshot Studio engine: ASOForge-style constrained pack builder replaces the Fabric.js freeform editor as the primary editing surface. /editor redirects to /studio.",
+    changes: [
+      { tag: "ADD",  body: "components/studio/* — Phase A engine: one project owns an ordered panel set (headline + subhead + screenshot + theme + layout + device class + frame style per panel). Constrained-by-design produces App Store-ready output without freeform layout decisions." },
+      { tag: "ADD",  body: "Multi-panel filmstrip on /studio with ordered selection, duplication, reordering, deletion, and bulk export naming. Each panel renders into the device frame at exact pixel dimensions on export." },
+      { tag: "ADD",  body: "Studio is now the default editing route — /projects/[id]/editor server-side redirects to /projects/[id]/studio. The legacy Fabric route is retired from the user path; lib/canvas/* stays as schema infrastructure that Studio reads/writes through." },
+      { tag: "FIX",  body: "Studio device-class switch was a UI lie. Clicking iPhone 6.7 or iPad 13 left iPhone 6.9 visually selected; preview header + filmstrip metadata stuck on the old device. Added aria-pressed + aria-checked + data-active + role=radio markers + an active text-color flip so the selected state is unambiguous. Extracted the switch logic to a pure reducer (lib/studio/device-switch.ts) with 12 unit specs + 3 Playwright specs covering click → selected styling, filmstrip metadata, and selection persistence across page reload (autosave)." },
+    ],
+  },
+  {
     rev:     "v0.7",
     date:    "2026-04-30",
     channel: "PRE-LAUNCH",
