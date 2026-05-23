@@ -1,5 +1,197 @@
 # ShotsHQ overnight BrowserOS status
 
+## 2026-05-24 05:00 AEST · overnight redesign (cycle #13)
+
+### What shipped this cycle
+
+Two commits, both pushed to `origin/main`:
+
+- **`51cdeba`** — `fix(capture): migrate wizard CaptureDropzone to /api/upload/direct`
+- **`a5d609e`** — `fix(redesign): remove WIP banner, fix Reveal opacity-0 gaps, fix Templates next/image warning, raise contrast on web-hero`
+
+Brief target: an overnight redesign pass to make ShotsHQ feel like a sharp, premium, truth-first product that is already usable today — keeping the brutalist/tactical identity but removing anything that reads broken, placeholder, dim, or "prelaunch". Audit caught five P0/P1 hard breakages + a queued P1 migration.
+
+#### P0 #1 — Reveal sections rendering at opacity:0 (large blank gaps)
+
+`components/Reveal.tsx` rewrote as progressive enhancement only:
+
+- **SSR + first paint + reduced-motion + no-IntersectionObserver paths** all render visible by default. No user ever sees a large blank gap because of a missed callback.
+- After mount: above-the-fold elements stay visible without animation (`getBoundingClientRect` checks `inViewAtMount`); below-the-fold elements drop to the pre-animation state and animate in on IO. The animation is now a polish layer, not a load-bearing piece of layout.
+
+#### P0 #2 — Yellow "Work in progress · Pre-launch build" banner destroying trust on every public surface
+
+`app/layout.tsx`: `<WipBanner />` unmounted from the root layout. v1.1 / planned items are now signposted in-place where they belong (`data-asc-status="planned"` in /settings, the v1.1 chip on /tools/web-hero) rather than via a blanket warning strip. `components/WipBanner.tsx` retained on disk in case a future scoped (authenticated-only) variant is needed.
+
+#### P0 #3 — Templates throwing next/image fill warnings + gray-box previews
+
+`components/marketing/Templates.tsx` switched from `<Image fill>` to explicit `width={600} height={800}` with `style={{ aspectRatio: "3 / 4" }}`:
+
+- Kills the `next/image` "fill + parent has no explicit height" warning.
+- Reserves space before bytes arrive → no LCP shift.
+- First **four cards** (above-the-fold on every viewport) get `priority` + `loading="eager"` so the gallery feels instant.
+
+#### P1 — Web-hero contrast + v1.1 demoted from headline weight
+
+`app/(marketing)/tools/web-hero/page.tsx`:
+
+- v1.1 chip moved from a primary headline-area element to a one-line metadata note beside the CTA: "**Designer ships v1.1 · App Store pipeline live today**" — confident positioning, not apology.
+- Sample-output badge reverts to "Sample output" (was "v1.1 · Sample mock" which read as a draft).
+- Body copy promoted from `var(--fg-mute)` to `var(--fg)` (eyebrow tag preserved). Dimension cards + style cards moved from fg-mute → fg-dim for legibility at rest.
+
+#### P1 — Landing page cadence
+
+`app/(marketing)/page.tsx` section order:
+
+```
+Hero → Templates compact → Pipeline → Surfaces → FeatureGrid → CTA
+```
+
+Templates moves up to step 2 so concrete proof of finished outputs lands BEFORE the engine-and-features explainers.
+
+#### P1 — CaptureDropzone migrated (queued from cycle #12 carry-forward)
+
+The wizard Step 3 dropzone was the last surface still on the presigned-PUT path at `/api/upload`. Studio has been on the same-origin `/api/upload/direct` proxy since cycle #3; cycle #10 documented that as canonical on `/docs/quickstart`; this cycle aligns the actual code.
+
+- `components/capture/CaptureDropzone.tsx` POSTs each PNG as multipart/form-data to `/api/upload/direct` (server proxies bytes to R2). Presigned flow gone.
+- `proxy.ts` auth-gating broadened from `"/api/upload"` to `"/api/upload(.*)"` so the new surface is Clerk-protected like the legacy path.
+- Header comments updated on `/api/screenshots/register`, `/api/upload/direct`, `/api/upload` to reflect the canonical/legacy split.
+
+#### Dashboard + Settings polish
+
+- **Dashboard**: empty state expanded into a two-column block — CTA + "or pick from a template" link on the left, a static `01 → 02 → 03` recipe on the right (Pick devices · Drop PNGs · Compose in Studio). First-run now reads as a directed ninety-second path, not a single CTA + filler copy.
+- **Settings**: header subhead tightened ("Profile changes save to Postgres in under a second. Studio API and App Store Connect integrations ship in v1.1.") with `var(--fg)` body copy for higher contrast.
+
+### Files touched
+
+```
+M  components/Reveal.tsx                          (progressive-enhancement rewrite)
+M  app/layout.tsx                                 (WipBanner unmounted)
+M  components/marketing/Templates.tsx             (explicit dims, priority, fill warning fix)
+M  app/(marketing)/page.tsx                       (section reorder)
+M  app/(marketing)/tools/web-hero/page.tsx        (contrast + v1.1 demoted)
+M  app/(app)/dashboard/page.tsx                   (empty-state two-column)
+M  app/(app)/settings/page.tsx                    (header subhead tightened)
+M  components/capture/CaptureDropzone.tsx         (migrate to /api/upload/direct)
+M  app/api/upload/route.ts                        (legacy comment)
+M  app/api/upload/direct/route.ts                 (canonical comment)
+M  app/api/screenshots/register/route.ts          (upstream-path comment)
+M  proxy.ts                                       (auth gate broadened to /api/upload(.*))
+M  e2e/studio-upload-persistence.spec.ts          (comment + stripped null bytes)
+M  e2e/marketing-honesty.spec.ts                  (+2 specs: WIP absence, Reveal visibility)
+```
+
+### Verification (all green)
+
+```
+pnpm typecheck   → clean
+pnpm test        → 231 / 231 pass across 22 files
+pnpm test:e2e    → 56 / 56 pass with --workers=1 (no flakes, no skips)
+                     - 2 new marketing-honesty specs (WIP absent
+                       + landing Reveal visibility)                  ✅
+                     - 9 existing marketing-honesty                  ✅ (cycle #10)
+                     - 8 settings                                    ✅ (cycle #11)
+                     - 6 ai-panel                                    ✅ (cycle #12)
+                     - 4 billing-readiness                           ✅ (cycle #9)
+                     - 6 studio-selector-parity                      ✅ (cycle #8)
+                     - 1 hydration smoke                             ✅ (cycle #6)
+                     - 1 export-loop                                 ✅ (cycle #6)
+                     - 5 list-surfaces                               ✅ (cycle #5)
+                     - 3 project-overview                            ✅ (cycle #4)
+                     - 4 export-readiness                            ✅ (cycle #2)
+                     - 3 studio-device-switch                        ✅ (cycle #1)
+                     - 2 studio-upload-persistence                   ✅ (cycle #3)
+                     - 2 wizard                                      ✅
+pnpm build       → clean
+git push         → afa5306..a5d609e main -> main
+```
+
+### Definition-of-done check (brief's eight bullets)
+
+1. ✅ `/` and `/tools/web-hero` render fully visible content on first load. Reveal renders visible at rest; e2e pins the templates CTA and bottom CTA as visible without scroll dependency.
+2. ✅ `/templates` shows real previews via explicit width/height (no more `fill` warning); first four cards get `priority` for LCP.
+3. ✅ Public marketing no longer shows the WIP warning strip. e2e pins absence across `/`, `/pricing`, `/docs`, `/templates`.
+4. ✅ Public copy stays honest about v1.1 / planned work but reads as confident product positioning (web-hero chip demoted from headline to CTA-side metadata).
+5. ✅ `CaptureDropzone` migrated to `/api/upload/direct`. The full Studio-export-loop e2e proves the upload + render + read round-trip stays green; manual smoke is the remaining check for the dropzone itself (file-system drag-drop is fragile in headless browsers).
+6. ✅ Dashboard empty state reframed as a directed ninety-second recipe.
+7. ✅ Settings header copy tightened; profile remains the first and most-prominent section.
+8. ✅ Local build clean, e2e coverage green, ready for deploy.
+
+### Blockers
+
+None code-side. Carry-forwards:
+
+- **R2 bucket CORS** — operator-side; with `/api/upload/direct` everywhere now, this is no longer in the critical path. Carrying as a "future browser-direct path unlock" rather than a block.
+- **Clerk live-key swap** in Vercel production env.
+- **Prod DB migration from cycle #11** — `pnpm db:migrate` runs on next Vercel deploy.
+- **`?e2e_plan=` fixture override for /billing paid-tier e2e** — carried from cycle #9.
+- **Dead `Comparison.tsx` marketing component** — carried from cycle #10.
+
+### Highest-priority next target
+
+The marketing surfaces, the app shell (dashboard, settings, billing), the AI panel, and the upload flow are all now on the readiness contract AND look premium at rest. Remaining audit surface clusters around three themes:
+
+1. **`/projects/[id]/surfaces` audit** — the surfaces overview page. Last untouched project-scoped route since cycle #4. Does it lie about which surfaces are ready vs blocked vs empty? Same checklist as cycle #11/#12.
+
+2. **Parallel-worker e2e flake investigation** — running at `--workers=2` saw flakes on cycle #9–#12; `--workers=1` is clean across all 56 tests but ~3× slower. A dedicated cycle to fix the actual race (likely DB-seed timing on shared synthetic user) would unblock a fast CI loop.
+
+3. **Comparison.tsx cleanup + Studio + Lifetime e2e fixture** — small follow-up debt.
+
+4. **Mobile audit** — the brief specifically called out mobile requirements (no clipped cards, hero CTA stacks cleanly, templates grid legible at small widths). After this cycle's changes a quick browser pass at 375px to confirm nothing regressed would close the loop.
+
+### Next BrowserOS prompt (paste verbatim next hour)
+
+```
+Continue the overnight loop in /Volumes/NVME EXT/Ivan/CODEX/ShotsHQ.
+Read docs/ops/overnight-browseros-loop.md (operating rules) and the
+top entry of docs/ops/overnight-browseros-status.md (latest cycle —
+yours).
+
+Focus this cycle: audit /projects/[id]/surfaces for the same
+readiness-lie shape that cycles #2–#13 caught for the other surfaces.
+This is the last untouched project-scoped route. It renders before
+/studio in the project nav — does it lie about which surfaces are
+ready vs blocked vs empty? Apply the same pattern as the cycles-#5
+/#11/#12 sweeps: derive from real state, expose data-surface-id /
+data-surface-status hooks for testability, add an e2e regression
+spec.
+
+Concrete steps:
+
+ 1. Visit /projects/[id]/surfaces with NEXT_PUBLIC_E2E=1. Note what
+    the page renders for an empty project vs a ready project.
+      - What "surfaces" does it list? (App Store, web hero, press
+        kit, OG cards?)
+      - Are any rendered as "live" when the backend isn't shipped?
+      - Are any rendered as "soon" when the backend IS shipped?
+      - Does the readiness pill use the cycle-#2 contract
+        (data-readiness-status) or has it drifted?
+
+ 2. Cross-check app/(app)/projects/[id]/surfaces/page.tsx. Common
+    lies to look for:
+      - Hardcoded "READY" badges on every surface
+      - "Render now" CTAs that POST nothing
+      - Cost shown without a real source-of-truth lookup
+
+ 3. If lies are found, fix them using the cycle-#5/cycle-#11/cycle-#12
+    pattern: derive from real state, expose data-surface-id /
+    data-surface-status attributes for testability, add an e2e spec.
+
+ 4. If /projects/[id]/surfaces is already honest, pivot to a
+    parallel-worker e2e flake investigation (running the suite at
+    --workers=2 has reliably flaked the project-list-surfaces:157
+    spec across cycles #9, #10, #11, #12; --workers=1 is clean).
+    Likely a DB-seed race on the shared synthetic E2E user — adding
+    a per-test isolation prefix would unblock fast CI runs.
+
+Re-run pnpm typecheck / pnpm test / pnpm test:e2e / pnpm build.
+Update docs/ops/overnight-browseros-status.md and reply with a
+ship report.
+
+Treat the repo + git state as truth. Don't trust session memory.
+```
+
+---
+
 ## 2026-05-23 20:30 AEST · cycle #12
 
 ### What shipped this cycle
