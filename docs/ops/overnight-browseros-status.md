@@ -1,5 +1,134 @@
 # ShotsHQ overnight BrowserOS status
 
+## 2026-05-23 13:30 AEST · cycle #8
+
+### What shipped this cycle
+
+**`feat(studio): selected-state parity across all Studio selector groups`** (commit `e09e479`, pushed to `origin/main`).
+
+Brief target: proactively apply the cycle #1 selected-state contract to Studio's other selector groups so they match the device-class fix and can't silently regress. Six groups now share the same contract + a parameterised regression net pins each one.
+
+#### Selector groups now on the contract
+
+| Group | Data attribute | Options |
+|---|---|---|
+| Frame style | `data-frame-id` | pro-device, flat-device, frameless (or tablet-device for iPad family) |
+| Layout | `data-layout-id` | text-top, text-bottom, device-only, device-angled |
+| Theme preset | `data-theme-id` | tactical-telemetry, swiss-industrial, signal-console, midnight-blue |
+| Align | `data-align-id` | left, center, right |
+| Font tone | `data-font-id` | display, sans, mono |
+| Background mode | `data-bgkind-id` | radial, linear, solid |
+
+Every option exposes `role="radio"` + `aria-pressed` + `aria-checked` + `data-active="true|false"` + `data-<group>-id`. Each wrapper is `role="radiogroup"` with `aria-label` set to the StudioField label so screen readers announce a real radio group.
+
+The active class adds `text-[var(--accent)]`; inactive adds `text-[var(--fg)]`. Combined with the border + background flip, the selected cue stays legible across both Tactical and Swiss themes regardless of bg color (the original cycle-#1 bug was that border-only contrast could read identical depending on theme).
+
+No reducers added. These are trivial setState selectors — pure JSX edits + a single parameterised spec is the right scope. (Per brief explicit instruction.)
+
+### Files touched
+
+```
+M  components/studio/StudioClient.tsx     (6 selector groups + wrappers)
+A  e2e/studio-selector-parity.spec.ts     (6 parameterised specs)
+```
+
+### Verification (all green, on commit `e09e479`)
+
+```
+pnpm typecheck   → clean
+pnpm test        → 205 passed across 20 files
+pnpm test:e2e    → 27 / 27 passed
+                     - 6 new studio-selector-parity
+                     - 1 hydration smoke           (cycle #6)
+                     - 1 export-loop               (cycle #6)
+                     - 5 list-surfaces             (cycle #5)
+                     - 3 project-overview          (cycle #4)
+                     - 4 export-readiness          (cycle #2)
+                     - 3 studio-device-switch      (cycle #1)
+                     - 2 studio-upload-persistence (cycle #3)
+                     - 2 wizard
+pnpm build       → clean
+git push         → 1bce503..e09e479 main -> main
+```
+
+### Acceptance-criteria status (brief's 5 bullets)
+
+1. ✅ `aria-pressed` + `aria-checked` + `data-active` + `role="radio"` on every option in every group; wrappers expose `role="radiogroup"` with `aria-label`.
+2. ✅ Active class adds text-color flip (`text-[var(--accent)]`) in addition to border + background, keeping the cue unambiguous across themes.
+3. ✅ Parameterised Playwright spec visits Studio, walks every option in every group, asserts clicked option flips to active (all 3 markers) + peers flip to inactive. One test per group, 6/6 green.
+4. ✅ No reducers added — trivial setState selectors stay JSX-only per brief.
+5. ✅ No regressing core flow surfaced during the pass; full export loop + readiness surfaces + hydration all stay green.
+
+### Blockers
+
+None code-side. Operator items still carried forward (unchanged):
+
+- **R2 bucket CORS** — operator-side, no-rush since same-origin proxy ships.
+- **Clerk live-key swap** in Vercel production env.
+
+### Highest-priority next target
+
+The Studio surface is now uniformly testable + truthful. Remaining shippability gaps cluster around two themes — **operator-config completeness** (Stripe + Clerk live keys, the roadmap items that have been parked) and **post-auth content audit** (`/billing` and `/settings` were verified hydration-clean but haven't been audited for the same readiness-lie shape that the cycle-#2-through-#5 sweep caught for the project surfaces). Pick the highest-leverage candidate:
+
+1. **`/billing` content audit** — what does the billing page show today? Plan, credit balance, purchase buttons. Are any badges / status pills hardcoded the way `/dashboard`'s "DRAFT" was? The Stripe Checkout flow is server-action-backed (per v0.6); the page might be lying about "current plan" or "active subscription" until a real Stripe webhook lands. Worth a browser audit + add `data-plan-status` / readiness contract if any drift found.
+
+2. **`/settings` content audit** — settings page has profile, API keys, theme prefs. ASC verify status, profile-save state, API key visibility — any of these hardcoded? The cycle-#0 audit batch already disabled the Save / ASC verify buttons honestly; worth re-verifying nothing regressed.
+
+3. **CaptureDropzone migrate to `/api/upload/direct`** — the wizard Step 3 dropzone still uses the presigned-PUT path that's CORS-blocked. Either migrate (immediate consistency win) or wait for operator R2 CORS rule. Low priority because the dropzone fails inline honestly.
+
+4. **`/projects/[id]/ai` audit** — the AI panel route exists. After cycle-#5's truthful surfaces work made the rest of the project pages match reality, is the AI panel still hardcoding things like "Translate · soon" or "Restyle · soon" buttons? Some of those products have backends; their UI might be either too dead or too alive.
+
+### Next BrowserOS prompt (paste verbatim next hour)
+
+```
+Continue the overnight loop in /Volumes/NVME EXT/Ivan/CODEX/ShotsHQ.
+Read docs/ops/overnight-browseros-loop.md (operating rules) and the
+top entry of docs/ops/overnight-browseros-status.md (latest cycle —
+yours).
+
+Focus this cycle: audit /billing for the same readiness-lie shape
+that the cycles-#2-through-#5 sweep caught for the project surfaces.
+Hydration is clean (verified cycle #6); content honesty is the open
+question.
+
+Concrete steps:
+
+ 1. Visit /billing in the live dev app (NEXT_PUBLIC_E2E=1 + a
+    project so the user has real state). Note what's rendered:
+      - plan label (Free / Indie / Pro / Studio / Lifetime)
+      - credit balance
+      - purchase / upgrade buttons
+      - subscription status (active / not subscribed / past due)
+    For each, check whether the data is derived from real state
+    (user.plan, getBalance(user.id), Stripe customer subscription)
+    or hardcoded.
+
+ 2. Cross-check the page source in app/(app)/billing/page.tsx and
+    any subcomponents. Common lies to look for:
+      - hardcoded "Free plan" badge regardless of user.plan
+      - balance shown as "0 credits" without reading getBalance
+      - "Upgrade" CTA visible to users already on Studio/Lifetime
+      - "Cancel subscription" button that never disables on the
+        non-recurring tiers
+      - "Past due" / "Active" status hardcoded
+
+ 3. If any lie is found, fix it using the cycle-#5 pattern: derive
+    from real state, expose data-plan-status / data-billing-status
+    attributes for testability, add an e2e spec.
+
+ 4. If /billing is already honest, pivot to /settings using the
+    same audit checklist (profile save state, ASC verify status,
+    API key visibility, danger-zone gates).
+
+Re-run pnpm typecheck / pnpm test / pnpm test:e2e / pnpm build.
+Update docs/ops/overnight-browseros-status.md and reply with a
+ship report.
+
+Treat the repo + git state as truth. Don't trust session memory.
+```
+
+---
+
 ## 2026-05-23 13:05 AEST · cycle #7
 
 ### What shipped this cycle
