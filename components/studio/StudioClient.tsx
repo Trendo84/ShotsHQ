@@ -632,19 +632,44 @@ export function StudioClient({
             </div>
           </StudioField>
 
+          {/*
+            Selected-state contract (applied across every selector
+            group on Studio's left rail, cycle #8):
+              - role="radiogroup" on the wrapper + role="radio" on
+                each button — accessibility tree exposes a real
+                radio group so screen readers announce the selection.
+              - aria-checked + aria-pressed reflect active state.
+              - data-active="true|false" + data-<group>-id="<value>"
+                on each option make the selected state directly
+                testable. The cycle-#1 device-class fix established
+                this contract; cycle #8 extends it everywhere.
+              - Active class flips text color in addition to border +
+                background, so the cue stays legible across themes
+                (the cycle-#1 bug was that border-only contrast can
+                read identical depending on theme + bg color).
+          */}
           <StudioField label="Frame style">
-            <div className="grid grid-cols-1 gap-2">
+            <div
+              className="grid grid-cols-1 gap-2"
+              role="radiogroup"
+              aria-label="Frame style"
+            >
               {compatibleFrames.map((frame) => {
                 const active = frame.id === activePanel.frameId;
                 return (
                   <button
                     key={frame.id}
                     type="button"
+                    role="radio"
+                    aria-checked={active}
+                    aria-pressed={active}
+                    data-frame-id={frame.id}
+                    data-active={active ? "true" : "false"}
                     onClick={() => patch("frameId", frame.id)}
                     className={`border px-3 py-2 text-left transition-colors ${
                       active
-                        ? "border-[var(--accent)] bg-[color-mix(in_srgb,var(--accent)_9%,transparent)]"
-                        : "border-[var(--line)] hover:border-[var(--accent)]"
+                        ? "border-[var(--accent)] bg-[color-mix(in_srgb,var(--accent)_9%,transparent)] text-[var(--accent)]"
+                        : "border-[var(--line)] hover:border-[var(--accent)] text-[var(--fg)]"
                     }`}
                   >
                     <div className="t-mono-sm uppercase tracking-[0.12em]">{frame.label}</div>
@@ -656,18 +681,27 @@ export function StudioClient({
           </StudioField>
 
           <StudioField label="Layout">
-            <div className="grid grid-cols-2 gap-2">
+            <div
+              className="grid grid-cols-2 gap-2"
+              role="radiogroup"
+              aria-label="Layout"
+            >
               {LAYOUT_PRESETS.map((layout) => {
                 const active = layout.id === activePanel.layout;
                 return (
                   <button
                     key={layout.id}
                     type="button"
+                    role="radio"
+                    aria-checked={active}
+                    aria-pressed={active}
+                    data-layout-id={layout.id}
+                    data-active={active ? "true" : "false"}
                     onClick={() => patch("layout", layout.id)}
                     className={`border px-3 py-2 t-mono-xs uppercase tracking-[0.14em] transition-colors ${
                       active
-                        ? "border-[var(--accent)] bg-[color-mix(in_srgb,var(--accent)_9%,transparent)]"
-                        : "border-[var(--line)] hover:border-[var(--accent)]"
+                        ? "border-[var(--accent)] bg-[color-mix(in_srgb,var(--accent)_9%,transparent)] text-[var(--accent)]"
+                        : "border-[var(--line)] hover:border-[var(--accent)] text-[var(--fg)]"
                     }`}
                   >
                     {layout.label}
@@ -678,18 +712,27 @@ export function StudioClient({
           </StudioField>
 
           <StudioField label="Theme preset">
-            <div className="grid grid-cols-1 gap-2">
+            <div
+              className="grid grid-cols-1 gap-2"
+              role="radiogroup"
+              aria-label="Theme preset"
+            >
               {THEME_PRESETS.map((theme) => {
                 const active = theme.id === activePanel.themeId;
                 return (
                   <button
                     key={theme.id}
                     type="button"
+                    role="radio"
+                    aria-checked={active}
+                    aria-pressed={active}
+                    data-theme-id={theme.id}
+                    data-active={active ? "true" : "false"}
                     onClick={() => applyTheme(theme.id)}
                     className={`border p-2 text-left transition-colors ${
                       active
-                        ? "border-[var(--accent)] bg-[color-mix(in_srgb,var(--accent)_9%,transparent)]"
-                        : "border-[var(--line)] hover:border-[var(--accent)]"
+                        ? "border-[var(--accent)] bg-[color-mix(in_srgb,var(--accent)_9%,transparent)] text-[var(--accent)]"
+                        : "border-[var(--line)] hover:border-[var(--accent)] text-[var(--fg)]"
                     }`}
                   >
                     <div className="flex items-center justify-between gap-3">
@@ -711,31 +754,63 @@ export function StudioClient({
 
           <div className="grid grid-cols-2 gap-4">
             <StudioField label="Align">
-              <div className="grid grid-cols-3 gap-2">
-                {ALIGNMENTS.map((align) => (
-                  <button
-                    key={align}
-                    type="button"
-                    onClick={() => patch("align", align)}
-                    className={`border px-2 py-2 t-mono-xs uppercase tracking-[0.14em] ${activePanel.align === align ? "border-[var(--accent)] bg-[color-mix(in_srgb,var(--accent)_9%,transparent)]" : "border-[var(--line)]"}`}
-                  >
-                    {align}
-                  </button>
-                ))}
+              <div
+                className="grid grid-cols-3 gap-2"
+                role="radiogroup"
+                aria-label="Align"
+              >
+                {ALIGNMENTS.map((align) => {
+                  const active = activePanel.align === align;
+                  return (
+                    <button
+                      key={align}
+                      type="button"
+                      role="radio"
+                      aria-checked={active}
+                      aria-pressed={active}
+                      data-align-id={align}
+                      data-active={active ? "true" : "false"}
+                      onClick={() => patch("align", align)}
+                      className={`border px-2 py-2 t-mono-xs uppercase tracking-[0.14em] transition-colors ${
+                        active
+                          ? "border-[var(--accent)] bg-[color-mix(in_srgb,var(--accent)_9%,transparent)] text-[var(--accent)]"
+                          : "border-[var(--line)] hover:border-[var(--accent)] text-[var(--fg)]"
+                      }`}
+                    >
+                      {align}
+                    </button>
+                  );
+                })}
               </div>
             </StudioField>
             <StudioField label="Font tone">
-              <div className="grid grid-cols-3 gap-2">
-                {FONT_CHOICES.map((font) => (
-                  <button
-                    key={font}
-                    type="button"
-                    onClick={() => patch("fontFamily", font)}
-                    className={`border px-2 py-2 t-mono-xs uppercase tracking-[0.14em] ${activePanel.fontFamily === font ? "border-[var(--accent)] bg-[color-mix(in_srgb,var(--accent)_9%,transparent)]" : "border-[var(--line)]"}`}
-                  >
-                    {font}
-                  </button>
-                ))}
+              <div
+                className="grid grid-cols-3 gap-2"
+                role="radiogroup"
+                aria-label="Font tone"
+              >
+                {FONT_CHOICES.map((font) => {
+                  const active = activePanel.fontFamily === font;
+                  return (
+                    <button
+                      key={font}
+                      type="button"
+                      role="radio"
+                      aria-checked={active}
+                      aria-pressed={active}
+                      data-font-id={font}
+                      data-active={active ? "true" : "false"}
+                      onClick={() => patch("fontFamily", font)}
+                      className={`border px-2 py-2 t-mono-xs uppercase tracking-[0.14em] transition-colors ${
+                        active
+                          ? "border-[var(--accent)] bg-[color-mix(in_srgb,var(--accent)_9%,transparent)] text-[var(--accent)]"
+                          : "border-[var(--line)] hover:border-[var(--accent)] text-[var(--fg)]"
+                      }`}
+                    >
+                      {font}
+                    </button>
+                  );
+                })}
               </div>
             </StudioField>
           </div>
@@ -768,17 +843,33 @@ export function StudioClient({
           </div>
 
           <StudioField label="Background mode">
-            <div className="grid grid-cols-3 gap-2">
-              {BACKGROUND_KINDS.map((kind) => (
-                <button
-                  key={kind}
-                  type="button"
-                  onClick={() => patch("bgKind", kind)}
-                  className={`border px-2 py-2 t-mono-xs uppercase tracking-[0.14em] ${activePanel.bgKind === kind ? "border-[var(--accent)] bg-[color-mix(in_srgb,var(--accent)_9%,transparent)]" : "border-[var(--line)]"}`}
-                >
-                  {kind}
-                </button>
-              ))}
+            <div
+              className="grid grid-cols-3 gap-2"
+              role="radiogroup"
+              aria-label="Background mode"
+            >
+              {BACKGROUND_KINDS.map((kind) => {
+                const active = activePanel.bgKind === kind;
+                return (
+                  <button
+                    key={kind}
+                    type="button"
+                    role="radio"
+                    aria-checked={active}
+                    aria-pressed={active}
+                    data-bgkind-id={kind}
+                    data-active={active ? "true" : "false"}
+                    onClick={() => patch("bgKind", kind)}
+                    className={`border px-2 py-2 t-mono-xs uppercase tracking-[0.14em] transition-colors ${
+                      active
+                        ? "border-[var(--accent)] bg-[color-mix(in_srgb,var(--accent)_9%,transparent)] text-[var(--accent)]"
+                        : "border-[var(--line)] hover:border-[var(--accent)] text-[var(--fg)]"
+                    }`}
+                  >
+                    {kind}
+                  </button>
+                );
+              })}
             </div>
           </StudioField>
         </div>
