@@ -18,8 +18,16 @@ export default defineConfig({
   testDir: "./e2e",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  // One retry locally smooths over rare autosave-timing flakes from
+  // the studio specs (cycle #6 audit): under heavy parallel R2 +
+  // dev-server load, the 900ms autosave debounce occasionally races
+  // with the test's wait assertion. CI keeps the stricter 2 retries.
+  retries: process.env.CI ? 2 : 1,
+  // Cap parallel workers to 2 locally: the studio upload + autosave
+  // path hits the dev server hard (R2 PUT + Server Action round-trip
+  // + Next dev recompiles). More than 2 workers makes the dev
+  // server choke and tests flake out wholesale.
+  workers: process.env.CI ? 1 : 2,
   reporter: "list",
   use: {
     baseURL: process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000",

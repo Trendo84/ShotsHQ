@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { cn } from "@/lib/utils/cn";
+import { rewriteR2ToProxy } from "@/lib/studio/r2-proxy-url";
 import type { DeviceFrameStyle } from "./types";
 
 /**
@@ -164,12 +165,32 @@ function ScreenContent({
   accent: string;
 }) {
   if (!screenshotUrl) return <PlaceholderScreen accent={accent} />;
+
+  // Route remote R2 URLs through our same-origin proxy so the
+  // exporter's canvas drawImage doesn't taint on the cross-origin
+  // read. The R2 bucket isn't CORS-configured today (cycle #6
+  // audit, 2026-05-23). See lib/studio/r2-proxy-url.ts for the
+  // rewrite rule + tests, and app/api/r2-proxy/route.ts for the
+  // server-side fetch.
+  //
+  // For non-R2 sources (blob: from a just-dropped file, data:
+  // URLs, or future same-origin sources) the helper returns the
+  // URL unchanged.
+  const renderSrc = remote ? (rewriteR2ToProxy(screenshotUrl) ?? screenshotUrl) : screenshotUrl;
+
+  // Same-origin renders don't need `crossOrigin` and shouldn't set
+  // it — the attribute changes cache-key behavior and can cause
+  // duplicate fetches. We only retain it for blob: / data: edge
+  // cases where `remote` is true but the helper passed the URL
+  // through unchanged (shouldn't happen in practice).
+  const sameOrigin = renderSrc !== screenshotUrl || !remote;
+
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src={screenshotUrl}
+      src={renderSrc}
       alt="App screenshot"
-      crossOrigin={remote ? "anonymous" : undefined}
+      crossOrigin={sameOrigin ? undefined : "anonymous"}
       className="h-full w-full object-cover"
       draggable={false}
     />

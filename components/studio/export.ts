@@ -6,10 +6,25 @@ import { CANVAS_BASE_WIDTH, type StudioDeviceSize } from "./types";
 /**
  * Exact-pixel export contract.
  *
- * The studio preview node renders at a fixed CSS width. Browser export scales
- * the capture node by `device.width / CANVAS_BASE_WIDTH`, and we also pass the
- * explicit backing-canvas width/height so the PNG lands on the exact integers
- * App Store Connect expects.
+ * The studio preview node renders at a fixed CSS width
+ * (`CANVAS_BASE_WIDTH`). Browser export scales the capture node by
+ * `device.width / CANVAS_BASE_WIDTH` via `pixelRatio` to land on the
+ * exact integer width the App Store expects (e.g. 1290 px for
+ * iPhone 6.9").
+ *
+ * **Do NOT also pass `canvasWidth` / `canvasHeight`.** `html-to-image`
+ * multiplies `canvasWidth` by `pixelRatio` to size the backing
+ * canvas, so passing both produces a `device.width * pixelRatio`-wide
+ * output (e.g. 3782 px for iPhone 6.9"). Cycle #6 (2026-05-23)
+ * caught this — the prior code set both as "belt-and-suspenders"
+ * and got double-scaled output. The dim mismatch went unnoticed
+ * because the export was simultaneously broken by canvas-taint
+ * (no PNG was actually produced); after fixing the taint via the
+ * R2 same-origin proxy, the dim bug became loud. Now caught by
+ * `e2e/studio-export-loop.spec.ts`.
+ *
+ * The CSS-pixel size of the node is the source of truth; pixelRatio
+ * is the single knob that maps it to App Store pixels.
  */
 export function pixelRatioFor(device: StudioDeviceSize): number {
   return device.width / CANVAS_BASE_WIDTH;
@@ -21,10 +36,8 @@ export async function renderPanelToPng(
 ): Promise<string> {
   return toPng(node, {
     pixelRatio: pixelRatioFor(device),
-    canvasWidth: device.width,
-    canvasHeight: device.height,
-    cacheBust: true,
-    style: { margin: "0" },
+    cacheBust:  true,
+    style:      { margin: "0" },
   });
 }
 

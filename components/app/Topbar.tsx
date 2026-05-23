@@ -1,10 +1,78 @@
 "use client";
 
+import * as React from "react";
 import { UserButton } from "@clerk/nextjs";
 import { Search, Bell } from "lucide-react";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 
 const HAS_CLERK = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
+
+/**
+ * Stable user-affordance slot.
+ *
+ * Clerk's `<UserButton />` renders different DOM during SSR vs. post-
+ * hydration (the widget needs the client-side session to know who
+ * the user is and what their avatar URL is). Rendering it directly
+ * from a `"use client"` component still goes through SSR — Next.js
+ * server-renders the client component once, then hydrates. The DOM
+ * shape on those two passes does not match, producing the
+ * "Hydration failed because the server rendered HTML didn't match
+ * the client" overlay on every authenticated route (cycle #6 audit,
+ * 2026-05-23).
+ *
+ * Fix: render a stable placeholder during SSR + first client render,
+ * swap to the real widget after `useEffect` fires post-hydration.
+ * The placeholder has the exact outer dimensions of UserButton's
+ * avatar box (`h-8 w-8 border`), so there's no layout shift.
+ *
+ * Same pattern handles the no-Clerk dev environment: if
+ * NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY is absent, we stay on the
+ * placeholder permanently — relabeled with proper a11y.
+ */
+function UserButtonSlot() {
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => setMounted(true), []);
+
+  // SSR + pre-hydration placeholder. Aria-hidden because the actual
+  // affordance arrives within milliseconds after mount — keeps screen
+  // readers from announcing the placeholder text ("OP"). Layout dims
+  // match the eventual UserButton + the no-Clerk fallback below so
+  // there's no shift.
+  if (!mounted) {
+    return (
+      <div
+        className="h-8 w-8 border border-[var(--line-strong)] bg-[var(--bg-2)] grid place-items-center t-mono-xs text-[var(--fg-mute)]"
+        aria-hidden
+        data-userbutton-slot="placeholder"
+      >
+        OP
+      </div>
+    );
+  }
+
+  if (!HAS_CLERK) {
+    return (
+      <div
+        className="h-8 w-8 border border-[var(--line-strong)] bg-[var(--bg-2)] grid place-items-center t-mono-xs text-[var(--fg-mute)]"
+        title="Clerk not configured"
+        aria-label="User account placeholder — Clerk not configured"
+        data-userbutton-slot="no-clerk"
+      >
+        OP
+      </div>
+    );
+  }
+
+  return (
+    <div data-userbutton-slot="clerk">
+      <UserButton
+        appearance={{
+          elements: { avatarBox: "h-8 w-8 border border-[var(--line-strong)]" },
+        }}
+      />
+    </div>
+  );
+}
 
 export function Topbar({ section, breadcrumb }: { section: string; breadcrumb?: string[] }) {
   return (
@@ -56,21 +124,7 @@ export function Topbar({ section, breadcrumb }: { section: string; breadcrumb?: 
           <Bell size={14} aria-hidden />
         </button>
 
-        {HAS_CLERK ? (
-          <UserButton
-            appearance={{
-              elements: { avatarBox: "h-8 w-8 border border-[var(--line-strong)]" },
-            }}
-          />
-        ) : (
-          <div
-            className="h-8 w-8 border border-[var(--line-strong)] bg-[var(--bg-2)] grid place-items-center t-mono-xs text-[var(--fg-mute)]"
-            title="Clerk not configured"
-            aria-label="User account placeholder — Clerk not configured"
-          >
-            OP
-          </div>
-        )}
+        <UserButtonSlot />
       </div>
     </header>
   );
