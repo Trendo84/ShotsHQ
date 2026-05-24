@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Check, ArrowRight } from "lucide-react";
 
 type Plan = {
   id: string;
@@ -101,9 +102,17 @@ const PLANS: Plan[] = [
   },
 ];
 
+/**
+ * PricingTable — recovery-cycle redesign.
+ *
+ * Was a 5-card grid with hairline-rule dividers (1px gap-px on bg
+ * line), Archivo Black plan names + the ring-2 brutalist highlight
+ * for the recommended plan. Now: rounded `surface` cards in a true
+ * gap-3 grid, recommended plan visually elevated (accent border +
+ * raised background), Check icons replace the ▸ glyph, cleaner
+ * heading hierarchy.
+ */
 export function PricingTable() {
-  // Lifetime is gated on the env presence of its price ID — when the SKU
-  // isn't configured we hide the tier from the UI entirely.
   const hasLifetime = Boolean(process.env.STRIPE_PRICE_LIFETIME);
   const visiblePlans = PLANS.filter((p) => p.id !== "lifetime" || hasLifetime);
   const colsClass = visiblePlans.length === 4
@@ -111,56 +120,74 @@ export function PricingTable() {
     : "lg:grid-cols-5";
 
   return (
-    <div className={`grid grid-cols-1 md:grid-cols-2 ${colsClass} gap-px bg-[var(--line)] border border-[var(--line)]`}>
+    <div className={`grid grid-cols-1 md:grid-cols-2 ${colsClass} gap-3 md:gap-4`}>
       {visiblePlans.map((p) => (
         <article
           key={p.id}
-          className={`bg-[var(--bg)] p-6 flex flex-col gap-5 min-h-[460px] relative ${
-            p.highlight ? "ring-2 ring-inset ring-[var(--accent)]" : ""
+          data-plan={p.id}
+          className={`flex flex-col gap-5 min-h-[440px] p-6 rounded-[10px] transition-colors ${
+            p.highlight
+              ? "bg-[var(--bg-3)] border-2 border-[var(--accent)] shadow-[0_2px_20px_-8px_color-mix(in_srgb,var(--accent)_30%,transparent)]"
+              : "bg-[var(--bg-2)] border border-[var(--line)] hover:border-[var(--line-strong)]"
           }`}
         >
-          {p.highlight && (
-            <span className="absolute top-3 right-3 t-eyebrow text-[var(--accent-fg)] bg-[var(--accent)] px-2 py-0.5 normal-case tracking-[0.05em]">
-              Recommended
-            </span>
-          )}
-          {p.flag && !p.highlight && (
-            <span className="absolute top-3 right-3 t-eyebrow text-[var(--accent)] border border-[var(--accent)] px-2 py-0.5 normal-case tracking-[0.05em]">
-              {p.flag}
-            </span>
-          )}
+          <header className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h3 className="text-[18px] font-semibold tracking-[-0.015em] text-[var(--fg)] leading-tight">
+                {p.name}
+              </h3>
+              <div className="text-[12px] text-[var(--fg-mute)] mt-0.5">{p.cadence}</div>
+            </div>
+            {p.highlight && (
+              <span className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-[var(--accent-fg)] bg-[var(--accent)] px-2 py-0.5 rounded-full shrink-0">
+                Recommended
+              </span>
+            )}
+            {p.flag && !p.highlight && (
+              <span className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-[var(--accent)] border border-[var(--accent)] px-2 py-0.5 rounded-full shrink-0">
+                {p.flag}
+              </span>
+            )}
+          </header>
 
-          <div>
-            <div className="t-display text-[clamp(1.5rem,3.5vw,1.625rem)] leading-[0.95] normal-case tracking-[-0.02em]">{p.name}</div>
-            <div className="text-[12px] text-[var(--fg-dim)] mt-1">{p.cadence}</div>
+          <div className="flex items-baseline gap-1.5">
+            <span className={`font-semibold tracking-[-0.04em] tabular-nums ${
+              p.highlight
+                ? "text-[clamp(2.5rem,7vw,3.5rem)] text-[var(--accent)]"
+                : "text-[clamp(2rem,6vw,2.75rem)] text-[var(--fg)]"
+            }`}>{p.price}</span>
           </div>
 
-          <div className="flex items-baseline gap-1">
-            <span className={`t-display leading-[0.85] tracking-[-0.05em] t-numeric ${p.highlight ? "text-[clamp(2.75rem,8vw,4rem)] text-[var(--accent)]" : "text-[clamp(2.25rem,7vw,3.25rem)]"}`}>{p.price}</span>
-          </div>
+          <p className="text-[14px] leading-snug text-[var(--fg-dim)]">{p.description}</p>
 
-          <p className="t-prose text-[13.5px]">{p.description}</p>
-
-          <ul className="space-y-2 flex-1 pt-3 border-t border-[var(--line)]">
+          <ul className="space-y-2.5 flex-1 pt-4 border-t border-[var(--line)]">
             {p.perks.map((perk) => (
-              <li key={perk} className="text-[13.5px] text-[var(--fg)] flex gap-2">
-                <span className="text-[var(--accent)] flex-none mt-0.5">▸</span>
+              <li key={perk} className="text-[14px] text-[var(--fg)] flex gap-2.5 items-start leading-snug">
+                <Check size={14} strokeWidth={2.5} className="text-[var(--accent)] mt-0.5 shrink-0" aria-hidden />
                 <span>{perk}</span>
               </li>
             ))}
           </ul>
 
           {p.comingNext && (
-            <p className="text-[11.5px] text-[var(--fg-mute)] leading-snug -mt-2">
-              <span className="t-mono-xs uppercase tracking-[0.14em] text-[var(--fg-mute)] mr-1.5">
+            <p className="text-[12px] text-[var(--fg-mute)] leading-snug pt-1">
+              <span className="font-medium uppercase tracking-[0.08em] text-[10.5px] text-[var(--fg-mute)] mr-1.5">
                 Coming next
               </span>
               {p.comingNext}
             </p>
           )}
 
-          <Link href={p.ctaHref} className={p.highlight ? "btn btn-accent" : "btn"}>
-            {p.cta} →
+          <Link
+            href={p.ctaHref}
+            className={`inline-flex items-center justify-center gap-1.5 text-[14px] font-semibold px-4 py-2.5 rounded-md transition-opacity ${
+              p.highlight
+                ? "bg-[var(--accent)] text-[var(--accent-fg)] hover:opacity-90"
+                : "bg-[var(--bg)] text-[var(--fg)] border border-[var(--line-strong)] hover:bg-[var(--bg-3)]"
+            }`}
+          >
+            {p.cta}
+            <ArrowRight size={14} strokeWidth={2.5} aria-hidden />
           </Link>
         </article>
       ))}

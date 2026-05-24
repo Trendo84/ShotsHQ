@@ -10,6 +10,7 @@
 @theme inline {
   --color-bg:           var(--bg);
   --color-bg-2:         var(--bg-2);
+  --color-bg-3:         var(--bg-3);
   --color-fg:           var(--fg);
   --color-fg-dim:       var(--fg-dim);
   --color-fg-mute:      var(--fg-mute);
@@ -24,47 +25,66 @@
   --font-serif:         var(--font-serif);
 }
 
-/* ───────────────────────── TACTICAL TELEMETRY (default) ───────────────────────── */
+/* ───────────────────────── GRAPHITE (default — redesign 2026-05-24) ─────────────────────────
+   Repositioning away from pure-black + hot-red + warning-yellow into a
+   calmer, more premium SaaS direction:
+     - background: warm graphite, not pure black
+     - foreground: off-white instead of stark white
+     - accent: muted champagne / brushed bronze — distinctive without
+       reading as a warning siren. Pairs visibly with the new logo mark.
+     - signal: muted mint instead of electric green
+     - softer borders, calmer scanlines, less noise
+   Theme name stays `tactical` for backwards compat with `<html data-theme>`.
+   ────────────────────────────────────────────────────────────────── */
 :root,
 [data-theme="tactical"] {
-  --bg:          #0A0A0A;
-  --bg-2:        #16161A;
-  --fg:          #EAEAEA;
-  --fg-dim:      #B5B5B5;
-  /* WCAG AA fix: #707070 on #0A0A0A = 4.04:1 (under 4.5 minimum for
-     small text). #909090 on #0A0A0A = 6.2:1 — passes AA + AAA. */
-  --fg-mute:     #909090;
-  --line:        #2A2A2A;
-  --line-strong: #4A4A4A;
-  --accent:      #E61919;
-  --accent-fg:   #FFFFFF;
-  --signal:      #4AF626;
+  --bg:          #0E0F12;
+  --bg-2:        #16171B;
+  --bg-3:        #1D1E24;
+  --fg:          #ECEDF1;
+  --fg-dim:      #B6B9C2;
+  --fg-mute:     #8A8D97;
+  --line:        #25262D;
+  --line-strong: #3A3C46;
+  --accent:      #D4B27A;
+  --accent-fg:   #0E0F12;
+  --signal:      #7BD9A7;
 
-  --scanline-color:   rgba(255, 255, 255, 0.012);
-  --scanline-step:    3px;
-  --noise-opacity:    0.025;
-  --grid-color:       rgba(255, 255, 255, 0.04);
-}
-
-/* ───────────────────────── SWISS INDUSTRIAL PRINT ───────────────────────── */
-[data-theme="swiss"] {
-  --bg:          #F4F4F0;
-  --bg-2:        #EAE8E3;
-  --fg:          #0A0A0A;
-  --fg-dim:      #2E2E2E;
-  /* WCAG AA fix: #707070 on #F4F4F0 measures 4.49:1 (under 4.5 minimum
-     for small text). #5A5A5A measures 6.2:1 — passes AA + AAA. */
-  --fg-mute:     #5A5A5A;
-  --line:        #0A0A0A;
-  --line-strong: #0A0A0A;
-  --accent:      #E61919;
-  --accent-fg:   #F4F4F0;
-  --signal:      #0A0A0A;
+  /* Surface radii — calmer than the old rigid 90° everywhere. Small
+     for cards, full for pill buttons. Brutalist edges retained on
+     hairline rules + dividers. */
+  --radius-sm:   4px;
+  --radius-md:   6px;
+  --radius-lg:   10px;
 
   --scanline-color:   transparent;
   --scanline-step:    3px;
-  --noise-opacity:    0.04;
-  --grid-color:       rgba(10, 10, 10, 0.05);
+  --noise-opacity:    0.018;
+  --grid-color:       rgba(255, 255, 255, 0.025);
+}
+
+/* ───────────────────────── STONE LIGHT (alt theme) ─────────────────────────
+   The light counterpart — soft stone background, deep ink foreground,
+   same champagne accent. Was "swiss industrial print" with hard black-on-cream
+   and hot-red accent; redesign softens the rules to match the dark theme's
+   premium-SaaS direction. */
+[data-theme="swiss"] {
+  --bg:          #F7F5F0;
+  --bg-2:        #EFECE4;
+  --bg-3:        #E6E2D9;
+  --fg:          #1A1A1F;
+  --fg-dim:      #3F3F46;
+  --fg-mute:     #6B6B72;
+  --line:        #D6D2C8;
+  --line-strong: #B7B3A9;
+  --accent:      #9C7A3D;
+  --accent-fg:   #F7F5F0;
+  --signal:      #2F8156;
+
+  --scanline-color:   transparent;
+  --scanline-step:    3px;
+  --noise-opacity:    0.025;
+  --grid-color:       rgba(10, 10, 10, 0.045);
 }
 
 /* ───────────────────────── BASE ───────────────────────── */
@@ -75,25 +95,25 @@ html, body { height: 100%; }
 html {
   background: var(--bg);
   color: var(--fg);
-  font-family: var(--font-mono);
+  /* Redesign 2026-05-24: base font flipped from mono → Geist Sans for
+     a calmer SaaS surface. Mono is now reserved for genuine code,
+     telemetry strings, and label eyebrows — not the default body
+     voice. The shift makes the whole site feel less terminal-y. */
+  font-family: var(--font-sans);
   font-feature-settings: "ss01", "ss02", "cv11";
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
   scroll-behavior: smooth;
-  /* Defensive: clip any rogue horizontal overflow at the root. The body
-     rule below also clips, but iOS Safari occasionally honors only one
-     of the two depending on stacking-context churn from fixed elements
-     (sticky CTA bar, WIP banner). Belt-and-suspenders. */
   overflow-x: clip;
   max-width: 100vw;
 }
 
 body {
   margin: 0;
-  font-size: 13px;
-  line-height: 1.5;
-  letter-spacing: 0.02em;
+  font-size: 14px;
+  line-height: 1.55;
+  letter-spacing: -0.005em;
   position: relative;
   overflow-x: clip;
   max-width: 100vw;
@@ -150,8 +170,22 @@ body::after {
 }
 
 /* ───────────────────────── TYPOGRAPHY UTILITIES ───────────────────────── */
-/* `.t-display` sets typeface only — font-size is set at the call site. */
+/* Redesign 2026-05-24:
+   `.t-display` was Archivo-Black ALL-CAPS at -0.04em tracking — pure
+   brutalist poster type. The new direction uses Geist Sans at 700
+   weight with negative tracking for a refined SaaS display voice;
+   ALL CAPS is dropped at the utility layer so any callsite that needs
+   uppercase opts in explicitly. The single brand "hero" moment that
+   should still feel poster-heavy can use `.t-display-brand` (which
+   keeps the original Archivo treatment). */
 .t-display {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 1;
+  text-transform: none;
+}
+.t-display-brand {
   font-family: var(--font-display);
   font-weight: 900;
   text-transform: uppercase;
@@ -277,7 +311,9 @@ body::after {
 }
 .grid-rule > * { background: var(--bg); }
 
-/* Hard borders. No radius. Ever. */
+/* Hard borders. No radius — the brutalist `.box` family was kept for
+   places where the rigid edge is intentionally part of the design
+   (data grids, hairline rules). */
 .box {
   border: 1px solid var(--line);
   background: var(--bg);
@@ -285,6 +321,21 @@ body::after {
 .box-strong { border-color: var(--line-strong); }
 .box-accent { border-color: var(--accent); }
 .box-2 { border-width: 2px; }
+
+/* Redesign 2026-05-24: `.surface` is the new calmer card primitive.
+   Slightly raised background, soft 1px hairline, subtle radius. Use
+   in place of `.box` wherever the surface is meant to read as a
+   premium product card rather than a poster panel. */
+.surface {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+}
+.surface-raised {
+  background: var(--bg-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+}
 
 /* Hazard stripe — diagonal red/black. */
 .hazard {
@@ -446,32 +497,41 @@ body::after {
   opacity: 0.7;
 }
 
-/* Buttons — flat, sharp, hover swap. */
+/* Buttons — calmer, slight radius, less aggressive on hover.
+   Redesign 2026-05-24: dropped the mono-uppercase typeface for the
+   button itself (kept on `.btn-label` for the inline-flex pill CTAs
+   where it still earns its keep). The base button now reads as a
+   restrained product control, not a terminal action. */
 .btn {
-  font-family: var(--font-mono);
-  font-size: 12px;
+  font-family: var(--font-sans);
+  font-size: 13px;
   font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  padding: 12px 18px;
+  letter-spacing: -0.005em;
+  padding: 10px 18px;
   border: 1px solid var(--line-strong);
-  background: var(--bg);
+  background: var(--bg-2);
   color: var(--fg);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  transition: background 80ms linear, color 80ms linear, border-color 80ms linear;
+  border-radius: var(--radius-md);
+  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
 }
-.btn:hover { background: var(--fg); color: var(--bg); }
+.btn:hover { background: var(--bg-3); border-color: var(--fg-mute); }
 .btn-accent {
   background: var(--accent);
   color: var(--accent-fg);
   border-color: var(--accent);
 }
-.btn-accent:hover { background: var(--accent-fg); color: var(--accent); border-color: var(--accent-fg); }
-.btn-ghost { border-color: var(--line); }
+.btn-accent:hover {
+  background: color-mix(in srgb, var(--accent) 85%, white);
+  border-color: color-mix(in srgb, var(--accent) 85%, white);
+  color: var(--accent-fg);
+}
+.btn-ghost { border-color: var(--line); background: transparent; }
+.btn-ghost:hover { background: var(--bg-2); }
 
 /* Pill-CTA label — 13px bold mono, tight tracking. Designed to stay
    legible on a saturated accent background where 11px medium fails. */

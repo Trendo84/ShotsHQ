@@ -61,30 +61,42 @@ function UserButtonSlot() {
 /**
  * Authenticated app shell topbar.
  *
- * Cycle (overnight polish): the disabled Search input ("Search · coming
- * soon", ⌘K, opacity-60) and the disabled Notifications bell were
- * removed from the prime header slot. They were honest (`disabled`,
- * aria-labelled, title-tipped) but they read as "this app is still
- * being assembled" — exactly the wrong signal on the surface a user
- * sees every single time they log in. Both will return when their
- * back-ends ship (Search has `/api/search` queued; Notifications has
- * a Loops integration in scope).
+ * Recovery cycle redesign: this header used to render the section
+ * label as 14px text and the breadcrumb as a slash-separated mono
+ * trail with "Operator" leading every crumb. Now: the active page
+ * is the dominant element (15px semibold), the breadcrumb is a quiet
+ * supporting line, and the chrome around the right-side affordances
+ * is calmer (no more big bordered buttons).
  *
- * What stays: section label + breadcrumb on the left, theme switcher
- * on the right, the Clerk-backed UserButton. That's the live shell.
+ * "Operator" as the lead breadcrumb is intentionally not rendered —
+ * the call sites still pass it as the first crumb for backwards
+ * compat; we filter it out here so the page header reads as product
+ * navigation, not admin tooling.
  */
 export function Topbar({ section, breadcrumb }: { section: string; breadcrumb?: string[] }) {
+  // Filter out the legacy "Operator" lead crumb — the call sites can
+  // still pass it for backwards compat; we don't render it.
+  const crumbs = (breadcrumb ?? []).filter(
+    (c) => c.toLowerCase() !== "operator",
+  );
+
   return (
-    <header className="border-b border-[var(--line)] bg-[var(--bg)]">
-      <div className="px-4 sm:px-6 py-3 flex items-center gap-3 sm:gap-4">
-        <div className="flex items-center gap-3 min-w-0">
-          <span className="text-[14px] font-medium text-[var(--fg)] truncate">{section}</span>
-          {breadcrumb && breadcrumb.length > 0 && (
-            <span className="hidden sm:flex text-[13px] text-[var(--fg-mute)] truncate items-center">
-              {breadcrumb.map((b, i) => (
-                <span key={i} className="truncate">
-                  {i > 0 && <span className="mx-2 opacity-50">/</span>}
-                  <span className={i === breadcrumb.length - 1 ? "text-[var(--fg)]" : ""}>{b}</span>
+    <header className="border-b border-[var(--line)] bg-[var(--bg)]/85 backdrop-blur-md sticky top-0 z-30">
+      <div className="px-4 sm:px-6 lg:px-8 h-14 flex items-center gap-4">
+        <div className="flex items-baseline gap-3 min-w-0">
+          <h1 className="text-[15px] font-semibold tracking-[-0.01em] text-[var(--fg)] truncate leading-none">
+            {section}
+          </h1>
+          {crumbs.length > 0 && (
+            <span className="hidden sm:flex text-[12.5px] text-[var(--fg-mute)] truncate items-center leading-none">
+              {crumbs.map((b, i) => (
+                <span key={i} className="truncate inline-flex items-center">
+                  {i > 0 && (
+                    <span aria-hidden className="mx-2 text-[var(--fg-mute)] opacity-60">/</span>
+                  )}
+                  <span className={i === crumbs.length - 1 ? "text-[var(--fg-dim)]" : ""}>
+                    {b}
+                  </span>
                 </span>
               ))}
             </span>
@@ -94,7 +106,6 @@ export function Topbar({ section, breadcrumb }: { section: string; breadcrumb?: 
         <div className="flex-1" />
 
         <ThemeSwitcher compact showLabel={false} />
-
         <UserButtonSlot />
       </div>
     </header>

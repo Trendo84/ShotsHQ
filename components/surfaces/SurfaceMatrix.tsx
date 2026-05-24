@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   SURFACES,
@@ -16,20 +16,64 @@ import {
  * Multi-select picker with category tabs, plan-gated CTAs, and a
  * sticky footer summary.
  *
- * Persistence + render dispatch will be wired in a follow-up. For now
- * we keep selection state in component memory and the "Render all"
- * CTA is honestly disabled with explanatory copy — selecting a
- * surface is still useful (informs the user what we'll render and at
- * what dimensions) but clicking the dispatch button is not a no-op
- * pretending to be live. Audit P1-7.
+ * Cycle #16 — `userPlan` now arrives as a prop, derived server-side
+ * from the real DB user via `userPlanToSurfacePlan()`. Was hardcoded
+ * `"indie"` so the gating was a lie regardless of the user's
+ * actual plan.
+ *
+ * Selection persists across reloads via localStorage keyed by
+ * `projectId` so the user's manifest survives navigation. The
+ * persisted shape is a stringified `string[]` of Surface IDs; reading
+ * is guarded by JSON.parse + Array.isArray so a corrupt key can't
+ * crash the page. Full DB-side manifest persistence ships when the
+ * Trigger.dev render dispatch lands.
+ *
+ * Render dispatch is still honestly disabled (audit P1-7) — selecting
+ * surfaces sets up the manifest only. The button is opacity-50 +
+ * cursor-not-allowed + a "· Soon" suffix in the label.
  */
-export function SurfaceMatrix({ projectId }: { projectId: string }) {
+export function SurfaceMatrix({
+  projectId,
+  userPlan,
+}: {
+  projectId: string;
+  userPlan: SurfacePlan;
+}) {
   const [selected, setSelected] = useState<string[]>(["ios-appstore"]);
   const [activeCategory, setActiveCategory] = useState<SurfaceCategory | "all">("all");
 
-  // In production this comes from the user record. Stub: free during build,
-  // the Surface tier-gating still functions and shows the upsell affordance.
-  const userPlan: SurfacePlan = "indie";
+  // Hydrate from localStorage on mount. SSR renders the default
+  // (always-on App Store), then the effect swaps in the persisted
+  // selection. Saves one round-trip vs. blocking SSR.
+  const storageKey = `shotshq:surfaces:${projectId}`;
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = window.localStorage.getItem(storageKey);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return;
+      const safe = parsed.filter(
+        (id): id is string => typeof id === "string" && SURFACES.some((s) => s.id === id),
+      );
+      // Always-on App Store gets re-inserted defensively.
+      if (!safe.includes("ios-appstore")) safe.unshift("ios-appstore");
+      setSelected(safe);
+    } catch {
+      /* corrupt key, ignore */
+    }
+  }, [storageKey]);
+
+  // Persist on every change. Best-effort — Safari private mode etc.
+  // can throw on localStorage writes; swallow silently.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(storageKey, JSON.stringify(selected));
+    } catch {
+      /* ignore */
+    }
+  }, [storageKey, selected]);
 
   const filtered = useMemo(() => {
     if (activeCategory === "all") return SURFACES;
@@ -54,12 +98,20 @@ export function SurfaceMatrix({ projectId }: { projectId: string }) {
   }, [selected]);
 
   return (
-    <div className="pb-32">
+    <div className="pb-32" data-surfaces-matrix data-user-plan={userPlan}>
       <div className="max-w-[1480px] mx-auto px-4 md:px-8 py-8">
         {/* Category tabs */}
-        <div className="flex flex-wrap items-center gap-2 mb-8 pb-4 border-b border-[var(--line)] overflow-x-auto">
+        <div
+          className="flex flex-wrap items-center gap-2 mb-8 pb-4 border-b border-[var(--line)] overflow-x-auto"
+          role="tablist"
+          aria-label="Surface category filter"
+        >
           <button
             type="button"
+            role="tab"
+            aria-selected={activeCategory === "all"}
+            data-surface-category="all"
+            data-active={activeCategory === "all" ? "true" : "false"}
             onClick={() => setActiveCategory("all")}
             className={tabClass(activeCategory === "all")}
           >
@@ -69,6 +121,10 @@ export function SurfaceMatrix({ projectId }: { projectId: string }) {
             <button
               key={c.id}
               type="button"
+              role="tab"
+              aria-selected={activeCategory === c.id}
+              data-surface-category={c.id}
+              data-active={activeCategory === c.id ? "true" : "false"}
               onClick={() => setActiveCategory(c.id)}
               className={tabClass(activeCategory === c.id)}
             >
@@ -92,10 +148,15 @@ export function SurfaceMatrix({ projectId }: { projectId: string }) {
       </div>
 
       {/* Sticky summary footer */}
-      <div className="fixed bottom-0 inset-x-0 z-30 border-t border-[var(--line-strong)] bg-[var(--bg)]/95 backdrop-blur-md">
+      <div
+        className="fixed bottom-0 inset-x-0 z-30 border-t border-[var(--line-strong)] bg-[var(--bg)]/95 backdrop-blur-md"
+        data-surfaces-footer
+        data-manifest-surface-count={selected.length}
+        data-manifest-variant-count={totalVariants}
+      >
         <div className="max-w-[1480px] mx-auto px-4 md:px-8 py-4 flex flex-wrap items-center gap-4">
           <div>
-            <div className="t-mono-xs text-[var(--fg-mute)]">Render manifest</div>
+            <div className="t-mono-xs text-[var(--fg-mute)]">Selected surfaces</div>
             <div className="t-display text-[20px] leading-[0.95] mt-0.5 normal-case">
               {selected.length} surface{selected.length === 1 ? "" : "s"} ·{" "}
               <span className="text-[var(--accent)]">{totalVariants}</span> variant{totalVariants === 1 ? "" : "s"}
@@ -106,23 +167,22 @@ export function SurfaceMatrix({ projectId }: { projectId: string }) {
               href={`/projects/${projectId}/exports`}
               className="text-[13px] text-[var(--fg-dim)] hover:text-[var(--fg)] underline underline-offset-4 decoration-[var(--line-strong)] hover:decoration-[var(--accent)] px-2 py-2"
             >
-              View existing exports
+              View exports
             </Link>
             {/*
-              "Render all" dispatch is not yet wired to the Trigger.dev
-              task. Audit P1-7 found this button looked active but
-              produced no observable result. Until the dispatch route
-              ships, the button is honestly disabled + labelled so users
-              understand selecting surfaces sets up the manifest but
-              doesn't fire a render. The disabled visual is the brand
-              "soon" pattern: opacity-50 + cursor-not-allowed + a clear
-              "· Soon" suffix in the label.
+              Render dispatch is queued behind the Trigger.dev render
+              task that ships with v1.1 (cycle #10 documented this on
+              /docs/export). Selecting surfaces here saves the manifest
+              locally; the live "Render all" button arrives with the
+              server queue. Honest "soon" treatment: opacity-50 +
+              cursor-not-allowed + a clear "· Soon" suffix.
             */}
             <button
               type="button"
               disabled
               aria-disabled
-              title="Render dispatch is in active development — selecting surfaces here saves the manifest only. The render queue ships in v1.1."
+              data-render-all="soon"
+              title="Saves the manifest locally. Render-all dispatch ships with the v1.1 server queue."
               className="group inline-flex items-center gap-3 bg-[var(--accent)] text-[var(--accent-fg)] pl-5 pr-1.5 py-2 opacity-50 cursor-not-allowed"
             >
               <span className="btn-label">Render all <span className="text-[var(--accent-fg)]/70 ml-1">· Soon</span></span>
@@ -152,7 +212,14 @@ function SurfaceCard({
   const isAlwaysOn = surface.id === "ios-appstore";
 
   return (
-    <article className="bg-[var(--bg)] p-5 md:p-6 flex flex-col gap-4 min-h-[320px] relative">
+    <article
+      className="bg-[var(--bg)] p-5 md:p-6 flex flex-col gap-4 min-h-[320px] relative"
+      data-surface-id={surface.id}
+      data-surface-status={surface.status}
+      data-surface-min-plan={surface.minPlan}
+      data-surface-allowed={String(allowed)}
+      data-surface-selected={String(selected)}
+    >
       <header className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2 mb-1">
@@ -203,17 +270,19 @@ function SurfaceCard({
             onClick={onToggle}
             disabled={isAlwaysOn && selected}
             aria-pressed={selected}
+            data-surface-toggle={surface.id}
             className={`flex-1 py-2.5 px-3 t-mono-xs uppercase tracking-[0.14em] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)] ${
               selected
                 ? "bg-[var(--accent)] text-[var(--accent-fg)]"
                 : "border border-[var(--line-strong)] hover:border-[var(--accent)] hover:text-[var(--accent)]"
             } ${isAlwaysOn && selected ? "opacity-90 cursor-default" : ""}`}
           >
-            {selected ? (isAlwaysOn ? "Always rendered" : "✓ Selected") : "+ Add to render"}
+            {selected ? (isAlwaysOn ? "Always included" : "✓ Selected") : "+ Add to render"}
           </button>
         ) : (
           <Link
             href="/billing"
+            data-surface-upgrade={surface.minPlan}
             className="flex-1 py-2.5 px-3 t-mono-xs uppercase tracking-[0.14em] font-semibold border border-[var(--line)] text-center text-[var(--fg-dim)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
           >
             Upgrade to {surface.minPlan === "indie" ? "Indie" : "Studio"} →

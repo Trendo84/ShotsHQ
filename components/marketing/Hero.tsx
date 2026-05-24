@@ -1,93 +1,77 @@
-import Image from "next/image";
-import Link from "next/link";
 import { HeroBeforeAfterSlider } from "@/components/marketing/HeroBeforeAfterSlider";
-import { HeroRotatingTitle, HeroSurfaceRotator } from "@/components/marketing/HeroRotatingTitle";
+import { HeroCta } from "@/components/marketing/HeroCta";
 
+/**
+ * Marketing hero — recovery-cycle redesign.
+ *
+ * Was the original brutalist treatment: pure black + hot-red, Archivo
+ * Black ALL-CAPS shouting "Ship App Store / SCREENSHOTS / before
+ * coffee.", a hero-backdrop bloom image + blueprint grid + grain
+ * noise + three trust chips + rotating "Also exports …" line.
+ *
+ * Now: a calmer two-column hero on a graphite surface with a single
+ * focused message, one primary CTA + one secondary link, and the
+ * interactive before/after slider as the proof element. The headline
+ * uses the new soft-display utility (Geist Sans 700 at negative
+ * tracking) and an italic-serif "every locale, every dimension" line
+ * as the editorial disruptor. No backdrop image, no blueprint grid —
+ * the previous atmospheric layers were exactly the noise the
+ * redesign brief called out.
+ */
 export function Hero() {
   return (
     <section className="relative border-b border-[var(--line)] overflow-hidden">
-      {/* Atmospheric backdrop — quality bumped to 95 (default 75 caused
-          visible banding in the gradient under mix-blend-screen). The
-          dither layer below adds 1.5% grain noise to break up any
-          residual banding from 8-bit color gradients. */}
+      {/* Subtle radial wash — single soft gradient, no scanlines, no
+         grain. Reads as depth, not telemetry. */}
       <div
         aria-hidden
-        className="absolute inset-0 pointer-events-none hero-backdrop"
-      >
-        <Image
-          src="/hero-backdrop.png"
-          alt=""
-          fill
-          priority
-          quality={95}
-          sizes="(max-width: 1024px) 100vw, 80vw"
-          className="object-cover object-right-top opacity-90 mix-blend-screen select-none"
-          draggable={false}
-        />
-        {/* Grain dither — masks 8-bit gradient banding without visible texture */}
-        <div
-          aria-hidden
-          className="absolute inset-0 pointer-events-none mix-blend-overlay opacity-[0.045]"
-          style={{
-            backgroundImage:
-              "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
-            backgroundSize: "200px 200px",
-          }}
-        />
-      </div>
-      <div className="absolute inset-0 blueprint pointer-events-none opacity-25" aria-hidden />
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(900px 420px at 22% -10%, color-mix(in srgb, var(--accent) 9%, transparent), transparent 70%)",
+        }}
+      />
 
-      <div className="relative z-10 max-w-[1480px] mx-auto px-4 md:px-8 pt-12 md:pt-16 pb-14 md:pb-20">
-        <div className="grid grid-cols-12 gap-10 lg:gap-14 items-start">
+      <div className="relative max-w-[1480px] mx-auto px-4 md:px-6 lg:px-8 pt-16 md:pt-24 lg:pt-28 pb-14 md:pb-20">
+        <div className="grid grid-cols-12 gap-8 lg:gap-14 items-center">
           {/* Headline column */}
-          <div className="col-span-12 lg:col-span-7 flex flex-col gap-6 sm:gap-8 min-w-0">
-            <HeroRotatingTitle />
+          <div className="col-span-12 lg:col-span-7 flex flex-col gap-7 min-w-0">
+            <div className="inline-flex self-start items-center gap-2 text-[12px] text-[var(--fg-dim)]">
+              <span aria-hidden className="block w-1.5 h-1.5 rounded-full bg-[var(--signal)]" />
+              <span>Live · App Store screenshot pipeline shipping today</span>
+            </div>
 
-            <p className="t-prose-lg max-w-[46ch] text-[var(--fg)]">
-              Drop in raw iPhone screenshots. Get back a polished App
-              Store pack — headlines, backdrops, every locale, every
-              required dimension. Ship in minutes, not an afternoon.
+            <h1 className="text-[clamp(2.5rem,6vw,5.25rem)] font-semibold tracking-[-0.045em] leading-[1.02] text-[var(--fg)] text-balance">
+              Drop in raw screenshots.
+              <br />
+              <span className="text-[var(--accent)]">Ship a polished pack</span>
+              <br />
+              by the time the coffee&apos;s ready.
+            </h1>
+
+            <p className="text-[17px] leading-[1.55] text-[var(--fg-dim)] max-w-[52ch]">
+              ShotsHQ turns Xcode-simulator PNGs into a complete App
+              Store pack — headlines, backdrops, every required
+              dimension, every locale. <span className="text-[var(--fg)]">One source.</span>{" "}
+              <span className="text-[var(--fg)]">One render pass.</span>{" "}
+              <span className="text-[var(--fg)]">No design step.</span>
             </p>
 
-            {/* CTA row — primary + secondary on their own line */}
-            <div className="flex flex-wrap gap-3 items-center">
-              <Link
-                href="/sign-up"
-                className="group inline-flex items-center gap-3 bg-[var(--accent)] text-[var(--accent-fg)] pl-5 pr-1.5 py-2 transition-transform duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]"
-              >
-                <span className="btn-label">Start free</span>
-                <span className="inline-grid place-items-center w-9 h-9 bg-[var(--accent-fg)] text-[var(--accent)] transition-transform duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0.5 leading-none font-bold">
-                  <span aria-hidden className="-mt-px">→</span>
-                </span>
-              </Link>
-              <Link
-                href="/pricing"
-                className="text-[13px] text-[var(--fg-dim)] hover:text-[var(--fg)] underline underline-offset-4 decoration-[var(--line-strong)] hover:decoration-[var(--accent)] transition-colors px-2 py-2 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]"
-              >
-                See pricing
-              </Link>
-            </div>
+            <HeroCta />
 
-            {/* Trust microcopy — three benefits, not four. The fourth
-               (watermark disclosure) was demoted to the pricing page
-               where it actually informs a buying decision. Each item
-               is a buyer-side fact, not an instrument-panel readout. */}
-            <div className="flex flex-wrap gap-x-5 gap-y-2 -mt-2 sm:-mt-3 text-[11px] sm:text-[12px] uppercase tracking-[0.16em] text-[var(--fg-dim)]">
+            {/* Trust microcopy — three concrete, two are buyer-side, one
+               is the "no card" qualifier. No ALL CAPS. */}
+            <div className="flex flex-wrap gap-x-6 gap-y-2 text-[12.5px] text-[var(--fg-mute)]">
               <span>No card required</span>
+              <span aria-hidden>·</span>
               <span>41 locales</span>
-              <span>iPhone + iPad</span>
+              <span aria-hidden>·</span>
+              <span>iPhone + iPad export-ready</span>
             </div>
-
-            {/* Static "also exports" line — was a rotator that flipped
-               copy every 3.2s. Brief asked for stable hero messaging
-               over a moving target; the rotator chip created
-               inconsistent first impressions for users who landed
-               mid-cycle. The full surface list lives on /tools/web-hero. */}
-            <HeroSurfaceRotator />
           </div>
 
-          {/* Interactive before / after — drag to compare */}
-          <div className="col-span-12 lg:col-span-5 relative pt-8 sm:pt-10 lg:pt-0">
+          {/* Interactive before/after — drag to compare */}
+          <div className="col-span-12 lg:col-span-5 relative pt-2 sm:pt-4 lg:pt-0">
             <HeroBeforeAfterSlider />
           </div>
         </div>

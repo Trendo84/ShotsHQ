@@ -200,3 +200,31 @@ export function planAllows(plan: SurfacePlan, requires: SurfacePlan): boolean {
   const order: Record<SurfacePlan, number> = { free: 0, indie: 1, studio: 2 };
   return order[plan] >= order[requires];
 }
+
+/**
+ * Map a User row from the DB (the canonical plan enum) onto the
+ * surface-gating SurfacePlan. The two enums don't match 1:1:
+ *
+ *   DB `plan`              → SurfacePlan
+ *   ---------------------- → -----------
+ *   "studio_monthly"       → "studio"   (full surface access)
+ *   "studio_annual"        → "studio"   (full surface access)
+ *   "lifetime"             → "studio"   (full surface access)
+ *   "free" + Stripe cust.  → "indie"    (bought a pack at least once)
+ *   "free" + no Stripe     → "free"     (signed up, never paid)
+ *
+ * The "bought a pack" inference uses `stripeCustomerId` as the proxy
+ * (matches the cycle #9 billingStatus pattern). A user who has a
+ * Stripe customer on file but the DB plan still reads "free" is
+ * exactly the "Indie/Pro pack one-off" cohort — they should see the
+ * Indie+ surfaces unlocked.
+ */
+export function userPlanToSurfacePlan(user: {
+  plan:             "free" | "studio_monthly" | "studio_annual" | "lifetime";
+  stripeCustomerId: string | null;
+}): SurfacePlan {
+  if (user.plan === "studio_monthly" || user.plan === "studio_annual" || user.plan === "lifetime") {
+    return "studio";
+  }
+  return user.stripeCustomerId ? "indie" : "free";
+}

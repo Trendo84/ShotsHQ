@@ -76,86 +76,115 @@ export default async function ProjectOverviewPage({
   const display    = projectStatusDisplay(projectInfo, id);
   const nextAction = nextActionFor(id, status);
 
-  const ACTIONS = [
-    { href: `/projects/${id}/studio`,   icon: Smartphone, label: "Open studio", desc: "Constrained screenshot engine", code: "01" },
-    { href: `/projects/${id}/ai`,       icon: Sparkles,   label: "AI panel",    desc: "Copy, backdrop, restyle",        code: "02" },
-    { href: `/projects/${id}/surfaces`, icon: Layers,     label: "Surfaces",    desc: "App Store + web + social",       code: "03" },
-    { href: `/projects/${id}/exports`,  icon: Download,   label: "Exports",     desc: "Render and download",            code: "04" },
-    { href: `/projects/${id}/ai#i18n`,  icon: Globe,      label: "Translate",   desc: "41-locale fan-out",              code: "05" },
+  // Rank modules by readiness: the next-action route gets the lead
+  // card; the others follow in their canonical order. This stops the
+  // page from presenting five equal-weight tiles.
+  const ACTION_DEFS = [
+    { id: "studio",   href: `/projects/${id}/studio`,   icon: Smartphone, label: "Open studio", desc: "Build screenshot panels" },
+    { id: "ai",       href: `/projects/${id}/ai`,       icon: Sparkles,   label: "AI panel",    desc: "Headlines, backdrops, restyle" },
+    { id: "surfaces", href: `/projects/${id}/surfaces`, icon: Layers,     label: "Surfaces",    desc: "App Store + web + social" },
+    { id: "exports",  href: `/projects/${id}/exports`,  icon: Download,   label: "Exports",     desc: "Render and download packs" },
+    { id: "i18n",     href: `/projects/${id}/ai#i18n`,  icon: Globe,      label: "Translate",   desc: "41-locale parallel fan-out" },
   ];
+  const leadActionId = matchActionId(nextAction.href);
+  const lead   = ACTION_DEFS.find((a) => a.id === leadActionId) ?? ACTION_DEFS[0]!;
+  const rest   = ACTION_DEFS.filter((a) => a.id !== lead.id);
 
   return (
     <>
-      <Topbar section="Project" breadcrumb={["Operator", "Projects", project.name]} />
+      <Topbar section={project.name} breadcrumb={["Projects", project.name]} />
 
-      <div className="grid grid-cols-12 border-b-2 border-[var(--line-strong)]">
-        <div className="col-span-12 md:col-span-7 border-r-0 md:border-r border-[var(--line)] p-5 sm:p-6 md:p-10">
-          <div className="flex items-center gap-3 mb-3 flex-wrap">
-            <span className="t-mono-xs text-[var(--fg-mute)]">[ {project.id.slice(0, 8)} ]</span>
-            <Badge variant={display.variant} data-project-status={status}>
-              {display.label}
-            </Badge>
+      {/* Project header — recovery-cycle calmer treatment. Title
+         dropped from clamp(2rem, 6vw, 5.5rem) → clamp(1.5rem, 3vw, 2.25rem).
+         Raw 8-char UUID prefix gone. Status pill stays. Stats moved
+         from a 2×3 right-column slab to a single inline summary
+         row beneath the title. */}
+      <div className="px-4 sm:px-6 lg:px-8 pt-8 lg:pt-10 pb-6 border-b border-[var(--line)] max-w-[1480px]">
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div className="min-w-0">
+            <div className="text-[11px] uppercase tracking-[0.14em] text-[var(--accent)] font-medium mb-2">
+              Project
+            </div>
+            <h1 className="text-[clamp(1.5rem,3vw,2.25rem)] font-semibold tracking-[-0.02em] text-[var(--fg)] leading-tight break-words text-balance">
+              {project.name}
+            </h1>
+            {project.appDescription && (
+              <p className="text-[14.5px] text-[var(--fg-dim)] mt-2 max-w-xl leading-relaxed">
+                {project.appDescription}
+              </p>
+            )}
+            <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-[12.5px] text-[var(--fg-mute)]">
+              {project.category && <span>{project.category}</span>}
+              <span aria-hidden>·</span>
+              <span>
+                {readiness.totalPanels === 0
+                  ? `${targets.length} ${targets.length === 1 ? "target" : "targets"}`
+                  : `${readiness.readyPanels} of ${readiness.totalPanels} panels ready`}
+              </span>
+              <span aria-hidden>·</span>
+              <span>Updated {updated}</span>
+              <span aria-hidden>·</span>
+              <span>Created {created}</span>
+            </div>
           </div>
-          <h1 className="t-display text-[clamp(2rem,6vw,5.5rem)] leading-[0.92] normal-case tracking-[-0.04em] break-words text-balance">
-            {project.name}.
-          </h1>
-          {project.appDescription && (
-            <p className="t-mono-md text-[var(--fg-dim)] mt-4 max-w-xl">{project.appDescription}</p>
-          )}
-          <div className="mt-6 flex flex-wrap gap-3">
-            {/* State-aware primary CTA. Audit cycle #4: the page used
-               to show "Open studio" regardless of state; for a ready
-               project that's not the operator's next useful action. */}
-            <Link
-              href={nextAction.href}
-              data-next-action={nextAction.id}
-              className="group inline-flex items-center gap-3 bg-[var(--accent)] text-[var(--accent-fg)] pl-5 pr-1.5 py-2 transition-transform duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98]"
-            >
-              <NextActionIcon id={nextAction.id} />
-              <span className="btn-label">{nextAction.label}</span>
-              <span className="inline-grid place-items-center w-9 h-9 bg-[var(--accent-fg)] text-[var(--accent)] transition-transform group-hover:translate-x-0.5 font-bold">→</span>
-            </Link>
-            <Link href={`/projects/${id}/studio`} className="btn text-[12px] tracking-[0.04em] normal-case">Studio</Link>
-            <Link href={`/projects/${id}/ai`} className="btn text-[12px] tracking-[0.04em] normal-case">AI panel</Link>
-            <Link href={`/projects/${id}/exports`} className="btn text-[12px] tracking-[0.04em] normal-case">Exports</Link>
-          </div>
-          <p className="t-mono-xs text-[var(--fg-mute)] mt-4 max-w-xl leading-relaxed" data-next-action-help={nextAction.id}>
-            {nextAction.help}
-          </p>
+          <Badge variant={display.variant} data-project-status={status}>
+            {display.label}
+          </Badge>
         </div>
-        <aside className="col-span-12 md:col-span-5 p-5 sm:p-6 md:p-10 grid grid-cols-2 gap-y-4 gap-x-2 content-between border-t md:border-t-0 border-[var(--line)]">
-          <Stat label="CATEGORY" value={project.category || "—"} />
-          <Stat label="CREATED"  value={created}  numeric />
-          <Stat label="UPDATED"  value={updated}  numeric />
-          <Stat label="TARGETS"  value={String(targets.length).padStart(2, "0")} numeric />
-          <Stat label="PANELS"   value={String(readiness.totalPanels).padStart(2, "0")} numeric />
-          <Stat label="READY"    value={`${String(readiness.readyPanels).padStart(2, "0")} / ${String(readiness.totalPanels).padStart(2, "0")}`} numeric />
-        </aside>
       </div>
 
-      <section className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 grid-rule">
-        {ACTIONS.map((a) => {
-          const Icon = a.icon;
-          return (
-            <Link
-              key={a.label}
-              href={a.href}
-              className="p-5 sm:p-6 min-h-[180px] sm:min-h-[200px] flex flex-col justify-between hover:bg-[var(--bg-2)] transition-colors"
-            >
-              <header className="flex items-start justify-between">
-                <Icon size={24} className="text-[var(--accent)]" />
-                <span className="t-mono-xs text-[var(--fg-mute)]">{a.code}</span>
-              </header>
-              <div>
-                <div className="t-display text-[clamp(1.25rem,2.4vw,1.625rem)] leading-[0.95] normal-case tracking-[-0.02em]">
-                  {a.label}
-                </div>
-                <div className="text-[12px] text-[var(--fg-mute)] mt-1">{a.desc}</div>
+      {/* Next-action hero card. The lead module gets premium real
+         estate (full-width banner); the rest hang below as a denser
+         secondary row. */}
+      <section className="px-4 sm:px-6 lg:px-8 py-6 lg:py-8 max-w-[1480px]">
+        <Link
+          href={nextAction.href}
+          data-next-action={nextAction.id}
+          className="group block surface-raised p-6 sm:p-8 hover:border-[var(--accent)] transition-colors"
+        >
+          <div className="flex items-start gap-5 sm:gap-6">
+            <div className="grid place-items-center w-12 h-12 rounded-md bg-[var(--accent)] text-[var(--accent-fg)] shrink-0">
+              <NextActionIcon id={nextAction.id} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="text-[11px] uppercase tracking-[0.14em] text-[var(--accent)] font-medium mb-2">
+                Next step
               </div>
-              <ArrowRight size={16} className="text-[var(--fg-mute)] self-end" />
-            </Link>
-          );
-        })}
+              <h2 className="text-[clamp(1.25rem,2.5vw,1.75rem)] font-semibold tracking-[-0.015em] text-[var(--fg)] leading-tight">
+                {nextAction.label}
+              </h2>
+              <p className="text-[14px] text-[var(--fg-dim)] mt-2 max-w-2xl leading-relaxed" data-next-action-help={nextAction.id}>
+                {nextAction.help}
+              </p>
+            </div>
+            <ArrowRight size={20} strokeWidth={2.5} className="text-[var(--fg-mute)] group-hover:text-[var(--accent)] transition-colors shrink-0 mt-1" />
+          </div>
+        </Link>
+
+        {/* Secondary actions — quieter row of 4 module shortcuts. */}
+        <ul className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-4">
+          {rest.map((a) => {
+            const Icon = a.icon;
+            return (
+              <li key={a.id}>
+                <Link
+                  href={a.href}
+                  className="group surface p-4 flex items-start gap-3 hover:bg-[var(--bg-3)] transition-colors h-full"
+                >
+                  <Icon size={18} className="text-[var(--fg-mute)] group-hover:text-[var(--accent)] transition-colors shrink-0 mt-0.5" />
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[14px] font-medium text-[var(--fg)] leading-snug">
+                      {a.label}
+                    </div>
+                    <div className="text-[12px] text-[var(--fg-mute)] mt-0.5 leading-snug">
+                      {a.desc}
+                    </div>
+                  </div>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
       </section>
 
       <section className="grid grid-cols-12 border-t-2 border-[var(--line-strong)]">
@@ -259,20 +288,23 @@ function computeTargetStats(catalogId: string, studio: StudioDesignSet): TargetS
  */
 function NextActionIcon({ id }: { id: NextActionId }) {
   switch (id) {
-    case "add-targets-in-studio": return <Smartphone size={14} className="ml-[-2px]" />;
-    case "upload-in-studio":      return <Upload     size={14} className="ml-[-2px]" />;
-    case "prepare-in-studio":     return <Upload     size={14} className="ml-[-2px]" />;
-    case "open-exports":          return <Download   size={14} className="ml-[-2px]" />;
+    case "add-targets-in-studio": return <Smartphone size={20} />;
+    case "upload-in-studio":      return <Upload     size={20} />;
+    case "prepare-in-studio":     return <Upload     size={20} />;
+    case "open-exports":          return <Download   size={20} />;
   }
 }
 
-function Stat({ label, value, numeric = false }: { label: string; value: string; numeric?: boolean }) {
-  return (
-    <div className="border-b border-[var(--line)] pb-3 min-w-0">
-      <dt className="t-mono-xs text-[var(--fg-mute)]">{label}</dt>
-      <dd className={`t-mono-md text-[var(--fg)] mt-1 truncate ${numeric ? "t-numeric" : ""}`}>{value}</dd>
-    </div>
-  );
+/**
+ * Map the `nextAction.href` back to the matching ACTION_DEFS id so
+ * we know which module to demote out of the secondary row.
+ */
+function matchActionId(href: string): string {
+  if (href.endsWith("/exports"))    return "exports";
+  if (href.endsWith("/ai"))         return "ai";
+  if (href.includes("#i18n"))       return "i18n";
+  if (href.endsWith("/surfaces"))   return "surfaces";
+  return "studio";
 }
 
 function EmptyShotGrid({ projectId }: { projectId: string }) {

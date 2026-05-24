@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { Menu, X } from "lucide-react";
+import { Menu, X, ArrowRight } from "lucide-react";
+import { SignedIn, SignedOut } from "@clerk/nextjs";
 import { cn } from "@/lib/utils/cn";
+import { BrandMark } from "@/components/Brand";
 
 const NAV = [
   { href: "/templates", label: "Templates" },
@@ -13,6 +15,26 @@ const NAV = [
   { href: "/changelog", label: "Changelog" },
 ];
 
+const HAS_CLERK = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
+
+/**
+ * Marketing site header.
+ *
+ * Redesign 2026-05-24:
+ *   - swapped the `SHOTS<accent>HQ</accent>` brutalist wordmark for
+ *     the new `<BrandMark>` (glyph + mixed-weight wordmark)
+ *   - auth-aware CTA: signed-out users still see "Sign in / Start
+ *     free"; signed-in users see "Open app →" instead — fixes the
+ *     mismatch where the header asked authenticated users to sign in
+ *     again. Uses Clerk's `<SignedIn>` / `<SignedOut>` islands so
+ *     the swap is hydration-safe (Clerk renders a stable placeholder
+ *     during SSR, then resolves client-side).
+ *   - calmer layout: removed the 3-column grid wrapper and the
+ *     animated underline scale-x rail (read as a debug indicator on
+ *     top of nav links). Active state is now a quiet character-pixel
+ *     dot beneath the label.
+ *   - dropped the pulsing accent square next to the wordmark.
+ */
 export function MarketingHeader() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
@@ -20,7 +42,6 @@ export function MarketingHeader() {
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
 
-  // ESC closes mobile menu, route changes auto-close it.
   useEffect(() => { setOpen(false); }, [pathname]);
   useEffect(() => {
     if (!open) return;
@@ -28,33 +49,33 @@ export function MarketingHeader() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
-
-  // Focus management: when menu closes, return focus to the toggle so
-  // keyboard users don't lose their place.
   useEffect(() => {
     if (!open && toggleRef.current === document.activeElement) return;
     if (!open) toggleRef.current?.focus({ preventScroll: true });
   }, [open]);
 
   return (
-    <header className="border-b border-[var(--line)] bg-[var(--bg)]/95 sticky top-0 z-40 backdrop-blur-[6px]">
+    <header
+      className="sticky top-0 z-40 border-b border-[var(--line)] bg-[var(--bg)]/85 backdrop-blur-md supports-[backdrop-filter]:bg-[var(--bg)]/70"
+      data-marketing-header
+    >
       <a
         href="#main"
-        className="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-50 focus:bg-[var(--accent)] focus:text-[var(--accent-fg)] focus:px-3 focus:py-2 focus:t-eyebrow focus:no-underline"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-50 focus:bg-[var(--accent)] focus:text-[var(--accent-fg)] focus:px-3 focus:py-2 focus:no-underline"
       >
         Skip to content
       </a>
 
-      <div className="grid grid-cols-12 items-stretch">
-        <Link href="/" className="col-span-7 md:col-span-3 border-r border-[var(--line)] px-4 md:px-6 py-3 flex items-center gap-3 group">
-          <span className="block w-2.5 h-2.5 bg-[var(--accent)] group-hover:animate-pulse" />
-          <span className="t-display text-[clamp(1rem,4vw,1.25rem)] tracking-[-0.04em] leading-none">
-            SHOTS<span className="text-[var(--accent)]">HQ</span>
-          </span>
-          <sup className="t-mono-xs text-[var(--fg-mute)] hidden sm:inline">®</sup>
+      <div className="max-w-[1480px] mx-auto px-4 md:px-6 lg:px-8 h-14 flex items-center gap-2">
+        <Link
+          href="/"
+          className="inline-flex items-center text-[var(--fg)] hover:opacity-90 transition-opacity"
+          aria-label="ShotsHQ home"
+        >
+          <BrandMark size="md" />
         </Link>
 
-        <nav className="hidden md:flex items-center col-span-6 px-6 gap-1">
+        <nav className="hidden md:flex items-center gap-1 ml-8" aria-label="Marketing">
           {NAV.map((n) => {
             const active = isActive(n.href);
             return (
@@ -63,39 +84,68 @@ export function MarketingHeader() {
                 href={n.href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "relative px-3 py-1.5 text-[13px] transition-colors rounded-none",
-                  active ? "text-[var(--fg)]" : "text-[var(--fg-dim)] hover:text-[var(--fg)]",
+                  "relative px-3 py-1.5 text-[13.5px] transition-colors",
+                  active
+                    ? "text-[var(--fg)]"
+                    : "text-[var(--fg-dim)] hover:text-[var(--fg)]",
                 )}
               >
                 {n.label}
-                <span
-                  aria-hidden
-                  className={cn(
-                    "absolute left-3 right-3 -bottom-[2px] h-[3px] origin-left transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]",
-                    active ? "bg-[var(--accent)] scale-x-100" : "bg-[var(--accent)] scale-x-0 group-hover:scale-x-50",
-                  )}
-                />
+                {active && (
+                  <span
+                    aria-hidden
+                    className="absolute left-1/2 -translate-x-1/2 bottom-0 block w-1 h-1 rounded-full bg-[var(--accent)]"
+                  />
+                )}
               </Link>
             );
           })}
         </nav>
 
-        {/* Theme toggle removed from public marketing per UX audit P2 #9 —
-           ShotsHQ ships one opinionated look on the public surface. The
-           toggle lives inside the app for users who want to adjust their
-           working theme. */}
-        <div className="col-span-5 md:col-span-3 flex items-center justify-end gap-2 px-3 py-2">
-          <Link
-            href="/sign-in"
-            className="hidden md:inline-flex items-center text-[13px] text-[var(--fg-dim)] hover:text-[var(--fg)] hover:border-[var(--accent)] px-3 py-1.5 border border-[var(--line-strong)] transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]"
-          >
-            Sign in
-          </Link>
-          <Link href="/sign-up" className="btn btn-accent text-[11px] tracking-[0.06em] py-2 px-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]">Start free</Link>
+        <div className="ml-auto flex items-center gap-2">
+          {HAS_CLERK ? (
+            <>
+              <SignedOut>
+                <Link
+                  href="/sign-in"
+                  className="hidden md:inline-flex items-center text-[13px] text-[var(--fg-dim)] hover:text-[var(--fg)] px-3 py-1.5 rounded-md transition-colors"
+                >
+                  Sign in
+                </Link>
+                <Link
+                  href="/sign-up"
+                  data-marketing-cta="start-free"
+                  className="inline-flex items-center gap-1.5 bg-[var(--accent)] text-[var(--accent-fg)] text-[13px] font-semibold px-3.5 py-1.5 rounded-md hover:opacity-90 transition-opacity"
+                >
+                  Start free
+                  <ArrowRight size={13} strokeWidth={2.5} aria-hidden />
+                </Link>
+              </SignedOut>
+              <SignedIn>
+                <Link
+                  href="/dashboard"
+                  data-marketing-cta="open-app"
+                  className="inline-flex items-center gap-1.5 bg-[var(--accent)] text-[var(--accent-fg)] text-[13px] font-semibold px-3.5 py-1.5 rounded-md hover:opacity-90 transition-opacity"
+                >
+                  Open app
+                  <ArrowRight size={13} strokeWidth={2.5} aria-hidden />
+                </Link>
+              </SignedIn>
+            </>
+          ) : (
+            <Link
+              href="/sign-up"
+              data-marketing-cta="start-free"
+              className="inline-flex items-center gap-1.5 bg-[var(--accent)] text-[var(--accent-fg)] text-[13px] font-semibold px-3.5 py-1.5 rounded-md hover:opacity-90 transition-opacity"
+            >
+              Start free
+              <ArrowRight size={13} strokeWidth={2.5} aria-hidden />
+            </Link>
+          )}
           <button
             ref={toggleRef}
             onClick={() => setOpen(!open)}
-            className="md:hidden p-2 text-[var(--fg)]"
+            className="md:hidden p-2 -mr-2 text-[var(--fg)]"
             aria-label={open ? "Close menu" : "Open menu"}
             aria-expanded={open}
             aria-controls="mobile-menu"
@@ -126,13 +176,32 @@ export function MarketingHeader() {
               )}
             >
               <span>{n.label}</span>
-              {active && <span className="block w-1.5 h-1.5 bg-[var(--accent)]" aria-hidden />}
+              {active && <span aria-hidden className="block w-1.5 h-1.5 rounded-full bg-[var(--accent)]" />}
             </Link>
           );
         })}
-        <Link href="/sign-in" onClick={() => setOpen(false)} className="block border-t border-[var(--line)] px-4 py-3 text-[14px] text-[var(--fg-mute)]">
-          Sign in
-        </Link>
+        {HAS_CLERK && (
+          <>
+            <SignedOut>
+              <Link
+                href="/sign-in"
+                onClick={() => setOpen(false)}
+                className="block border-t border-[var(--line)] px-4 py-3 text-[14px] text-[var(--fg-mute)]"
+              >
+                Sign in
+              </Link>
+            </SignedOut>
+            <SignedIn>
+              <Link
+                href="/dashboard"
+                onClick={() => setOpen(false)}
+                className="block border-t border-[var(--line)] px-4 py-3 text-[14px] text-[var(--accent)] font-semibold"
+              >
+                Open app →
+              </Link>
+            </SignedIn>
+          </>
+        )}
       </div>
     </header>
   );

@@ -7,50 +7,46 @@ import {
   StudioApiForm,
 } from "@/components/settings/SettingsForms";
 
+/**
+ * SECTIONS — recovery-cycle redesign 2026-05-24.
+ *
+ * Was a 4-entry list with `code: "01"` prefixes that rendered as
+ * "01 · Section" / "02 · Section" / etc. on the page — internal-tool
+ * framing. Now: just `title` + `description`. The section header
+ * renders the title as a clean h2 with a quiet kicker line; no more
+ * numbered scaffolding for the user to count through.
+ */
 const SECTIONS = [
   {
-    code:        "01",
     title:       "Profile",
-    description: "How you show up on operator cards, receipts, and the public showcase.",
+    description: "How you show up on receipts and (later) the public showcase.",
   },
   {
-    code:        "02",
     title:       "Studio API",
     description: "Public REST + webhooks. Included with Studio and Lifetime — shipping in v1.1.",
   },
   {
-    code:        "03",
     title:       "App Store Connect",
     description: "Direct push of generated assets to App Store Connect — shipping in v1.1.",
   },
   {
-    code:        "04",
     title:       "Account",
     description: "Export or delete your data. Email support today; self-serve in v1.1.",
   },
 ] as const;
 
 function SectionHeading({
-  code, title, description, danger = false,
+  title, description,
 }: {
-  code: string;
   title: string;
   description: string;
-  danger?: boolean;
 }) {
   return (
     <div className="col-span-12 md:col-span-4 md:pr-8">
-      <div className={`t-eyebrow ${danger ? "text-[var(--accent)]" : "t-eyebrow-accent"} mb-3`}>
-        {code} · {danger ? "Caution" : "Section"}
-      </div>
-      <h2
-        className={`t-display text-[clamp(1.5rem,2.6vw,1.875rem)] leading-[0.95] mb-3 normal-case tracking-[-0.02em] text-balance ${
-          danger ? "text-[var(--accent)]" : ""
-        }`}
-      >
+      <h2 className="text-[20px] font-semibold tracking-[-0.015em] text-[var(--fg)] leading-snug mb-2">
         {title}
       </h2>
-      <p className="t-prose text-[14px] max-w-xs">{description}</p>
+      <p className="text-[13.5px] text-[var(--fg-dim)] max-w-xs leading-relaxed">{description}</p>
     </div>
   );
 }
@@ -68,14 +64,16 @@ export default async function SettingsPage() {
 
   return (
     <>
-      <Topbar section="Settings" breadcrumb={["Operator", "Settings"]} />
+      <Topbar section="Settings" breadcrumb={["Settings"]} />
 
-      <div className="px-4 sm:px-6 lg:px-10 pt-10 lg:pt-12 pb-8 lg:pb-10 max-w-[1480px] border-b border-[var(--line)]">
+      <div className="px-4 sm:px-6 lg:px-8 pt-8 lg:pt-12 pb-6 lg:pb-8 max-w-[1480px] border-b border-[var(--line)]">
         <div className="grid grid-cols-12 gap-6 lg:gap-8 items-end">
           <div className="col-span-12 md:col-span-7">
-            <div className="t-eyebrow t-eyebrow-accent mb-3">Account</div>
-            <h1 className="t-display text-[clamp(2rem,4vw,3.75rem)] leading-[0.95] normal-case tracking-[-0.04em] text-balance">
-              Operator config.
+            <div className="text-[11px] uppercase tracking-[0.14em] text-[var(--accent)] font-medium mb-2">
+              Account
+            </div>
+            <h1 className="text-[clamp(1.75rem,3vw,2.5rem)] font-semibold tracking-[-0.02em] text-[var(--fg)] leading-tight">
+              Account settings
             </h1>
           </div>
           <p className="col-span-12 md:col-span-5 t-prose max-w-md text-[var(--fg)]">
