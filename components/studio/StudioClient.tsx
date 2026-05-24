@@ -499,16 +499,12 @@ export function StudioClient({
     <div className="grid grid-cols-12 min-h-[calc(100dvh-7rem)]">
       <section className="col-span-12 xl:col-span-4 border-r border-[var(--line)] bg-[var(--bg)]">
         <div className="border-b border-[var(--line)] px-5 py-4">
-          <div className="text-[11px] uppercase tracking-[0.14em] text-[var(--accent)] font-medium mb-2">
-            Studio
-          </div>
-          <h1 className="text-[clamp(1.5rem,3vw,2.25rem)] font-semibold tracking-[-0.02em] text-[var(--fg)] leading-tight">
-            Build your screenshot pack
+          <div className="t-eyebrow t-eyebrow-accent mb-2">Studio engine · Phase C</div>
+          <h1 className="t-display text-[clamp(1.75rem,4vw,3rem)] leading-[0.92] tracking-[-0.04em] normal-case text-balance">
+            Constrained screenshot studio.
           </h1>
-          <p className="text-[14px] leading-relaxed text-[var(--fg-dim)] mt-3 max-w-[46ch]">
-            One panel per App Store screenshot. Drop the source PNG,
-            write the headline, pick a layout — then reorder, duplicate,
-            and export the whole pack at App Store-exact dimensions.
+          <p className="t-prose mt-3 text-[var(--fg-dim)] max-w-[46ch]">
+            The ASOForge-style engine inside ShotsHQ now behaves like a screenshot pack builder: ordered panels, filmstrip selection, duplication, reordering, deletion, and bulk export.
           </p>
         </div>
 

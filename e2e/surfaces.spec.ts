@@ -64,22 +64,20 @@ test.describe("/projects/[id]/surfaces contract (free-tier E2E user)", () => {
     await expect(matrixRoot).toHaveAttribute("data-user-plan", "free");
   });
 
-  test("page identifies the project without `Operator` or raw UUID slice", async ({ page, request }) => {
+  test("breadcrumb is product-language — no `Operator` or raw UUID slice", async ({ page, request }) => {
     const projectId = await createProject(request, "surfaces-breadcrumb");
     await page.goto(`/projects/${projectId}/surfaces`);
 
-    // Structural redesign 2026-05-24: the legacy `<Topbar>` strip with
-    // its slash-separated breadcrumb is gone. Project identification
-    // now lives in the page body (h1 or supporting copy), not in a
-    // header chrome strip. Pin the body — same intent (no Operator,
-    // no UUID), no longer a coupling to the Topbar component.
-    const body = page.locator("body");
-    await expect(body).not.toContainText(/\bOperator\b/);
+    // The Topbar breadcrumb sits in the page header. We assert the
+    // negative (no "Operator" and no UUID-shaped substring) and the
+    // positive (the project name is present).
+    const header = page.locator("header").first();
+    await expect(header).not.toContainText(/Operator/i);
+    // 8-char UUID slice would be the leading 8 hex chars + dash.
     const uuidPrefix = projectId.slice(0, 8);
-    await expect(body).not.toContainText(uuidPrefix);
-    // Project name should still be present somewhere on the page so
-    // the user knows which project they're configuring.
-    await expect(body).toContainText("surfaces-breadcrumb");
+    await expect(header).not.toContainText(uuidPrefix);
+    // Project name was "surfaces-breadcrumb" — should be in the crumb.
+    await expect(header).toContainText("surfaces-breadcrumb");
   });
 
   test("App Store surface is always selected for a free user; Indie+ surfaces show Upgrade CTA", async ({ page, request }) => {

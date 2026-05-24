@@ -49,9 +49,7 @@ export default async function SurfacesPage({ params }: { params: Promise<{ id: s
         data-user-plan={userPlan}
       >
         <div className="col-span-12 md:col-span-7 border-r border-[var(--line)] p-6 md:p-10">
-          <div className="text-[11px] uppercase tracking-[0.14em] text-[var(--accent)] font-medium mb-2">
-            {project.name} · Surfaces
-          </div>
+          <div className="t-eyebrow t-eyebrow-accent mb-2">Project · Surfaces</div>
           <h1 className="t-display t-h-2">
             Choose your<br />
             <span className="text-[var(--accent)]">channels.</span>

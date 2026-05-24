@@ -1,12 +1,10 @@
 import type { DeviceId } from "@/lib/canvas/schema";
 
 /**
- * Studio — constrained screenshot pack engine.
+ * ASOForge-style constrained screenshot studio for ShotsHQ.
  *
- * The model is an ordered set of panels (the real unit of an App
- * Store screenshot pack). Each panel pins a device, source PNG,
- * headline, and layout; the studio supports reordering, duplication,
- * deletion, and bulk export at App Store-exact dimensions.
+ * Phase C upgrades the model from one editable design to an ordered set of
+ * panels (the real unit of an App Store screenshot pack).
  */
 
 export type StudioDeviceSize = {
