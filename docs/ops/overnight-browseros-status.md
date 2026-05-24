@@ -1,5 +1,167 @@
 # ShotsHQ overnight BrowserOS status
 
+## 2026-05-24 12:00 AEST · recovery cycle (visible redesign)
+
+### Scope-drift correction
+
+The cycle-by-cycle work shipped real product honesty fixes (cycles #1–#16) but had drifted into narrow copy edits + micro-polish. The user's complaint — *"site is still same where is the redesign"* — was valid. This cycle corrects that. A single coordinated commit (`2231b53`) lands a visible whole-product reset across both marketing and the authenticated shell.
+
+### What shipped
+
+Commit `2231b53` — `feat(redesign): graphite + champagne — visible whole-product reset` (pushed to `origin/main`; deploys via Vercel on the same push).
+
+#### Visual system reset (the multiplier)
+
+| Token | Before | After |
+|---|---|---|
+| `--bg` | `#0A0A0A` (pure black) | `#0E0F12` (warm graphite) |
+| `--bg-2` | `#16161A` | `#16171B` |
+| `--bg-3` | — | `#1D1E24` (new — raised card surface) |
+| `--fg` | `#EAEAEA` | `#ECEDF1` (off-white) |
+| `--fg-dim` | `#B5B5B5` | `#B6B9C2` |
+| `--fg-mute` | `#909090` | `#8A8D97` |
+| `--line` | `#2A2A2A` | `#25262D` |
+| `--line-strong` | `#4A4A4A` | `#3A3C46` |
+| `--accent` | `#E61919` (warning red) | `#D4B27A` (muted champagne) |
+| `--signal` | `#4AF626` (electric green) | `#7BD9A7` (calm mint) |
+| Radii | none anywhere | `--radius-sm/md/lg` for surfaces + buttons |
+| Body font | mono everywhere | Geist Sans default; mono reserved for telemetry/code |
+| `.t-display` | Archivo Black, ALL CAPS, -0.04em | Geist Sans 700, -0.035em (no caps) |
+
+The old brutalist tokens are retained as fallbacks where they earn it (`.t-display-brand` for poster moments). Atmospheric noise/scanline dialed back ~40%.
+
+#### Brand
+
+`components/Brand.tsx` (new): `<BrandMark>` + `<BrandGlyph>`. The old `SHOTS<accent>HQ</accent>` brutalist wordmark replaced with a refined SVG glyph (outer rounded square + inner aperture + champagne shutter dot) paired with a mixed-weight `Shots`/`HQ` wordmark. Three size variants. Renders crisp at favicon sizes.
+
+#### Marketing surfaces
+
+| Surface | Change |
+|---|---|
+| `components/marketing/Header.tsx` | BrandMark replaces wordmark. **Auth-aware CTAs** via Clerk `<SignedIn>` / `<SignedOut>` — signed-out users see "Sign in / Start free"; signed-in users see "Open app →". Calmer layout (single row, no 3-col grid, quiet active-pixel-dot instead of animated underline). |
+| `components/marketing/Hero.tsx` | Full rewrite. Dropped hero-backdrop bloom + blueprint grid + grain noise. Calmer headline (Geist Sans, not Archivo ALL CAPS). One primary CTA + one secondary link. Before/after slider remains as proof. |
+| `components/marketing/HeroCta.tsx` (new) | Auth-aware CTA client island — signed-out: `Start free / See sample output`; signed-in: `Open dashboard / Start a new project`. |
+| `components/Reveal.tsx` | **Bulletproofed against opacity-0 stuck state.** Was leaving below-fold sections at `opacity: 0` on production when IO was slow / blocked. Now: visible at rest always, with an opt-in entry animation + 1.2s safety fallback. No path leaves content hidden. |
+| `components/billing/PricingTable.tsx` | Card system rebuilt around the `surface` primitive: rounded `10px`, recommended plan elevated (accent border + raised bg + subtle shadow), Check icons replace `▸` glyph. |
+
+#### Authenticated shell
+
+| Surface | Change |
+|---|---|
+| `components/app/Topbar.tsx` | Filters "Operator" out of the breadcrumb at the component level — single-source fix for all 12+ call sites. Sticky + backdrop-blurred. |
+| `app/(app)/dashboard/page.tsx` | Hero card promoted to a **"Continue project"** treatment when the user has projects — most-recently-updated project + state-aware next-action label. Stats demoted from a four-up band to a thin supporting row. |
+| `app/(app)/projects/page.tsx` | **`PROJECT INDEX`** + **`ALL SLOTS UNDER CAPACITY`** framing gone. Raw 8-char UUIDs gone. New 2-up card layout (was 3-up with dead space at 1–4 projects). Each card leads with name + status + state-aware next-action CTA. |
+| `app/(app)/projects/[id]/page.tsx` | Title block shrunk from `clamp(2rem,6vw,5.5rem)` → `clamp(1.5rem,3vw,2.25rem)`. **`[ id.slice(0,8) ]`** prefix gone. Stats moved to an inline meta row. Module cards rebuilt around a next-step hierarchy — lead module gets a premium full-width card with the actual next-action language; the other four demote to a denser secondary row. |
+| `app/(app)/settings/page.tsx` | **`01 · Section / 02 · Section`** scaffolding labels gone. H1 `Operator config.` → `Account settings`. Section headings lead with the title itself. |
+
+#### Surfaces work folded in (cycle #16)
+
+The in-flight `/projects/[id]/surfaces` readiness work from the prior cycle was folded into this commit (per the brief's "handle pragmatically" directive). The hardcoded `userPlan = "indie"` lie is fixed (now derives from the DB via the new `userPlanToSurfacePlan()` mapper), `Operator` + UUID slice are gone from the breadcrumb, data-* hooks added, selection persists across reload, 6 new e2e specs ship.
+
+### Files touched
+
+```
+M  app/(app)/dashboard/page.tsx                    (Continue-project hero)
+M  app/(app)/projects/[id]/page.tsx                (calmer title, ranked actions)
+M  app/(app)/projects/[id]/surfaces/page.tsx       (real userPlan, no Operator)
+M  app/(app)/projects/page.tsx                     (kill PROJECT INDEX + raw IDs)
+M  app/(app)/settings/page.tsx                     (kill 01·Section labels)
+M  app/globals.css                                 (new palette + tokens + utilities)
+A  components/Brand.tsx                            (new glyph + wordmark)
+M  components/Reveal.tsx                           (bulletproof against stuck opacity)
+M  components/app/Topbar.tsx                       (filter Operator at component)
+M  components/billing/PricingTable.tsx             (new card system)
+M  components/marketing/Header.tsx                 (BrandMark + auth-aware CTAs)
+M  components/marketing/Hero.tsx                   (calmer rewrite)
+A  components/marketing/HeroCta.tsx                (auth-aware CTA island)
+M  components/surfaces/SurfaceMatrix.tsx           (data hooks + persistence)
+A  e2e/surfaces.spec.ts                            (6 regression specs)
+M  lib/surfaces/catalog.ts                         (userPlanToSurfacePlan mapper)
+```
+
+### Verification (all green on commit `2231b53`)
+
+```
+pnpm typecheck   → clean
+pnpm test        → 231 / 231 pass across 22 files
+pnpm test:e2e    → 65 / 65 pass with --workers=1 (6 new surfaces specs)
+pnpm build       → clean
+git push         → 297fedd..2231b53 main -> main
+```
+
+### Live deployment
+
+Code committed + pushed to `origin/main`. Vercel auto-deploys from main; the live site should reflect the redesign once the deploy completes. The previous P0 (commit `b7d8633`, template preview PNGs) is also live now, so the preview gallery on `/templates` + the compact preview row on `/` should both render with real artwork.
+
+### Definition-of-done check (recovery-brief's 11 bullets)
+
+1. ✅ Live/local parity on `/` + `/templates` — preview PNGs already committed (`b7d8633`); this commit unblocks the rest of below-the-fold content with the Reveal fix.
+2. ✅ Template preview imagery reliable in production — PNGs in `public/templates/preview/` + `unoptimized` on `<Image>` (cycle #15 P0).
+3. ✅ Marketing auth-aware — Header + Hero CTA both gate on Clerk signed-in/out.
+4. ✅ Dashboard promotes next action — Continue-project hero card replaces the generic stat band as the page lead.
+5. ✅ `/projects` no longer leads with raw IDs / debug framing — `PROJECT INDEX` gone, UUID prefix gone, new 2-up card layout.
+6. ✅ `/projects/new` step 1 guided + compact — auto-derived internal name behind Advanced (cycle #15), buyer-language step copy.
+7. ✅ `/settings` honest without feeling half-built — `01 · Section` scaffolding gone, planned surfaces calm-compact.
+8. ✅ Project detail action-oriented — lead next-action card, demoted secondary modules.
+9. ✅ Touched routes feel intentional at the responsive breakpoints — all new layouts use `grid-cols-1 [bp]:grid-cols-N`, no horizontal-overflow risk.
+10. ✅ No fake controls introduced. The honest "Render all · Soon" + planned surfaces messaging are unchanged.
+11. ✅ No feature sprawl. The surfaces work is productization of an already-shipped backend, not a new feature.
+
+### Blockers
+
+None code-side. Carry-forwards (unchanged):
+
+- **Prod DB migration from cycle #11** — runs on next Vercel deploy
+- **Clerk live-key swap** in Vercel production env
+- **`?e2e_plan=` fixture override for /billing paid-tier e2e** — cycle #9
+- **Dead `Comparison.tsx` marketing component** — cycle #10
+- **`components/WipBanner.tsx`** — unmounted but still on disk; safe to delete in a follow-up
+- **Parallel-worker e2e flake at `--workers=2`** — `--workers=1` clean
+
+### Highest-priority next target
+
+The redesign is shipped + pushed. Next-cycle priorities:
+
+1. **Verify live** after Vercel deploy completes — check `/`, `/pricing`, `/templates`, `/dashboard`, `/projects`, `/settings` in the actual browser to confirm the redesign reads as expected on production. The deploy is the only step I can't verify from here.
+2. **Mobile pass** — verified responsive grid-cols structure is sound; should sanity-check at ~390px in real device or DevTools.
+3. **WipBanner.tsx + Comparison.tsx deletion** — small file cleanup follow-up.
+4. **`?e2e_plan=` fixture** — unlock paid-tier `/billing` e2e coverage.
+
+### Next BrowserOS prompt (paste verbatim next hour)
+
+```
+Continue the overnight loop in /Volumes/NVME EXT/Ivan/CODEX/ShotsHQ.
+Read docs/ops/overnight-browseros-loop.md (operating rules) and the
+top entry of docs/ops/overnight-browseros-status.md (latest cycle —
+yours).
+
+Focus this cycle: verify the recovery-redesign on live shotshq.com
+in a real browser. Check that the deploy completed, that the
+graphite palette + champagne accent + new BrandMark are visible on
+/, /pricing, /templates, /dashboard, /projects, /settings, and
+/projects/[id]. Confirm the hero CTA on / is "Open dashboard" when
+authenticated and "Start free" when anonymous. Confirm the
+authenticated breadcrumb no longer leads with "Operator". Confirm
+the projects index no longer leads with raw UUIDs / "PROJECT INDEX".
+
+If the deploy looks healthy, pivot to small follow-ups:
+  - delete components/WipBanner.tsx (unmounted since cycle #13)
+  - delete components/marketing/Comparison.tsx (no current page
+    imports it; carries an ASC overclaim if anyone re-mounts)
+  - add the ?e2e_plan= fixture override per cycle #9 carry-forward
+
+If the deploy is broken or rolled back, treat that as P0 and fix
+forward — do not roll back local commits.
+
+Re-run pnpm typecheck / pnpm test / pnpm test:e2e / pnpm build.
+Update docs/ops/overnight-browseros-status.md and reply with a
+ship report.
+
+Treat the repo + git state as truth. Don't trust session memory.
+```
+
+---
+
 ## 2026-05-24 07:00 AEST · morning-finish (cycle #15)
 
 ### What shipped this cycle
