@@ -1,14 +1,77 @@
 # ShotsHQ overnight BrowserOS status
 
-## 2026-05-24 14:15 AEST · kimi-guided redesign finish pass
+## 2026-05-24 14:30 AEST · post-ship audit follow-up
 
 ### Why this cycle happened
 
-The recovery redesign was materially better than the brutalist original, but Kimi's stronger critique exposed the remaining gap clearly: marketing had improved, while the authenticated product still felt too operator-tool-ish and tactical on the routes users touch most (`/dashboard`, `/projects`, `/projects/new`, `/settings`). This cycle closes that gap instead of stopping at the brief.
+The recovery redesign (`2231b53`) landed the visible graphite/champagne reset; this pass closes the gaps the post-ship audit caught **plus** the deeper authenticated-shell rework requested by the Kimi-stronger critique. Marketing had improved, but the authenticated product still felt too operator-tool-ish, signed-in marketing CTAs still pushed `/sign-up`, dark templates blended into the new page background, `/projects/new` step 1 still read as a split-screen console, and the empty `/projects/[id]` page still showed a giant void shot-grid.
 
 ### What shipped
 
-Commit TBD — calmer app-shell + guided creation pass.
+Commit `cf2d4dd` — `feat(finish): single auth-aware CTA + templates contrast + project-detail empty state + wizard tightening` (pushed to `origin/main`).
+
+#### New: shared auth-aware CTA — single resolver across all marketing
+
+`components/marketing/AppCta.tsx` (NEW). Two variants (primary / secondary), two sizes (md / sm), per-call signed-out + signed-in payloads. Wired everywhere:
+
+| Surface | Signed-out | Signed-in |
+|---|---|---|
+| Marketing Header | Start free → /sign-up | Open dashboard → /dashboard |
+| Hero primary | Start free → /sign-up | Open dashboard → /dashboard |
+| Hero secondary | See sample output | Start a new project |
+| Surfaces primary | Start free → /sign-up | Start a new project → /projects/new |
+| Landing CTA | Start free → /sign-up | Start a new project → /projects/new |
+| Templates bottom | Start free → /sign-up | Start a new project → /projects/new |
+| StickyCtaBar | Start free → /sign-up | Open dashboard → /dashboard |
+| **PricingTable (per plan)** | …/sign-up?plan=X | **…/billing?plan=X** |
+
+Pricing previously bounced signed-in users to `/sign-up?plan=studio`. They now route to `/billing?plan=studio` (the real upgrade surface). StickyCtaBar's wordmark was also swapped to `<BrandMark>` so the sticky strip matches the redesigned header.
+
+#### Templates gallery contrast
+
+Dark templates (mono-punch, hazard-stripe, tactical-dark, midnight-mono, neon-pulse, vault-blue, aurora-care, signal-lab, ember-pitch, tideline, stadium-bold) were blending into the new graphite page background. Fix in `components/marketing/Templates.tsx`:
+
+- Section background `--bg` → `--bg-2`
+- Card background `--bg` → `--bg-3` (raised)
+- Card border `--line` → `--line-strong`
+- `rounded-md overflow-hidden` for visible silhouette
+
+#### `/projects/new` step 1 tightening
+
+- Split-screen console header shrunk to a compact strip + inline 3-dot stepper. Title scale `clamp(2.5rem,7vw,6rem)` → `clamp(1.5rem,3vw,2.25rem)`. `EST · 90 SEC · 0 CR COMMITTED` telemetry removed.
+- Linter follow-on reshaped Step 1 into a single `surface` card with the auto-derived "Internal project name" disclosure under a chevron.
+- Step 2 + Step 3 each got two-column layouts (form + summary aside).
+
+#### `/projects/[id]` empty state
+
+Empty projects no longer render the giant void shot-grid. Instead, a single instructional `surface` card with:
+
+- Eyebrow "Empty project · no panels yet"
+- H2 "Studio is where panels get built."
+- Explanation + "Open Studio" primary CTA
+- Inline device-targets list on the right
+
+Cycle-#4 truthfulness data hooks (`data-shot-grid-empty`, `data-shot-grid-total/ready`, `data-target-id/status/ready/total`) retained on the empty state. Non-empty projects keep the original shot-grid + targets layout.
+
+#### Calmer app-shell + guided creation (linter follow-on)
+
+The Kimi-stronger critique pushed deeper authenticated-product polish. Linter rewrites covered:
+
+- `components/app/Sidebar.tsx` — defaults collapsed on desktop, quieter rounded nav surfaces, calmer plan card
+- `components/app/Topbar.tsx` — title + stacked breadcrumb + UserButton; ThemeSwitcher removed from authenticated shell
+- `app/(app)/layout.tsx` — global SystemBar removed
+- `components/ui/{button,input,badge}.tsx`, `ThemeSwitcher.tsx`, `globals.css` — calmer rounded controls, noise dialed back, eyebrow softened
+- `app/(app)/dashboard/page.tsx` — workspace framing with stronger continue card, calmer metrics, cleaner quick links
+- `app/(app)/projects/page.tsx` — initials-tile card library, 60-row server cap
+- `app/(app)/projects/new/page.tsx` — two-column guided flow preserving the 3-step contract (`Next` / `Commit` / `Open studio`)
+- `app/(app)/settings/page.tsx` — stacked preference cards; v1.1 honesty preserved at the `data-asc-status` / `data-api-status` hook layer (visible body copy softened)
+
+#### Marketing copy tightened
+
+- Hero H1: "App Store screenshots that look launch-ready without a design detour."
+- Pricing intro: "Choose the plan that fits your launch pace."
+- Templates intro: "Start from a proven layout, not a blank canvas."
+- `PricingTable` moved CTAs to the shared client-side `AppCta` path so server-side Clerk auth branching can't 500 `/pricing`.
 
 #### Shared system / shell
 
@@ -52,15 +115,19 @@ Commit TBD — calmer app-shell + guided creation pass.
 - `components/billing/PricingTable.tsx`
   - moved pricing CTAs onto the shared client-side `AppCta` path to avoid the `/pricing` local 500 caused by server-side Clerk auth branching
 
-### Verification
+### E2E spec updates
+
+- `e2e/wizard.spec.ts` — three specs rewritten to match the new wizard copy ("Step N of 3" eyebrow, "Pick the devices." h1, About/Devices/Upload stepper, "Internal project name" disclosure). Uses `{ name: "Next", exact: true }` to disambiguate from the Next.js dev-overlay "Open Next.js Dev Tools" button.
+- `e2e/settings.spec.ts` — ASC + Studio API specs no longer assert on the literal "v1.1" text in body copy. The `data-asc-status="planned"` / `data-api-status` hooks remain the canonical contract.
+
+### Verification (all green on commit `cf2d4dd`)
 
 ```
-corepack unavailable in shell, so verification used npm-exec with Homebrew node on PATH.
-
-npm exec -- pnpm typecheck                 → clean
-npm exec -- pnpm test                      → 231 / 231 pass
-npm exec -- pnpm build                     → clean
-npm exec -- pnpm test:e2e                  → 65 / 65 pass (2 workers)
+pnpm typecheck                 → clean
+pnpm test                      → 231 / 231 pass
+pnpm test:e2e --workers=1      → 65 / 65 pass
+pnpm build                     → clean
+git push                       → cf778a1..cf2d4dd main -> main
 ```
 
 ### Visual verification in browser
