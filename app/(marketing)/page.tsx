@@ -1,35 +1,53 @@
 import { Hero } from "@/components/marketing/Hero";
-import { PipelineDiagram } from "@/components/marketing/PipelineDiagram";
-import { FeatureGrid } from "@/components/marketing/FeatureGrid";
+import { LandingWorkflow } from "@/components/marketing/LandingWorkflow";
 import { Templates } from "@/components/marketing/Templates";
-import { Surfaces } from "@/components/marketing/Surfaces";
-import { CTA } from "@/components/marketing/CTA";
-import { Reveal } from "@/components/Reveal";
+import { LandingClose } from "@/components/marketing/LandingClose";
 import { HomeJsonLd } from "@/components/seo/JsonLd";
 
+/**
+ * Landing page — structural redesign 2026-05-24.
+ *
+ * Was: Hero + Templates(compact) + PipelineDiagram + Surfaces +
+ * FeatureGrid + CTA. Six section-stack blocks where each one was a
+ * separate marketing concept. The user's "looks the same just
+ * different colors" verdict was about exactly this composition:
+ * every redesign cycle just tweaked the contents of the six blocks.
+ *
+ * Now: the page tells ONE story top-to-bottom — raw screenshots in,
+ * polished launch pack out — across three coherent moments:
+ *
+ *   1. <Hero>            — the headline + before/after proof
+ *   2. <LandingWorkflow> — a continuous four-step workflow narrative
+ *                          (Drop → Compose → Polish → Ship), not
+ *                          four discrete cards. One row, one
+ *                          motion, one read.
+ *   3. <Templates>       — the curated starting points (the "you
+ *                          don't have to start from blank" beat)
+ *   4. <LandingClose>    — close: ready-to-go template grid + final
+ *                          CTA, fused into one final moment instead
+ *                          of two separate sections (FeatureGrid +
+ *                          CTA were always read as one beat anyway)
+ *
+ * What got dropped on purpose:
+ *   - PipelineDiagram (the "seven-stage timeline" lived as its own
+ *     section even though the four-step workflow above carries the
+ *     same idea more concretely)
+ *   - Surfaces  (already a redundant "we ship to other channels too"
+ *     beat — kept on /tools/web-hero where it actually belongs)
+ *   - FeatureGrid (the six-up "modules" grid was the "section stack"
+ *     pattern itself; collapsed into the workflow narrative)
+ *
+ * The result is three coherent moments on the page instead of six
+ * comparable sections — fewer competing ideas per screen.
+ */
 export default function LandingPage() {
   return (
     <>
       <HomeJsonLd />
       <Hero />
-      {/*
-        Cycle (overnight redesign) reordered the landing cadence:
-          1. Hero (with HeroBeforeAfterSlider — proof of output baked in)
-          2. Templates compact — concrete proof of finished outputs
-             (was buried below FeatureGrid; users were scrolling past
-             the "what does the output look like" answer)
-          3. Pipeline — how the engine works
-          4. Surfaces — where the outputs land
-          5. FeatureGrid — module-by-module breakdown
-          6. CTA
-        Reveal sections render visible by default now; the wrappers
-        are kept for the polish animation only (see Reveal.tsx).
-      */}
-      <Reveal as="div"><Templates compact /></Reveal>
-      <Reveal as="div"><PipelineDiagram /></Reveal>
-      <Reveal as="div"><Surfaces /></Reveal>
-      <Reveal as="div"><FeatureGrid /></Reveal>
-      <Reveal as="div"><CTA /></Reveal>
+      <LandingWorkflow />
+      <Templates compact />
+      <LandingClose />
     </>
   );
 }

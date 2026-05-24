@@ -1,15 +1,20 @@
 import { notFound } from "next/navigation";
-import { Topbar } from "@/components/app/Topbar";
 import { StudioClient } from "@/components/studio/StudioClient";
 import { requireUser } from "@/lib/auth/clerk";
 import { getProject } from "@/lib/db/queries/projects";
 import { extractStudioDesignSet } from "@/lib/studio/schema";
 
 /**
- * ShotsHQ Studio — ASOForge-style constrained screenshot engine.
+ * Studio — the screenshot pack engine.
  *
- * Phase C: ordered panel set with filmstrip, reordering, duplication,
- * deletion, and bulk export naming.
+ * Constrained workflow: each App Store screenshot is one ordered panel
+ * with a device, source PNG, headline, and layout. The studio supports
+ * filmstrip selection, reordering, duplication, deletion, and bulk
+ * export at App Store-exact dimensions.
+ *
+ * Structural redesign 2026-05-24: dropped the legacy `<Topbar>` header
+ * row — the AppNav at layout level is enough, and Studio benefits from
+ * the extra vertical space when it can have the whole content area.
  */
 export default async function ProjectStudioPage({
   params,
@@ -24,15 +29,12 @@ export default async function ProjectStudioPage({
   const initialStudio = extractStudioDesignSet(project.polotnoJson);
 
   return (
-    <>
-      <Topbar section="Studio" breadcrumb={["Operator", "Projects", project.name, "Studio"]} />
-      <StudioClient
-        projectId={project.id}
-        projectName={project.name}
-        appName={project.appName}
-        appDescription={project.appDescription}
-        initialStudio={initialStudio}
-      />
-    </>
+    <StudioClient
+      projectId={project.id}
+      projectName={project.name}
+      appName={project.appName}
+      appDescription={project.appDescription}
+      initialStudio={initialStudio}
+    />
   );
 }

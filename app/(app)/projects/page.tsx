@@ -54,12 +54,57 @@ export default async function ProjectsPage() {
                 Showing the most recent {visibleProjects.length} projects. Older launches stay available from the same account history.
               </p>
             )}
-            <ul className="grid grid-cols-1 gap-4 xl:grid-cols-3 md:grid-cols-2">
-              {visibleProjects.map((p) => {
-                const info = projectStatus(p.polotnoJson);
+            {/*
+              Structural redesign 2026-05-24: the page used to render a
+              single flat 2/3-up card grid sorted by updatedAt desc.
+              Now grouped by lifecycle status so the workspace tells the
+              user what's worth resuming first:
+                - Ready to ship      (status === "ready")
+                - In progress        (status === "partial" | "drafting")
+                - Empty               (status === "empty")
+              Each group keeps the same card shape so muscle memory still
+              works, but the page reads as a curated workspace, not an
+              undifferentiated index.
+            */}
+            {(() => {
+              type ProjectWithStatus = {
+                p:        typeof projects[number];
+                info:     ReturnType<typeof projectStatus>;
+                display:  ReturnType<typeof projectStatusDisplay>;
+                next:     ReturnType<typeof nextActionFor>;
+              };
+              const enriched: ProjectWithStatus[] = visibleProjects.map((p) => {
+                const info    = projectStatus(p.polotnoJson);
                 const display = projectStatusDisplay(info, p.id);
-                const nextAction = nextActionFor(p.id, info.status);
-                return (
+                const next    = nextActionFor(p.id, info.status);
+                return { p, info, display, next };
+              });
+              const ready    = enriched.filter((e) => e.info.status === "ready");
+              const inProg   = enriched.filter((e) => e.info.status === "partial" || e.info.status === "blocked");
+              const empty    = enriched.filter((e) => e.info.status === "empty");
+              const sections = [
+                { id: "ready",    title: "Ready to ship",         items: ready,  helper: "Pack is fully composed — open exports to download." },
+                { id: "in-prog",  title: "In progress",           items: inProg, helper: "Resume the one you were working on most recently." },
+                { id: "empty",    title: "Empty — needs Studio",  items: empty,  helper: "Project exists but no panels yet. Open Studio to start composing." },
+              ].filter((s) => s.items.length > 0);
+
+              return (
+                <div className="space-y-10">
+                  {sections.map((sec) => (
+                    <section key={sec.id} data-projects-group={sec.id}>
+                      <header className="mb-3 flex items-baseline justify-between gap-3 flex-wrap">
+                        <h2 className="text-[15px] font-semibold tracking-[-0.01em] text-[var(--fg)]">
+                          {sec.title}
+                          <span className="ml-2 text-[12.5px] font-medium text-[var(--fg-mute)] tabular-nums">
+                            {sec.items.length}
+                          </span>
+                        </h2>
+                        <p className="text-[12.5px] text-[var(--fg-mute)]">
+                          {sec.helper}
+                        </p>
+                      </header>
+                      <ul className="grid grid-cols-1 gap-4 xl:grid-cols-3 md:grid-cols-2">
+                        {sec.items.map(({ p, info, display, next }) => (
                   <li key={p.id}>
                     <ProjectCard
                       projectId={p.id}
@@ -72,13 +117,17 @@ export default async function ProjectsPage() {
                       statusHelp={display.help}
                       readyPanels={info.readiness.readyPanels}
                       totalPanels={info.readiness.totalPanels}
-                      nextActionHref={nextAction.href}
-                      nextActionLabel={nextAction.label}
+                      nextActionHref={next.href}
+                      nextActionLabel={next.label}
                     />
                   </li>
-                );
-              })}
-            </ul>
+                        ))}
+                      </ul>
+                    </section>
+                  ))}
+                </div>
+              );
+            })()}
           </>
         )}
       </div>

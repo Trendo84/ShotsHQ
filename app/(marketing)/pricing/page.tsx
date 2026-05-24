@@ -1,136 +1,263 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { PricingTable } from "@/components/billing/PricingTable";
+import { ArrowRight } from "lucide-react";
+import { AppCta } from "@/components/marketing/AppCta";
 
 export const metadata: Metadata = {
   title: "Pricing",
   description: "Free tier, credit packs, and Studio subscription. No subscription traps.",
 };
 
-const PRICING_FAQS: { q: string; a: string }[] = [
+/**
+ * Pricing — decision-first composition. Structural redesign 2026-05-24.
+ *
+ * Was: 3-lane buyer-framing grid + a 5-card pricing matrix + an FAQ
+ * block + a credit-reference table. Four equal-weight beats that
+ * each said "look at me." The user could scan all 5 plans before
+ * being told what kind of buyer they are.
+ *
+ * Now: the page leads with TWO branches — "Launching once or twice" vs
+ * "Launching every cycle." Pick a branch, see the one plan that
+ * fits. The legacy 5-card matrix is collapsed into a single
+ * `<details>` reference block below the fold for the buyer who
+ * already knows what they want. Credit costs + FAQ both collapse
+ * into the same reference block (still browsable, just no longer
+ * the dominant content of the page).
+ *
+ * The page now answers "which plan should I buy?" before it
+ * answers "what are all the plans?"
+ */
+
+type Branch = {
+  id:        "launches" | "ongoing";
+  eyebrow:   string;
+  question:  string;
+  recommended: {
+    name:    string;
+    price:   string;
+    cadence: string;
+    pitch:   string;
+    perks:   string[];
+    signedOut: { href: string; label: string };
+    signedIn:  { href: string; label: string };
+  };
+  alt: { name: string; price: string; href: string };
+};
+
+const BRANCHES: Branch[] = [
   {
-    q: "What counts as one full set?",
-    a: "A 'set' is a complete pack of App Store screenshots for one app — typically 6 frames in one locale. At ~12-15 credits per set (2 cr/backdrop × 6 frames + 1 cr copy gen), the Indie pack covers 6-8 sets and the Pro pack covers 20-25 sets.",
+    id:        "launches",
+    eyebrow:   "Branch 01",
+    question:  "Shipping a launch this month?",
+    recommended: {
+      name:    "Pro pack",
+      price:   "$49",
+      cadence: "one-off, never expires",
+      pitch:   "300 credits — roughly 20–25 App Store packs. Pay once, ship as many launches as you want, walk away when you're done.",
+      perks: [
+        "20–25 complete launch packs",
+        "Watermark removed",
+        "Cloud project storage",
+        "All required dimensions handled",
+      ],
+      signedOut: { href: "/sign-up?plan=pro", label: "Buy the Pro pack"  },
+      signedIn:  { href: "/billing?plan=pro", label: "Buy in billing"    },
+    },
+    alt: { name: "Indie pack", price: "$19 / 100 cr", href: "/sign-up?plan=indie" },
   },
   {
-    q: "Can I buy credit packs on top of Studio?",
-    a: "Yes — Studio includes unmetered AI for the subscription holder, but if you exceed the soft fairness limits or want to gift credits to a teammate, packs stack onto your account.",
-  },
-  {
-    q: "What happens to my projects if I cancel Studio?",
-    a: "Projects and previously-rendered exports stay accessible for 30 days post-cancellation. After that, projects are archived (read-only) for another 60 days, then deleted. You can re-export at any point during the readable window.",
-  },
-  {
-    q: "Is the free tier really unlimited or is there a project cap?",
-    a: "Unlimited projects, unlimited editor time. Free-tier exports include a small ShotsHQ watermark in the corner — that's the only catch. The watermark is removed automatically on any paid pack or Studio plan.",
+    id:        "ongoing",
+    eyebrow:   "Branch 02",
+    question:  "Screenshots are part of your monthly cadence?",
+    recommended: {
+      name:    "Studio",
+      price:   "$29",
+      cadence: "per month, cancel from Stripe portal",
+      pitch:   "Unmetered AI. Use as much copy, backdrop, restyle, and translate as you want — every month, no per-call billing.",
+      perks: [
+        "Unlimited AI generations",
+        "All 41 locales + every device frame",
+        "Cloud project storage",
+        "Manage subscription via Stripe portal",
+      ],
+      signedOut: { href: "/sign-up?plan=studio", label: "Start Studio"        },
+      signedIn:  { href: "/billing?plan=studio", label: "Upgrade in billing"  },
+    },
+    alt: { name: "Lifetime", price: "$149 once · 500 seats", href: "/sign-up?plan=lifetime" },
   },
 ];
+
+/** Reference content under the disclosure — kept browsable but
+ *  collapsed by default so it doesn't compete with the decision-first
+ *  composition above. */
+const REFERENCE = {
+  costs: [
+    { label: "AI copy generation",        cost: 1, body: "Headline, subheadline, CTA — guaranteed well-formed output." },
+    { label: "AI backdrop · per frame",   cost: 2, body: "Flux 2 swaps the surrounding scene around your screenshot." },
+    { label: "AI template set",           cost: 8, body: "gpt-image-1 generates a cohesive 6-frame carousel from your app metadata." },
+    { label: "AI restyle from ref",       cost: 3, body: "Lift palette + mood from a reference, restyle the whole pack." },
+    { label: "Translate · per locale",    cost: 1, body: "Auto-relayout, RTL-aware, parallel fan-out." },
+    { label: "Export pack",               cost: 0, body: "Pixel-exact at App Store dimensions. ASC push is a v1.1 target." },
+  ],
+  faqs: [
+    { q: "What counts as one full pack?", a: "A pack is a complete set of App Store screenshots for one app — typically 6 frames in one locale. At ~12–15 credits per pack (2 cr/backdrop × 6 + 1 cr copy), the Indie pack covers 6–8 packs and the Pro pack covers 20–25." },
+    { q: "Can I buy credit packs on top of Studio?", a: "Yes. Studio includes unmetered AI for the subscriber, but credit packs stack onto your account if you want them." },
+    { q: "What happens to my projects if I cancel Studio?", a: "Projects and previously-rendered exports stay accessible for 30 days post-cancellation, then archived (read-only) for 60 days, then deleted." },
+    { q: "Free tier — really unlimited?", a: "Unlimited projects + editor time. Free exports include a small watermark in the corner. Any paid pack or Studio plan removes it." },
+  ],
+};
 
 export default function PricingPage() {
   return (
     <>
+      {/* Header */}
       <section className="border-b border-[var(--line)]">
-        <div className="mx-auto max-w-[1480px] px-4 py-14 md:px-8 md:py-20">
-          <div className="grid grid-cols-12 items-end gap-8">
-            <div className="col-span-12 md:col-span-7">
-              <div className="t-eyebrow t-eyebrow-accent mb-3">Pricing</div>
-              <h1 className="text-balance text-[clamp(2.4rem,6vw,5rem)] font-semibold tracking-[-0.045em] leading-[1.02] text-[var(--fg)]">
-                Choose the plan
-                <br />
-                <span className="text-[var(--accent)]">that fits your launch pace.</span>
-              </h1>
-            </div>
-            <div className="col-span-12 md:col-span-5">
-              <p className="t-prose-lg max-w-md text-[var(--fg)]">
-                Start free, move to packs for one-off launches, or stay in Studio if screenshots are part of your regular shipping cadence.
-              </p>
-            </div>
+        <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8 py-14 md:py-20">
+          <div className="text-[11px] uppercase tracking-[0.14em] text-[var(--accent)] font-medium mb-3">
+            Pricing
           </div>
-
-          <div className="mt-10 grid grid-cols-1 gap-3 md:grid-cols-3 md:gap-4 lg:mt-12">
-            {[
-              { lane: "Free", pitch: "Try the full editor.", sub: "Watermarked exports · no card." },
-              { lane: "Packs", pitch: "Pay per launch.", sub: "Buy credits, ship a pack, done.", flag: true },
-              { lane: "Studio", pitch: "Keep the workflow always on.", sub: "Unmetered AI · $29 / month." },
-            ].map((row) => (
-              <div
-                key={row.lane}
-                className={`rounded-[12px] border p-4 ${row.flag ? "border-[var(--accent)] bg-[var(--bg-2)]" : "border-[var(--line)] bg-[var(--bg)]"}`}
-              >
-                <div className="mb-1 flex items-baseline justify-between gap-3">
-                  <span className="t-eyebrow t-eyebrow-accent">{row.lane}</span>
-                  {row.flag && <span className="text-[12px] text-[var(--accent)]">Most teams start here</span>}
-                </div>
-                <div className="text-[15px] font-medium text-[var(--fg)] leading-snug">{row.pitch}</div>
-                <div className="mt-1 text-[12.5px] text-[var(--fg-dim)]">{row.sub}</div>
-              </div>
-            ))}
-          </div>
+          <h1 className="text-balance text-[clamp(2.25rem,5vw,4rem)] font-semibold tracking-[-0.04em] leading-[1.02] text-[var(--fg)] max-w-3xl">
+            One question picks your plan.
+            <br />
+            <span className="text-[var(--accent)]">Pick the one that matches how often you launch.</span>
+          </h1>
         </div>
       </section>
 
-      <div className="mx-auto max-w-[1480px] px-4 py-12 md:px-8">
-        <PricingTable />
-      </div>
+      {/* Branching decision — two side-by-side recommended paths. */}
+      <section className="border-b border-[var(--line)] bg-[var(--bg-2)]">
+        <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8 py-14 md:py-20">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+            {BRANCHES.map((b) => (
+              <article
+                key={b.id}
+                data-pricing-branch={b.id}
+                className="flex flex-col gap-5 rounded-[14px] border border-[var(--line)] bg-[var(--bg)] p-7 lg:p-8 hover:border-[var(--line-strong)] transition-colors"
+              >
+                <header>
+                  <div className="text-[10.5px] uppercase tracking-[0.16em] text-[var(--fg-mute)] font-medium tabular-nums mb-2">
+                    {b.eyebrow}
+                  </div>
+                  <h2 className="text-[clamp(1.25rem,2.4vw,1.625rem)] font-semibold tracking-[-0.015em] text-[var(--fg)] leading-snug">
+                    {b.question}
+                  </h2>
+                </header>
 
-      <section className="border-y border-[var(--line)] bg-[var(--bg-2)]">
-        <div className="mx-auto max-w-[1480px] px-4 py-16 md:px-8">
-          <div className="mb-16 grid grid-cols-12 gap-8">
-            <div className="col-span-12 md:col-span-4">
-              <div className="t-eyebrow t-eyebrow-accent mb-3">Pricing FAQ</div>
-              <h2 className="text-balance text-[clamp(1.75rem,4vw,2.75rem)] font-semibold tracking-[-0.035em] leading-[1.04] text-[var(--fg)]">
-                Common questions before you buy.
-              </h2>
-              <p className="t-prose mt-4">
-                Read the full <Link href="/docs/billing" className="link-tick">billing docs</Link>{" "}
-                or email <a href="mailto:support@shotshq.com" className="link-tick">support@shotshq.com</a>.
-              </p>
-            </div>
-            <ul className="col-span-12 divide-y divide-[var(--line)] border-y border-[var(--line)] md:col-span-8">
-              {PRICING_FAQS.map((f) => (
-                <li key={f.q} className="py-5">
-                  <div className="mb-1.5 text-[12px] text-[var(--accent)]">Question</div>
-                  <h3 className="mb-2 text-[16px] font-medium text-[var(--fg)] leading-snug">{f.q}</h3>
-                  <p className="t-prose text-[14px]">{f.a}</p>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="mb-8 grid grid-cols-12 gap-8">
-            <div className="col-span-12 md:col-span-5">
-              <div className="t-eyebrow t-eyebrow-accent mb-3">Credit reference</div>
-              <h2 className="text-balance text-[clamp(1.5rem,3vw,2.25rem)] font-semibold tracking-[-0.03em] leading-[1.04] text-[var(--fg)]">
-                What each AI run costs.
-              </h2>
-            </div>
-            <div className="col-span-12 flex items-end md:col-span-6 md:col-start-7">
-              <p className="t-prose text-[var(--fg-dim)]">
-                Studio subscribers skip credits entirely. This table is here as a reference, not as homework before purchase.
-              </p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 gap-px rounded-[12px] border border-[var(--line)] bg-[var(--line)] md:grid-cols-3">
-            {[
-              { label: "AI copy generation", cost: 1, body: "AI-generated headline, subheadline, and CTA — guaranteed well-formed." },
-              { label: "AI backdrop (per frame)", cost: 2, body: "Flux 2 swaps the surrounding scene around your screenshot. Single frame, your UI untouched." },
-              { label: "AI template set", cost: 8, body: "gpt-image-1 generates a cohesive 6-frame App Store carousel from your app metadata." },
-              { label: "AI restyle from ref", cost: 3, body: "Lift palette and mood from a reference, restyle the full pack." },
-              { label: "Translate (per locale)", cost: 1, body: "Auto-relayout, RTL-aware, parallel fan-out." },
-              { label: "Export pack", cost: 0, body: "Studio renders every active panel at App Store-exact dimensions. Direct App Store Connect push is a v1.1 target." },
-            ].map((row) => (
-              <div key={row.label} className="flex min-h-[150px] flex-col gap-3 rounded-[0] bg-[var(--bg)] p-5">
-                <div className="flex items-baseline justify-between gap-3">
-                  <span className="text-[14px] font-medium text-[var(--fg)]">{row.label}</span>
-                  <span className="text-[24px] font-semibold tracking-[-0.03em] text-[var(--fg)]">
-                    {row.cost === 0 ? "Free" : `${row.cost} cr`}
-                  </span>
+                <div className="rounded-[10px] border border-[var(--accent)]/40 bg-[var(--bg-3)] p-5">
+                  <div className="flex items-baseline justify-between gap-3 mb-2">
+                    <span className="text-[11px] uppercase tracking-[0.14em] text-[var(--accent)] font-medium">
+                      Recommended
+                    </span>
+                    <span className="text-[12px] text-[var(--fg-mute)]">{b.recommended.cadence}</span>
+                  </div>
+                  <div className="flex items-baseline gap-2 mb-3">
+                    <span className="text-[28px] font-semibold tracking-[-0.025em] text-[var(--fg)]">
+                      {b.recommended.name}
+                    </span>
+                    <span className="text-[20px] font-semibold tracking-[-0.025em] text-[var(--accent)] tabular-nums">
+                      {b.recommended.price}
+                    </span>
+                  </div>
+                  <p className="text-[13.5px] leading-[1.55] text-[var(--fg-dim)] mb-4">
+                    {b.recommended.pitch}
+                  </p>
+                  <ul className="space-y-1.5 mb-5">
+                    {b.recommended.perks.map((perk) => (
+                      <li key={perk} className="flex items-start gap-2 text-[13px] text-[var(--fg)] leading-snug">
+                        <span aria-hidden className="text-[var(--accent)] mt-0.5">▸</span>
+                        <span>{perk}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <AppCta
+                    dataCtaTag={`pricing-branch-${b.id}`}
+                    signedOut={b.recommended.signedOut}
+                    signedIn={b.recommended.signedIn}
+                  />
                 </div>
-                <p className="t-prose mt-auto text-[13px]">{row.body}</p>
-              </div>
+
+                <div className="text-[12.5px] text-[var(--fg-mute)] leading-relaxed">
+                  Or pick the smaller option:{" "}
+                  <Link
+                    href={b.alt.href}
+                    className="text-[var(--fg-dim)] hover:text-[var(--accent)] underline underline-offset-4 decoration-[var(--line-strong)] hover:decoration-[var(--accent)]"
+                  >
+                    {b.alt.name} · {b.alt.price}
+                  </Link>
+                </div>
+              </article>
             ))}
           </div>
+
+          <p className="mt-10 text-[13px] text-[var(--fg-mute)] text-center">
+            Just trying it out? The Free tier is unlimited — watermarked exports, no card.{" "}
+            <Link href="/sign-up" className="text-[var(--fg-dim)] hover:text-[var(--accent)] underline underline-offset-4 decoration-[var(--line-strong)] hover:decoration-[var(--accent)]">
+              Start free →
+            </Link>
+          </p>
+        </div>
+      </section>
+
+      {/* Reference — collapsed by default. Browsable for buyers who
+         already know what they want; not the dominant page content. */}
+      <section className="border-b border-[var(--line)]">
+        <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8 py-14 md:py-16">
+          <details className="group">
+            <summary className="cursor-pointer list-none">
+              <div className="flex items-center justify-between gap-4 py-2 border-b border-[var(--line)]">
+                <h2 className="text-[18px] font-semibold tracking-[-0.015em] text-[var(--fg)] leading-snug">
+                  Reference — credit costs + FAQ
+                </h2>
+                <span className="text-[12px] text-[var(--fg-mute)] inline-flex items-center gap-1 group-open:rotate-90 transition-transform">
+                  <ArrowRight size={14} strokeWidth={2.5} aria-hidden />
+                </span>
+              </div>
+            </summary>
+
+            <div className="pt-8 grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14">
+              {/* Credit cost table */}
+              <div>
+                <div className="text-[11px] uppercase tracking-[0.14em] text-[var(--accent)] font-medium mb-3">
+                  Credit costs
+                </div>
+                <ul className="divide-y divide-[var(--line)] border-y border-[var(--line)]">
+                  {REFERENCE.costs.map((row) => (
+                    <li key={row.label} className="py-3 grid grid-cols-[1fr_auto] gap-3 items-baseline">
+                      <div className="min-w-0">
+                        <div className="text-[14px] font-medium text-[var(--fg)] leading-snug">{row.label}</div>
+                        <div className="text-[12.5px] text-[var(--fg-dim)] mt-1 leading-snug">{row.body}</div>
+                      </div>
+                      <span className="text-[15px] font-semibold tracking-[-0.02em] text-[var(--accent)] tabular-nums shrink-0">
+                        {row.cost === 0 ? "Free" : `${row.cost} cr`}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+                <p className="text-[12.5px] text-[var(--fg-mute)] mt-3">
+                  Studio subscribers skip credit costs entirely.
+                </p>
+              </div>
+
+              {/* FAQ */}
+              <div>
+                <div className="text-[11px] uppercase tracking-[0.14em] text-[var(--accent)] font-medium mb-3">
+                  FAQ
+                </div>
+                <ul className="divide-y divide-[var(--line)] border-y border-[var(--line)]">
+                  {REFERENCE.faqs.map((f) => (
+                    <li key={f.q} className="py-4">
+                      <h3 className="text-[14px] font-medium text-[var(--fg)] leading-snug mb-2">{f.q}</h3>
+                      <p className="text-[13px] leading-[1.6] text-[var(--fg-dim)]">{f.a}</p>
+                    </li>
+                  ))}
+                </ul>
+                <p className="text-[12.5px] text-[var(--fg-mute)] mt-3">
+                  Full <Link href="/docs/billing" className="text-[var(--fg-dim)] hover:text-[var(--accent)] underline underline-offset-4 decoration-[var(--line-strong)] hover:decoration-[var(--accent)]">billing docs</Link>{" "}
+                  · email <a href="mailto:support@shotshq.com" className="text-[var(--fg-dim)] hover:text-[var(--accent)] underline underline-offset-4 decoration-[var(--line-strong)] hover:decoration-[var(--accent)]">support@shotshq.com</a>.
+                </p>
+              </div>
+            </div>
+          </details>
         </div>
       </section>
     </>
