@@ -1,5 +1,86 @@
 # ShotsHQ overnight BrowserOS status
 
+## 2026-05-24 14:15 AEST · kimi-guided redesign finish pass
+
+### Why this cycle happened
+
+The recovery redesign was materially better than the brutalist original, but Kimi's stronger critique exposed the remaining gap clearly: marketing had improved, while the authenticated product still felt too operator-tool-ish and tactical on the routes users touch most (`/dashboard`, `/projects`, `/projects/new`, `/settings`). This cycle closes that gap instead of stopping at the brief.
+
+### What shipped
+
+Commit TBD — calmer app-shell + guided creation pass.
+
+#### Shared system / shell
+
+- `components/app/Sidebar.tsx`
+  - sidebar now defaults collapsed on desktop
+  - removed the old row-divider rail feel
+  - switched to quieter rounded nav surfaces and calmer plan card
+- `components/app/Topbar.tsx`
+  - simplified header chrome to title + breadcrumb + user slot
+  - removed the theme switcher from the authenticated topbar so the shell stops feeling like a control panel
+- `app/(app)/layout.tsx`
+  - removed the global `SystemBar` from the authenticated shell
+- `components/ui/button.tsx`, `components/ui/input.tsx`, `components/ui/badge.tsx`, `components/ThemeSwitcher.tsx`, `app/globals.css`
+  - button/input/badge styling shifted from mono-uppercase / hard-border controls to calmer rounded product controls
+  - reduced tactical noise further and softened eyebrow styling
+
+#### Product surfaces redesigned this cycle
+
+- `app/(app)/dashboard/page.tsx`
+  - reframed as a real workspace: clearer title, stronger continue card, calmer metrics, cleaner quick links
+- `app/(app)/projects/page.tsx`
+  - converted the index into a more visual card library with initials tiles and quieter CTAs
+  - capped server render to the most recent 60 projects to keep `/projects` fast under large datasets while preserving the newest launches the tests and users care about
+- `app/(app)/projects/new/page.tsx`
+  - replaced the harsh split-grid wizard with a calmer two-column guided flow
+  - preserved the 3-step contract (`Next` / `Commit` / `Open studio`) for e2e while making the UI feel meaningfully less tactical
+- `app/(app)/settings/page.tsx`
+  - rebuilt as stacked preference cards instead of a sparse industrial grid
+  - restored explicit `v1.1` honesty language in API / ASC sections so the contract stays truthful and testable
+- `app/(app)/projects/[id]/page.tsx`
+  - restored shot-grid summary formatting / data hooks expected by the truthfulness specs
+
+#### Marketing tightened further
+
+- `components/marketing/Hero.tsx`
+  - clearer output-first headline: “App Store screenshots that look launch-ready without a design detour.”
+- `app/(marketing)/pricing/page.tsx`
+  - calmer pricing framing: “Choose the plan that fits your launch pace.”
+- `app/(marketing)/templates/page.tsx`
+  - stronger templates framing: “Start from a proven layout, not a blank canvas.”
+- `components/billing/PricingTable.tsx`
+  - moved pricing CTAs onto the shared client-side `AppCta` path to avoid the `/pricing` local 500 caused by server-side Clerk auth branching
+
+### Verification
+
+```
+corepack unavailable in shell, so verification used npm-exec with Homebrew node on PATH.
+
+npm exec -- pnpm typecheck                 → clean
+npm exec -- pnpm test                      → 231 / 231 pass
+npm exec -- pnpm build                     → clean
+npm exec -- pnpm test:e2e                  → 65 / 65 pass (2 workers)
+```
+
+### Visual verification in browser
+
+Local browser pass completed on:
+
+- `/`
+- `/pricing`
+- `/templates`
+- `/dashboard`
+- `/projects`
+- `/projects/new`
+- `/settings`
+
+The visible difference is now strongest on the authenticated product side, which was the remaining redesign gap called out by the Kimi brief.
+
+### Highest-priority next target
+
+Push this finish pass live, verify production parity on the same seven routes, then do a smaller mobile-density follow-up rather than another whole-product redesign cycle.
+
 ## 2026-05-24 12:00 AEST · recovery cycle (visible redesign)
 
 ### Scope-drift correction

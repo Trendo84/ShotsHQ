@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { Menu, X, ArrowRight } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { SignedIn, SignedOut } from "@clerk/nextjs";
 import { cn } from "@/lib/utils/cn";
 import { BrandMark } from "@/components/Brand";
+import { AppCta } from "@/components/marketing/AppCta";
 
 const NAV = [
   { href: "/templates", label: "Templates" },
@@ -103,45 +104,22 @@ export function MarketingHeader() {
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
-          {HAS_CLERK ? (
-            <>
-              <SignedOut>
-                <Link
-                  href="/sign-in"
-                  className="hidden md:inline-flex items-center text-[13px] text-[var(--fg-dim)] hover:text-[var(--fg)] px-3 py-1.5 rounded-md transition-colors"
-                >
-                  Sign in
-                </Link>
-                <Link
-                  href="/sign-up"
-                  data-marketing-cta="start-free"
-                  className="inline-flex items-center gap-1.5 bg-[var(--accent)] text-[var(--accent-fg)] text-[13px] font-semibold px-3.5 py-1.5 rounded-md hover:opacity-90 transition-opacity"
-                >
-                  Start free
-                  <ArrowRight size={13} strokeWidth={2.5} aria-hidden />
-                </Link>
-              </SignedOut>
-              <SignedIn>
-                <Link
-                  href="/dashboard"
-                  data-marketing-cta="open-app"
-                  className="inline-flex items-center gap-1.5 bg-[var(--accent)] text-[var(--accent-fg)] text-[13px] font-semibold px-3.5 py-1.5 rounded-md hover:opacity-90 transition-opacity"
-                >
-                  Open app
-                  <ArrowRight size={13} strokeWidth={2.5} aria-hidden />
-                </Link>
-              </SignedIn>
-            </>
-          ) : (
-            <Link
-              href="/sign-up"
-              data-marketing-cta="start-free"
-              className="inline-flex items-center gap-1.5 bg-[var(--accent)] text-[var(--accent-fg)] text-[13px] font-semibold px-3.5 py-1.5 rounded-md hover:opacity-90 transition-opacity"
-            >
-              Start free
-              <ArrowRight size={13} strokeWidth={2.5} aria-hidden />
-            </Link>
+          {HAS_CLERK && (
+            <SignedOut>
+              <Link
+                href="/sign-in"
+                className="hidden md:inline-flex items-center text-[13px] text-[var(--fg-dim)] hover:text-[var(--fg)] px-3 py-1.5 rounded-md transition-colors"
+              >
+                Sign in
+              </Link>
+            </SignedOut>
           )}
+          <AppCta
+            size="sm"
+            dataCtaTag="marketing-header"
+            signedOut={{ href: "/sign-up",   label: "Start free"     }}
+            signedIn={{  href: "/dashboard", label: "Open dashboard" }}
+          />
           <button
             ref={toggleRef}
             onClick={() => setOpen(!open)}

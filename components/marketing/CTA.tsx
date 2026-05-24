@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AppCta } from "@/components/marketing/AppCta";
 
 const PLANS = [
   { id: "free",     label: "Free",         price: "$0",   note: "unlimited editor",   accent: false },
@@ -53,15 +54,11 @@ export function CTA() {
             </p>
 
             <div className="flex items-center gap-4 flex-wrap">
-              <Link
-                href="/sign-up"
-                className="group inline-flex items-center gap-3 bg-[var(--accent)] text-[var(--accent-fg)] pl-5 pr-1.5 py-2 transition-transform duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98]"
-              >
-                <span className="btn-label">Start free</span>
-                <span className="inline-grid place-items-center w-9 h-9 bg-[var(--accent-fg)] text-[var(--accent)] transition-transform duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0.5 font-bold">
-                  →
-                </span>
-              </Link>
+              <AppCta
+                dataCtaTag="landing-final-primary"
+                signedOut={{ href: "/sign-up",      label: "Start free"        }}
+                signedIn={{  href: "/projects/new", label: "Start a new project" }}
+              />
               <Link
                 href="/pricing"
                 className="text-[13px] text-[var(--fg-dim)] hover:text-[var(--fg)] underline underline-offset-4 decoration-[var(--line-strong)] hover:decoration-[var(--accent)]"

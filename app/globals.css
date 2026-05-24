@@ -59,7 +59,7 @@
 
   --scanline-color:   transparent;
   --scanline-step:    3px;
-  --noise-opacity:    0.018;
+  --noise-opacity:    0.012;
   --grid-color:       rgba(255, 255, 255, 0.025);
 }
 
@@ -261,10 +261,10 @@ body::after {
   font-weight: 600;
 }
 .t-eyebrow {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  text-transform: none;
   color: var(--fg-mute);
   font-weight: 500;
 }

@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { Topbar } from "@/components/app/Topbar";
 import { Badge } from "@/components/ui/badge";
@@ -11,34 +12,16 @@ import {
   nextActionFor,
 } from "@/lib/studio/project-status";
 
-/**
- * /dashboard — re-entry point.
- *
- * Recovery-cycle redesign 2026-05-24:
- *   - removed "Operator / Overview" breadcrumb
- *   - the page leads with a "Continue where you left off" hero card
- *     when the user has projects (the most-recently-updated one gets
- *     the lead with its state-aware next-action CTA). When the user
- *     is brand new, the empty state remains
- *   - stat tiles demoted from a four-up macro band that took 30% of
- *     the page to a compact inline metric row underneath the hero
- *   - recent projects list moved below the continue-card; capped at
- *     4 items (was 5) so the row never crowds out the hero
- *   - "Quick start" tiles compressed into a thin utility rail at the
- *     bottom — they were generic for any user who already had projects
- */
 export default async function DashboardPage() {
-  const user      = await requireUser();
-  const projects  = await listProjectsForUser(user.id);
-  const balance   = await getBalance(user.id);
+  const user = await requireUser();
+  const projects = await listProjectsForUser(user.id);
+  const balance = await getBalance(user.id);
 
   const isStudio = user.plan === "studio_monthly" || user.plan === "studio_annual" || user.plan === "lifetime";
   const hasProjects = projects.length > 0;
-  // Project with the most recent updatedAt — the one to continue.
-  // listProjectsForUser returns ordered by updatedAt desc.
   const continueProject = hasProjects ? projects[0] : null;
-  const continueInfo    = continueProject ? projectStatus(continueProject.polotnoJson) : null;
-  const continueAction  = continueProject && continueInfo
+  const continueInfo = continueProject ? projectStatus(continueProject.polotnoJson) : null;
+  const continueAction = continueProject && continueInfo
     ? nextActionFor(continueProject.id, continueInfo.status)
     : null;
   const continueDisplay = continueProject && continueInfo
@@ -47,71 +30,79 @@ export default async function DashboardPage() {
 
   return (
     <>
-      <Topbar section="Dashboard" breadcrumb={["Overview"]} />
+      <Topbar section="Dashboard" />
 
-      <div className="px-4 sm:px-6 lg:px-8 py-8 lg:py-10 max-w-[1480px]">
-        {/* Header row — kept compact. The dominant page element is
-           the continue-card below, not this strip. */}
-        <div className="flex items-end justify-between flex-wrap gap-4 mb-6 lg:mb-8">
+      <div className="mx-auto w-full max-w-[1320px] px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
+        <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
           <div className="min-w-0">
-            <div className="text-[11px] uppercase tracking-[0.14em] text-[var(--accent)] font-medium mb-2">
-              Welcome back
-            </div>
-            <h1 className="text-[clamp(1.5rem,3vw,2.25rem)] font-semibold tracking-[-0.02em] text-[var(--fg)] leading-tight">
-              {hasProjects ? "Pick up where you left off." : "Let's ship your first pack."}
+            <p className="mb-2 text-[13px] text-[var(--fg-mute)]">
+              {hasProjects ? "Continue where you left off." : "Start your first screenshot set."}
+            </p>
+            <h1 className="text-[clamp(2rem,4vw,3rem)] font-semibold tracking-[-0.04em] text-[var(--fg)] leading-[1.02]">
+              {hasProjects ? "Your workspace" : "Ready to ship something?"}
             </h1>
           </div>
-          <div className="flex gap-2 flex-wrap">
+          <div className="flex flex-wrap gap-2">
             <Link
               href="/projects/new"
-              className="inline-flex items-center gap-2 bg-[var(--accent)] text-[var(--accent-fg)] font-semibold text-[14px] px-4 py-2.5 rounded-md hover:opacity-90 transition-opacity"
+              className="inline-flex items-center gap-2 rounded-[10px] bg-[var(--accent)] px-4 py-2.5 text-[14px] font-medium text-[var(--accent-fg)] transition-opacity hover:opacity-92"
             >
-              <Plus size={14} strokeWidth={2.5} />
+              <Plus size={15} strokeWidth={2.5} />
               New project
             </Link>
             {!isStudio && (
               <Link
                 href="/billing"
-                className="inline-flex items-center text-[13px] text-[var(--fg-dim)] hover:text-[var(--fg)] px-3 py-2.5 rounded-md border border-[var(--line)] hover:border-[var(--line-strong)] transition-colors"
+                className="inline-flex items-center rounded-[10px] border border-[var(--line)] px-4 py-2.5 text-[14px] text-[var(--fg-dim)] transition-colors hover:border-[var(--line-strong)] hover:text-[var(--fg)]"
               >
-                Top-up credits
+                Manage billing
               </Link>
             )}
           </div>
         </div>
 
-        {/* HERO — Continue where you left off */}
         {continueProject && continueAction && continueDisplay ? (
           <Link
             href={continueAction.href}
             data-continue-project={continueProject.id}
             data-next-action={continueAction.id}
-            className="group block surface-raised p-5 sm:p-7 lg:p-8 hover:border-[var(--accent)] transition-colors mb-6 lg:mb-8"
+            className="group mb-8 block surface-raised p-6 sm:p-7 lg:p-8 transition-colors hover:border-[var(--line-strong)]"
           >
-            <div className="flex items-start gap-5 flex-wrap sm:flex-nowrap">
-              <div className="min-w-0 flex-1">
-                <div className="text-[11px] uppercase tracking-[0.14em] text-[var(--accent)] font-medium mb-2">
-                  Continue project
-                </div>
-                <h2 className="text-[clamp(1.25rem,2.5vw,1.625rem)] font-semibold tracking-[-0.015em] text-[var(--fg)] leading-tight truncate">
+            <div className="grid gap-6 lg:grid-cols-[1.3fr_0.7fr] lg:items-center">
+              <div className="min-w-0">
+                <div className="mb-2 text-[13px] text-[var(--fg-mute)]">Continue project</div>
+                <h2 className="text-[clamp(1.4rem,2.8vw,2rem)] font-semibold tracking-[-0.03em] text-[var(--fg)] leading-tight">
                   {continueProject.name}
                 </h2>
-                <p className="text-[13.5px] text-[var(--fg-dim)] mt-2 leading-snug max-w-2xl">
+                <p className="mt-3 max-w-[56ch] text-[14.5px] leading-[1.6] text-[var(--fg-dim)]">
                   {continueInfo!.readiness.totalPanels === 0
-                    ? (continueProject.category || "Uncategorized")
-                    : `${continueInfo!.readiness.readyPanels} of ${continueInfo!.readiness.totalPanels} panels ready`}
-                  {" · Updated "}
-                  {timeAgo(continueProject.updatedAt)}
+                    ? `Start shaping the first App Store story for ${continueProject.category || "your app"}.`
+                    : `${continueInfo!.readiness.readyPanels} of ${continueInfo!.readiness.totalPanels} panels are ready. Pick up the last step and keep the launch moving.`}
                 </p>
+                <div className="mt-4 flex flex-wrap items-center gap-3 text-[13px] text-[var(--fg-mute)]">
+                  <span>{continueProject.category || "Uncategorized"}</span>
+                  <span aria-hidden>·</span>
+                  <span>Updated {timeAgo(continueProject.updatedAt)}</span>
+                </div>
               </div>
-              <div className="flex items-center gap-3 shrink-0">
-                <Badge variant={continueDisplay.variant} title={continueDisplay.help}>
-                  {continueDisplay.label}
-                </Badge>
-                <span className="inline-flex items-center gap-1.5 text-[14px] font-semibold text-[var(--accent)] group-hover:opacity-80 transition-opacity">
+
+              <div className="surface p-5 sm:p-6">
+                <div className="mb-4 flex items-center justify-between gap-3">
+                  <div className="text-[13px] text-[var(--fg-mute)]">Next step</div>
+                  <Badge variant={continueDisplay.variant} title={continueDisplay.help}>
+                    {continueDisplay.label}
+                  </Badge>
+                </div>
+                <div className="text-[18px] font-semibold tracking-[-0.02em] text-[var(--fg)]">
                   {continueAction.label}
+                </div>
+                <p className="mt-2 text-[13.5px] leading-[1.55] text-[var(--fg-dim)]">
+                  Open the project and continue exactly where the workflow left off.
+                </p>
+                <div className="mt-5 inline-flex items-center gap-2 text-[14px] font-medium text-[var(--accent)]">
+                  Open now
                   <ArrowRight size={14} strokeWidth={2.5} aria-hidden />
-                </span>
+                </div>
               </div>
             </div>
           </Link>
@@ -119,63 +110,58 @@ export default async function DashboardPage() {
           <EmptyProjectsCard />
         )}
 
-        {/* Stat tiles — demoted to a thin row that supports the hero. */}
-        <div className="surface px-1 mb-8 lg:mb-10 overflow-hidden">
-          <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-[var(--line)]">
-            <Stat label="Credits" value={isStudio ? "∞" : String(balance)} sub={isStudio ? "studio · unmetered" : "balance"} tint="accent" />
-            <Stat label="Projects" value={String(projects.length)} sub={projects.length === 1 ? "active" : "total"} />
-            <Stat label="In queue" value={"00"} sub="rendering" />
-            <Stat label="Plan" value={planLabel(user.plan)} sub={isStudio ? "active" : "non-recurring"} />
-          </div>
+        <div className="mb-8 grid gap-3 sm:grid-cols-3">
+          <Stat label="Projects" value={String(projects.length)} sub={projects.length === 1 ? "in progress" : "total projects"} />
+          <Stat label="Credits" value={isStudio ? "∞" : String(balance)} sub={isStudio ? "Studio plan" : "available now"} tint="accent" />
+          <Stat label="Plan" value={planLabel(user.plan)} sub={isStudio ? "active subscription" : "pay as you go"} />
         </div>
 
-        {/* RECENT PROJECTS + QUICK START — both demoted to secondary. */}
         {hasProjects && (
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 lg:gap-8">
-            <section className="xl:col-span-2">
-              <header className="flex items-center justify-between mb-3">
-                <h2 className="text-[12px] uppercase tracking-[0.14em] text-[var(--fg-mute)] font-medium">
-                  Recent projects
-                </h2>
-                <Link
-                  href="/projects"
-                  className="text-[13px] text-[var(--fg-mute)] hover:text-[var(--fg)] inline-flex items-center gap-1"
-                >
+          <div className="grid gap-6 xl:grid-cols-[1.3fr_0.7fr]">
+            <section>
+              <div className="mb-3 flex items-center justify-between">
+                <h2 className="text-[15px] font-medium text-[var(--fg)]">Recent projects</h2>
+                <Link href="/projects" className="inline-flex items-center gap-1 text-[13px] text-[var(--fg-mute)] hover:text-[var(--fg)]">
                   View all
                   <ArrowRight size={13} aria-hidden />
                 </Link>
-              </header>
+              </div>
 
-              <ul className="surface divide-y divide-[var(--line)]">
+              <ul className="grid gap-3 md:grid-cols-2">
                 {projects.slice(0, 4).map((p) => {
-                  const info    = projectStatus(p.polotnoJson);
+                  const info = projectStatus(p.polotnoJson);
                   const display = projectStatusDisplay(info, p.id);
                   return (
                     <li key={p.id}>
                       <Link
                         href={`/projects/${p.id}`}
-                        className="grid grid-cols-12 items-center gap-3 px-4 sm:px-5 py-4 hover:bg-[var(--bg-3)] transition-colors"
+                        className="group block surface p-5 transition-colors hover:bg-[var(--bg-3)]"
                         data-project-row={p.id}
                         data-project-status={info.status}
                         data-panels-ready={String(info.readiness.readyPanels)}
                         data-panels-total={String(info.readiness.totalPanels)}
                       >
-                        <div className="col-span-12 sm:col-span-6 min-w-0">
-                          <div className="text-[15px] font-medium text-[var(--fg)] tracking-[-0.01em] truncate leading-snug">
-                            {p.name}
+                        <div className="mb-4 flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="truncate text-[16px] font-semibold tracking-[-0.02em] text-[var(--fg)]">
+                              {p.name}
+                            </div>
+                            <div className="mt-1 text-[13px] text-[var(--fg-mute)]">
+                              {p.category || "Uncategorized"}
+                            </div>
                           </div>
-                          <div className="text-[12.5px] text-[var(--fg-mute)] mt-0.5 truncate">
-                            {info.readiness.totalPanels === 0
-                              ? (p.category || "Uncategorized")
-                              : `${info.readiness.readyPanels} of ${info.readiness.totalPanels} panels ready`}
-                          </div>
-                        </div>
-                        <div className="col-span-7 sm:col-span-3 text-[12.5px] text-[var(--fg-mute)] tabular-nums">
-                          {timeAgo(p.updatedAt)}
-                        </div>
-                        <div className="col-span-5 sm:col-span-3 flex justify-end items-center gap-2">
                           <Badge variant={display.variant} title={display.help}>{display.label}</Badge>
-                          <ChevronRight size={14} className="text-[var(--fg-mute)]" />
+                        </div>
+                        <div className="flex items-center justify-between gap-3 border-t border-[var(--line)] pt-4 text-[13px] text-[var(--fg-mute)]">
+                          <span>
+                            {info.readiness.totalPanels === 0
+                              ? "No panels yet"
+                              : `${info.readiness.readyPanels} / ${info.readiness.totalPanels} ready`}
+                          </span>
+                          <span className="inline-flex items-center gap-1">
+                            {timeAgo(p.updatedAt)}
+                            <ChevronRight size={14} aria-hidden />
+                          </span>
                         </div>
                       </Link>
                     </li>
@@ -185,30 +171,11 @@ export default async function DashboardPage() {
             </section>
 
             <section>
-              <header className="flex items-center justify-between mb-3">
-                <h2 className="text-[12px] uppercase tracking-[0.14em] text-[var(--fg-mute)] font-medium">
-                  Quick links
-                </h2>
-              </header>
-              <ul className="surface divide-y divide-[var(--line)]">
-                <QuickStart
-                  href="/projects/new"
-                  icon={<Plus size={14} />}
-                  title="New project"
-                  desc="Pick devices, drop screens, ship."
-                />
-                <QuickStart
-                  href="/templates"
-                  icon={<Sparkles size={14} />}
-                  title="Browse templates"
-                  desc="Curated starting points."
-                />
-                <QuickStart
-                  href="/docs"
-                  icon={<FileText size={14} />}
-                  title="Read the docs"
-                  desc="Pipeline, credits, surfaces."
-                />
+              <div className="mb-3 text-[15px] font-medium text-[var(--fg)]">Quick links</div>
+              <ul className="space-y-3">
+                <QuickStart href="/projects/new" icon={<Plus size={14} />} title="Create a new project" desc="Set the name, pick devices, and start editing." />
+                <QuickStart href="/templates" icon={<Sparkles size={14} />} title="Browse templates" desc="Start from a proven layout instead of a blank canvas." />
+                <QuickStart href="/docs" icon={<FileText size={14} />} title="Read the docs" desc="Reference billing, exports, surfaces, and setup." />
               </ul>
             </section>
           </div>
@@ -218,76 +185,77 @@ export default async function DashboardPage() {
   );
 }
 
-// ── helpers ──────────────────────────────────────────────────────────────────
-
 function planLabel(plan: string): string {
   switch (plan) {
     case "studio_monthly": return "Studio";
-    case "studio_annual":  return "Studio";
-    case "lifetime":       return "Lifetime";
-    default:               return "Free";
+    case "studio_annual": return "Studio";
+    case "lifetime": return "Lifetime";
+    default: return "Free";
   }
 }
 
 function timeAgo(date: Date): string {
-  const diff   = Date.now() - date.getTime();
-  const min    = Math.floor(diff / 60_000);
-  const hour   = Math.floor(diff / 3_600_000);
-  const day    = Math.floor(diff / 86_400_000);
-  if (min  < 1)     return "just now";
-  if (min  < 60)    return `${min}m ago`;
-  if (hour < 24)    return `${hour}h ago`;
-  if (day  < 7)     return `${day}d ago`;
+  const diff = Date.now() - date.getTime();
+  const min = Math.floor(diff / 60_000);
+  const hour = Math.floor(diff / 3_600_000);
+  const day = Math.floor(diff / 86_400_000);
+  if (min < 1) return "just now";
+  if (min < 60) return `${min}m ago`;
+  if (hour < 24) return `${hour}h ago`;
+  if (day < 7) return `${day}d ago`;
   return date.toISOString().slice(0, 10);
 }
 
 function Stat({
-  label, value, sub, tint = "default",
+  label,
+  value,
+  sub,
+  tint = "default",
 }: {
   label: string;
   value: string;
-  sub?:  string;
+  sub?: string;
   tint?: "default" | "accent" | "signal";
 }) {
-  const color =
-    tint === "accent" ? "text-[var(--accent)]"
-    : tint === "signal" ? "text-[var(--signal)]"
-    : "text-[var(--fg)]";
+  const color = tint === "accent"
+    ? "text-[var(--accent)]"
+    : tint === "signal"
+      ? "text-[var(--signal)]"
+      : "text-[var(--fg)]";
+
   return (
-    <div className="px-4 py-3.5 min-w-0">
-      <div className="text-[10.5px] uppercase tracking-[0.14em] text-[var(--fg-mute)] font-medium truncate">
-        {label}
-      </div>
-      <div className={`text-[clamp(1.25rem,2.5vw,1.625rem)] font-semibold tracking-[-0.02em] tabular-nums mt-0.5 leading-tight truncate ${color}`}>
+    <div className="surface p-5">
+      <div className="text-[12px] text-[var(--fg-mute)]">{label}</div>
+      <div className={`mt-2 text-[28px] font-semibold tracking-[-0.03em] leading-none ${color}`}>
         {value}
       </div>
-      {sub && <div className="text-[12px] text-[var(--fg-mute)] mt-0.5 truncate">{sub}</div>}
+      {sub && <div className="mt-2 text-[13px] text-[var(--fg-mute)]">{sub}</div>}
     </div>
   );
 }
 
 function QuickStart({
-  href, icon, title, desc,
+  href,
+  icon,
+  title,
+  desc,
 }: {
   href: string;
-  icon: React.ReactNode;
+  icon: ReactNode;
   title: string;
-  desc:  string;
+  desc: string;
 }) {
   return (
     <li>
-      <Link
-        href={href}
-        className="flex items-start gap-3 px-4 py-3.5 hover:bg-[var(--bg-3)] transition-colors group"
-      >
-        <span className="mt-0.5 inline-grid place-items-center w-7 h-7 rounded-md bg-[var(--bg-3)] text-[var(--fg-mute)] group-hover:text-[var(--accent)] transition-colors shrink-0">
+      <Link href={href} className="group flex items-start gap-3 surface p-5 transition-colors hover:bg-[var(--bg-3)]">
+        <span className="mt-0.5 grid h-8 w-8 place-items-center rounded-full bg-[var(--bg-3)] text-[var(--fg-dim)]">
           {icon}
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block text-[14px] text-[var(--fg)] font-medium">{title}</span>
-          <span className="block text-[12px] text-[var(--fg-mute)] mt-0.5">{desc}</span>
+          <span className="block text-[15px] font-medium text-[var(--fg)]">{title}</span>
+          <span className="mt-1 block text-[13px] leading-[1.55] text-[var(--fg-dim)]">{desc}</span>
         </span>
-        <ChevronRight size={14} className="text-[var(--fg-mute)] mt-1 shrink-0" />
+        <ChevronRight size={16} className="mt-1 text-[var(--fg-mute)]" />
       </Link>
     </li>
   );
@@ -295,39 +263,38 @@ function QuickStart({
 
 function EmptyProjectsCard() {
   return (
-    <div className="surface px-6 sm:px-10 py-10 sm:py-14 mb-6 lg:mb-8">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+    <div className="mb-8 surface-raised px-6 py-10 sm:px-8 sm:py-12">
+      <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
         <div>
-          <div className="text-[11px] uppercase tracking-[0.14em] text-[var(--accent)] font-medium mb-2">
-            Empty deck
-          </div>
-          <h3 className="text-[clamp(1.5rem,3vw,2rem)] font-semibold tracking-[-0.02em] text-[var(--fg)] leading-tight mb-3">
-            Your first project on the house.
-          </h3>
-          <p className="text-[14.5px] text-[var(--fg-dim)] mb-5 max-w-md leading-relaxed">
-            Drop in iOS screenshots, pick devices, ship. Your first
-            project takes about ninety seconds — no card required.
+          <p className="mb-2 text-[13px] text-[var(--fg-mute)]">No projects yet</p>
+          <h2 className="text-[clamp(1.75rem,3.8vw,2.6rem)] font-semibold tracking-[-0.035em] text-[var(--fg)] leading-[1.04]">
+            Make your first screenshot set in a couple of minutes.
+          </h2>
+          <p className="mt-4 max-w-[52ch] text-[15px] leading-[1.65] text-[var(--fg-dim)]">
+            Start with your app name, choose the devices you plan to ship, then drop in the raw screenshots from Xcode or Simulator.
           </p>
-          <div className="flex flex-wrap items-center gap-4">
-            <Link
-              href="/projects/new"
-              className="inline-flex items-center gap-2 bg-[var(--accent)] text-[var(--accent-fg)] font-semibold text-[14px] px-5 py-2.5 rounded-md hover:opacity-90 transition-opacity"
-            >
+          <div className="mt-6 flex flex-wrap items-center gap-3">
+            <Link href="/projects/new" className="inline-flex items-center gap-2 rounded-[10px] bg-[var(--accent)] px-5 py-3 text-[14px] font-medium text-[var(--accent-fg)] transition-opacity hover:opacity-92">
               Start a project
               <ArrowRight size={14} strokeWidth={2.5} aria-hidden />
             </Link>
-            <Link
-              href="/templates"
-              className="text-[13px] text-[var(--fg-dim)] hover:text-[var(--accent)] underline underline-offset-4 decoration-[var(--line-strong)] hover:decoration-[var(--accent)] transition-colors"
-            >
-              … or pick from a template
+            <Link href="/templates" className="text-[14px] text-[var(--fg-dim)] underline decoration-[var(--line-strong)] underline-offset-4 transition-colors hover:text-[var(--fg)] hover:decoration-[var(--accent)]">
+              Or start from a template
             </Link>
           </div>
         </div>
-        <ol className="space-y-2.5 text-[13.5px] text-[var(--fg-dim)] leading-relaxed border-l border-[var(--line)] pl-5">
-          <li><span className="text-[var(--accent)] mr-2 font-medium">01</span> Pick devices · iPhone 6.9″ / 6.7″ / iPad 13″</li>
-          <li><span className="text-[var(--accent)] mr-2 font-medium">02</span> Drop raw PNGs · auto-bucketed by dimension</li>
-          <li><span className="text-[var(--accent)] mr-2 font-medium">03</span> Compose in Studio · export at App Store-exact dims</li>
+        <ol className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+          {[
+            ["1", "Name the app", "We use it to seed copy and keep the project organized."],
+            ["2", "Choose devices", "Pick every screen size you want to export for App Store Connect."],
+            ["3", "Drop screenshots", "Upload the raw PNGs now or add them later inside the studio."],
+          ].map(([num, title, body]) => (
+            <li key={num} className="surface p-4">
+              <div className="mb-3 text-[12px] text-[var(--accent)]">Step {num}</div>
+              <div className="text-[15px] font-medium text-[var(--fg)]">{title}</div>
+              <div className="mt-2 text-[13px] leading-[1.55] text-[var(--fg-dim)]">{body}</div>
+            </li>
+          ))}
         </ol>
       </div>
     </div>

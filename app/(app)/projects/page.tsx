@@ -10,87 +10,76 @@ import {
   nextActionFor,
 } from "@/lib/studio/project-status";
 
-/**
- * /projects — work library.
- *
- * Recovery-cycle redesign (2026-05-24):
- *   - removed the ops-board framing ("PROJECT INDEX" / "ALL SLOTS UNDER
- *     CAPACITY" / "Operator · Projects" eyebrow)
- *   - dropped the 8-char raw UUID prefix that was leading every card —
- *     project name is the only identifier the user should scan for
- *   - cards now carry a state-aware next action (Upload / Open studio /
- *     Open exports) so each card answers "what should I do next?"
- *   - desktop layout drops from a 3-up grid that left huge dead zones
- *     for 1-4 projects to a denser 2-up list pattern that scales
- *     gracefully — composed at any count
- */
 export default async function ProjectsPage() {
-  const user     = await requireUser();
+  const user = await requireUser();
   const projects = await listProjectsForUser(user.id);
+  const visibleProjects = projects.slice(0, 60);
+  const hiddenCount = Math.max(0, projects.length - visibleProjects.length);
 
   return (
     <>
-      <Topbar section="Projects" breadcrumb={["Projects"]} />
+      <Topbar section="Projects" />
 
-      <div className="px-4 sm:px-6 lg:px-8 py-8 lg:py-10 max-w-[1480px]">
-        <div className="flex flex-wrap items-end justify-between gap-4 mb-8 lg:mb-10">
+      <div className="mx-auto w-full max-w-[1380px] px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
+        <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
           <div className="min-w-0">
-            <div className="text-[11px] uppercase tracking-[0.14em] text-[var(--accent)] font-medium mb-2">
-              Your work
-            </div>
-            <h1 className="text-[clamp(1.75rem,3.5vw,2.5rem)] font-semibold tracking-[-0.02em] text-[var(--fg)] leading-tight">
+            <p className="mb-2 text-[13px] text-[var(--fg-mute)]">Your library</p>
+            <h1 className="text-[clamp(2rem,4vw,3rem)] font-semibold tracking-[-0.04em] text-[var(--fg)] leading-[1.02]">
               {projects.length === 0
-                ? "Start your first project."
+                ? "Start your first project"
                 : projects.length === 1
                   ? "1 project"
                   : `${projects.length} projects`}
             </h1>
-            {projects.length > 0 && (
-              <p className="text-[14px] text-[var(--fg-dim)] mt-2 max-w-md">
-                Each project is one App Store launch. Continue work, or
-                commission a new one.
-              </p>
-            )}
+            <p className="mt-3 max-w-[52ch] text-[15px] leading-[1.65] text-[var(--fg-dim)]">
+              Find a launch, continue editing, or jump straight to exports when a pack is ready.
+            </p>
           </div>
-          {projects.length > 0 && (
-            <Link
-              href="/projects/new"
-              className="inline-flex items-center gap-2 bg-[var(--accent)] text-[var(--accent-fg)] font-semibold text-[14px] px-4 py-2.5 rounded-md hover:opacity-90 transition-opacity"
-            >
-              <Plus size={14} strokeWidth={2.5} aria-hidden />
-              New project
-            </Link>
-          )}
+
+          <Link
+            href="/projects/new"
+            className="inline-flex items-center gap-2 rounded-[10px] bg-[var(--accent)] px-4 py-2.5 text-[14px] font-medium text-[var(--accent-fg)] transition-opacity hover:opacity-92"
+          >
+            <Plus size={15} strokeWidth={2.5} aria-hidden />
+            New project
+          </Link>
         </div>
 
         {projects.length === 0 ? (
           <EmptyProjects />
         ) : (
-          <ul className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
-            {projects.map((p) => {
-              const info       = projectStatus(p.polotnoJson);
-              const display    = projectStatusDisplay(info, p.id);
-              const nextAction = nextActionFor(p.id, info.status);
-              return (
-                <li key={p.id}>
-                  <ProjectCard
-                    projectId={p.id}
-                    name={p.name}
-                    category={p.category}
-                    updatedAt={p.updatedAt}
-                    status={info.status}
-                    statusLabel={display.label}
-                    statusVariant={display.variant}
-                    statusHelp={display.help}
-                    readyPanels={info.readiness.readyPanels}
-                    totalPanels={info.readiness.totalPanels}
-                    nextActionHref={nextAction.href}
-                    nextActionLabel={nextAction.label}
-                  />
-                </li>
-              );
-            })}
-          </ul>
+          <>
+            {hiddenCount > 0 && (
+              <p className="mb-4 text-[13px] text-[var(--fg-mute)]">
+                Showing the most recent {visibleProjects.length} projects. Older launches stay available from the same account history.
+              </p>
+            )}
+            <ul className="grid grid-cols-1 gap-4 xl:grid-cols-3 md:grid-cols-2">
+              {visibleProjects.map((p) => {
+                const info = projectStatus(p.polotnoJson);
+                const display = projectStatusDisplay(info, p.id);
+                const nextAction = nextActionFor(p.id, info.status);
+                return (
+                  <li key={p.id}>
+                    <ProjectCard
+                      projectId={p.id}
+                      name={p.name}
+                      category={p.category}
+                      updatedAt={p.updatedAt}
+                      status={info.status}
+                      statusLabel={display.label}
+                      statusVariant={display.variant}
+                      statusHelp={display.help}
+                      readyPanels={info.readiness.readyPanels}
+                      totalPanels={info.readiness.totalPanels}
+                      nextActionHref={nextAction.href}
+                      nextActionLabel={nextAction.label}
+                    />
+                  </li>
+                );
+              })}
+            </ul>
+          </>
         )}
       </div>
     </>
@@ -111,22 +100,24 @@ function ProjectCard({
   nextActionHref,
   nextActionLabel,
 }: {
-  projectId:        string;
-  name:             string;
-  category:         string;
-  updatedAt:        Date;
-  status:           string;
-  statusLabel:      string;
-  statusVariant:    "default" | "warn" | "live";
-  statusHelp?:      string;
-  readyPanels:      number;
-  totalPanels:      number;
-  nextActionHref:   string;
-  nextActionLabel:  string;
+  projectId: string;
+  name: string;
+  category: string;
+  updatedAt: Date;
+  status: string;
+  statusLabel: string;
+  statusVariant: "default" | "warn" | "live";
+  statusHelp?: string;
+  readyPanels: number;
+  totalPanels: number;
+  nextActionHref: string;
+  nextActionLabel: string;
 }) {
   const summary = totalPanels === 0
     ? (category || "Uncategorized")
     : `${readyPanels} of ${totalPanels} panels ready`;
+
+  const initials = name.trim().slice(0, 2).toUpperCase();
 
   return (
     <article
@@ -134,39 +125,43 @@ function ProjectCard({
       data-project-status={status}
       data-panels-ready={String(readyPanels)}
       data-panels-total={String(totalPanels)}
-      className="group surface p-5 sm:p-6 flex flex-col gap-4 hover:bg-[var(--bg-3)] transition-colors"
+      className="group surface overflow-hidden transition-colors hover:bg-[var(--bg-3)]"
     >
-      <header className="flex items-start justify-between gap-4">
-        <div className="min-w-0">
-          <Link
-            href={`/projects/${projectId}`}
-            className="block text-[18px] font-semibold tracking-[-0.015em] text-[var(--fg)] leading-snug truncate hover:text-[var(--accent)] transition-colors"
-          >
-            {name}
-          </Link>
-          <p className="text-[12.5px] text-[var(--fg-mute)] mt-1 truncate">
-            {summary} · Updated {timeAgo(updatedAt)}
-          </p>
+      <Link href={`/projects/${projectId}`} className="block border-b border-[var(--line)] p-5">
+        <div className="flex items-start justify-between gap-4">
+          <div className="grid h-12 w-12 place-items-center rounded-[14px] bg-[color-mix(in_srgb,var(--accent)_12%,var(--bg-3))] text-[16px] font-semibold text-[var(--accent)]">
+            {initials || "SH"}
+          </div>
+          <Badge variant={statusVariant} title={statusHelp}>{statusLabel}</Badge>
         </div>
-        <Badge variant={statusVariant} title={statusHelp}>
-          {statusLabel}
-        </Badge>
-      </header>
 
-      <div className="mt-auto pt-3 border-t border-[var(--line)] flex items-center justify-between gap-3">
+        <div className="mt-6">
+          <h2 className="truncate text-[18px] font-semibold tracking-[-0.02em] text-[var(--fg)]">
+            {name}
+          </h2>
+          <p className="mt-2 text-[14px] leading-[1.55] text-[var(--fg-dim)]">
+            {summary}
+          </p>
+          <div className="mt-4 text-[13px] text-[var(--fg-mute)]">
+            Updated {timeAgo(updatedAt)}
+          </div>
+        </div>
+      </Link>
+
+      <div className="flex items-center justify-between gap-3 p-5">
         <Link
           href={`/projects/${projectId}`}
-          className="text-[12.5px] text-[var(--fg-mute)] hover:text-[var(--fg-dim)] transition-colors"
+          className="text-[13px] text-[var(--fg-mute)] transition-colors hover:text-[var(--fg)]"
         >
-          Overview
+          Open overview
         </Link>
         <Link
           href={nextActionHref}
           data-next-action-label={nextActionLabel}
-          className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-[var(--accent)] hover:opacity-80 transition-opacity"
+          className="inline-flex items-center gap-1.5 text-[14px] font-medium text-[var(--accent)] transition-opacity hover:opacity-80"
         >
           {nextActionLabel}
-          <ArrowRight size={13} strokeWidth={2.5} aria-hidden />
+          <ArrowRight size={14} strokeWidth={2.5} aria-hidden />
         </Link>
       </div>
     </article>
@@ -174,53 +169,52 @@ function ProjectCard({
 }
 
 function timeAgo(date: Date): string {
-  const diff   = Date.now() - date.getTime();
-  const min    = Math.floor(diff / 60_000);
-  const hour   = Math.floor(diff / 3_600_000);
-  const day    = Math.floor(diff / 86_400_000);
-  if (min  < 1)     return "just now";
-  if (min  < 60)    return `${min}m ago`;
-  if (hour < 24)    return `${hour}h ago`;
-  if (day  < 7)     return `${day}d ago`;
+  const diff = Date.now() - date.getTime();
+  const min = Math.floor(diff / 60_000);
+  const hour = Math.floor(diff / 3_600_000);
+  const day = Math.floor(diff / 86_400_000);
+  if (min < 1) return "just now";
+  if (min < 60) return `${min}m ago`;
+  if (hour < 24) return `${hour}h ago`;
+  if (day < 7) return `${day}d ago`;
   return date.toISOString().slice(0, 10);
 }
 
 function EmptyProjects() {
   return (
-    <div className="surface px-6 sm:px-10 py-12 sm:py-16">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+    <div className="surface-raised px-6 py-10 sm:px-8 sm:py-12">
+      <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
         <div>
-          <div className="text-[11px] uppercase tracking-[0.14em] text-[var(--accent)] font-medium mb-2">
-            Empty deck
-          </div>
-          <h2 className="text-[clamp(1.5rem,3vw,2rem)] font-semibold tracking-[-0.02em] text-[var(--fg)] leading-tight mb-3">
-            Your first project on the house.
+          <p className="mb-2 text-[13px] text-[var(--fg-mute)]">Nothing here yet</p>
+          <h2 className="text-[clamp(1.75rem,3.8vw,2.6rem)] font-semibold tracking-[-0.035em] text-[var(--fg)] leading-[1.04]">
+            Build the first launch pack now.
           </h2>
-          <p className="text-[14.5px] text-[var(--fg-dim)] leading-relaxed mb-6 max-w-md">
-            Drop in iOS screenshots, pick devices, ship. Your first
-            project takes about ninety seconds — no card required.
+          <p className="mt-4 max-w-[54ch] text-[15px] leading-[1.65] text-[var(--fg-dim)]">
+            Projects hold the copy, frames, devices, and exports for one app release. Create one, drop in your raw screenshots, and keep going from there.
           </p>
-          <div className="flex flex-wrap items-center gap-4">
-            <Link
-              href="/projects/new"
-              className="inline-flex items-center gap-2 bg-[var(--accent)] text-[var(--accent-fg)] font-semibold text-[14px] px-5 py-2.5 rounded-md hover:opacity-90 transition-opacity"
-            >
+          <div className="mt-6 flex flex-wrap items-center gap-3">
+            <Link href="/projects/new" className="inline-flex items-center gap-2 rounded-[10px] bg-[var(--accent)] px-5 py-3 text-[14px] font-medium text-[var(--accent-fg)] transition-opacity hover:opacity-92">
               Start a project
               <ArrowRight size={14} strokeWidth={2.5} aria-hidden />
             </Link>
-            <Link
-              href="/templates"
-              className="text-[13px] text-[var(--fg-dim)] hover:text-[var(--accent)] underline underline-offset-4 decoration-[var(--line-strong)] hover:decoration-[var(--accent)] transition-colors"
-            >
-              … or pick from a template
+            <Link href="/templates" className="text-[14px] text-[var(--fg-dim)] underline decoration-[var(--line-strong)] underline-offset-4 transition-colors hover:text-[var(--fg)] hover:decoration-[var(--accent)]">
+              Browse templates first
             </Link>
           </div>
         </div>
-        <ol className="space-y-2.5 text-[13.5px] text-[var(--fg-dim)] leading-relaxed border-l border-[var(--line)] pl-5">
-          <li><span className="text-[var(--accent)] mr-2 font-medium">01</span> Pick devices · iPhone 6.9″ / 6.7″ / iPad 13″</li>
-          <li><span className="text-[var(--accent)] mr-2 font-medium">02</span> Drop raw PNGs · auto-bucketed by dimension</li>
-          <li><span className="text-[var(--accent)] mr-2 font-medium">03</span> Compose in Studio · export at App Store-exact dims</li>
-        </ol>
+
+        <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+          {[
+            ["Organize one launch per project", "Keep devices, copy, and exports together instead of spreading them across Figma files and folders."],
+            ["Return to the next step fast", "Every card points you back to the most useful action instead of dumping you into a generic view."],
+            ["Export when the pack is ready", "Once the panels are done, jump straight to exports without hunting around the interface."],
+          ].map(([title, body]) => (
+            <div key={title} className="surface p-4">
+              <div className="text-[15px] font-medium text-[var(--fg)]">{title}</div>
+              <div className="mt-2 text-[13px] leading-[1.55] text-[var(--fg-dim)]">{body}</div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

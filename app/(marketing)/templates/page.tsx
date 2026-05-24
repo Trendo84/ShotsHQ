@@ -11,20 +11,19 @@ export default function TemplatesPage() {
   return (
     <>
       <section className="border-b border-[var(--line)]">
-        <div className="max-w-[1480px] mx-auto px-4 md:px-8 py-14 md:py-20">
-          <div className="grid grid-cols-12 gap-8 items-end">
+        <div className="mx-auto max-w-[1480px] px-4 py-14 md:px-8 md:py-20">
+          <div className="grid grid-cols-12 items-end gap-8">
             <div className="col-span-12 md:col-span-7">
               <div className="t-eyebrow t-eyebrow-accent mb-3">Templates</div>
-              <h1 className="t-display text-[clamp(2.5rem,6.5vw,5.5rem)] leading-[0.92]">
-                {TEMPLATE_COUNT}&nbsp;ways<br />
-                to start.
+              <h1 className="text-balance text-[clamp(2.4rem,6vw,5rem)] font-semibold tracking-[-0.045em] leading-[1.02] text-[var(--fg)]">
+                Start from a proven layout,
+                <br />
+                <span className="text-[var(--accent)]">not a blank canvas.</span>
               </h1>
             </div>
             <div className="col-span-12 md:col-span-5">
               <p className="t-prose-lg max-w-md">
-                Each template is a complete composition — typography, palette,
-                device frame, and layout. Pick one as a base and customize
-                anything in the editor.
+                {TEMPLATE_COUNT} starting points built for real App Store launches. Pick one, swap in your app, and refine the details in the editor.
               </p>
             </div>
           </div>

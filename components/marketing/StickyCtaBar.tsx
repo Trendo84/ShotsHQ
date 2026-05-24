@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { BrandMark } from "@/components/Brand";
+import { AppCta } from "@/components/marketing/AppCta";
 
 /**
  * Slim sticky CTA bar that appears after the user has scrolled past the
@@ -45,32 +47,13 @@ export function StickyCtaBar() {
         <Link
           href="/"
           tabIndex={visible ? 0 : -1}
-          className="hidden sm:flex items-center gap-2 group min-w-0"
+          className="inline-flex items-center text-[var(--fg)] hover:opacity-90 transition-opacity min-w-0"
           aria-label="ShotsHQ home"
         >
-          <span className="block w-2 h-2 bg-[var(--accent)] shrink-0" />
-          <span className="t-display text-[15px] tracking-[-0.04em] leading-none">
-            SHOTS<span className="text-[var(--accent)]">HQ</span>
-          </span>
-          <sup className="t-mono-xs text-[var(--fg-mute)] hidden md:inline">®</sup>
-          <span className="t-mono-xs text-[var(--fg-mute)] tracking-[0.16em] uppercase ml-2 truncate">
-            · Free forever
-          </span>
+          <BrandMark size="sm" />
         </Link>
 
-        <Link
-          href="/"
-          tabIndex={visible ? 0 : -1}
-          className="sm:hidden flex items-center gap-2 min-w-0"
-          aria-label="ShotsHQ home"
-        >
-          <span className="block w-2 h-2 bg-[var(--accent)] shrink-0" />
-          <span className="t-display text-[14px] tracking-[-0.04em] leading-none">
-            SHOTS<span className="text-[var(--accent)]">HQ</span>
-          </span>
-        </Link>
-
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-3 shrink-0">
           <Link
             href="/pricing"
             tabIndex={visible ? 0 : -1}
@@ -78,21 +61,12 @@ export function StickyCtaBar() {
           >
             Pricing
           </Link>
-          <Link
-            href="/sign-up"
-            tabIndex={visible ? 0 : -1}
-            className="group relative inline-flex items-center gap-2 bg-[var(--accent)] text-[var(--accent-fg)] pl-4 pr-1 py-1.5 overflow-hidden transition-all duration-[280ms] ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.97] hover:shadow-[0_8px_24px_-8px_var(--accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]"
-          >
-            {/* Shimmer sweep on hover — pure transform, GPU-only */}
-            <span
-              aria-hidden
-              className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-[var(--accent-fg)]/12 to-transparent transition-transform duration-[700ms] ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-full pointer-events-none"
-            />
-            <span className="relative t-mono-xs uppercase tracking-[0.14em] font-semibold">Start free</span>
-            <span className="relative inline-grid place-items-center w-7 h-7 bg-[var(--accent-fg)] text-[var(--accent)] transition-all duration-[280ms] ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-1 group-hover:-translate-y-px leading-none font-bold text-[12px]">
-              →
-            </span>
-          </Link>
+          <AppCta
+            size="sm"
+            dataCtaTag="sticky-primary"
+            signedOut={{ href: "/sign-up",      label: "Start free"     }}
+            signedIn={{  href: "/dashboard",    label: "Open dashboard" }}
+          />
         </div>
       </div>
     </div>

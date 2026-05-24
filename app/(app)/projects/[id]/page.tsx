@@ -187,23 +187,93 @@ export default async function ProjectOverviewPage({
         </ul>
       </section>
 
-      <section className="grid grid-cols-12 border-t-2 border-[var(--line-strong)]">
-        <div className="col-span-12 md:col-span-8 border-r-0 md:border-r border-[var(--line)]">
-          <div className="px-5 sm:px-6 py-3 border-b border-[var(--line)] flex items-center justify-between flex-wrap gap-2">
-            <span className="t-eyebrow t-eyebrow-accent">Shot grid</span>
-            <span
-              className="t-mono-xs text-[var(--fg-mute)]"
-              data-shot-grid-ready={String(readiness.readyPanels)}
-              data-shot-grid-total={String(readiness.totalPanels)}
-            >
-              {readiness.totalPanels === 0
-                ? "no panels yet"
-                : `${readiness.readyPanels} / ${readiness.totalPanels} ready`}
-            </span>
+      {/*
+        Shot grid + Targets — when the project is empty (no panels),
+        the page now shows a single compact, instructional empty
+        state instead of the giant void-grid presentation. The
+        readiness data hooks (data-shot-grid-total, data-shot-grid-
+        ready, data-shot-grid-empty, data-target-* per row) are
+        retained so the cycle-#4 truthfulness contract still holds.
+      */}
+      {readiness.totalPanels === 0 ? (
+        <section className="px-4 sm:px-6 lg:px-8 pb-12 max-w-[1480px]">
+          <div
+            className="surface p-6 sm:p-8 lg:p-10"
+            data-shot-grid-empty="true"
+            data-shot-grid-total={String(readiness.totalPanels)}
+            data-shot-grid-ready={String(readiness.readyPanels)}
+          >
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+              <div className="md:col-span-7 min-w-0">
+                <div className="text-[11px] uppercase tracking-[0.14em] text-[var(--accent)] font-medium mb-2">
+                  Empty project · no panels yet
+                </div>
+                <div
+                  className="mb-3 text-[12px] text-[var(--fg-mute)]"
+                  data-shot-grid-ready={String(readiness.readyPanels)}
+                  data-shot-grid-total={String(readiness.totalPanels)}
+                >
+                  {readiness.readyPanels} / {readiness.totalPanels} ready
+                </div>
+                <h2 className="text-[clamp(1.25rem,2.5vw,1.625rem)] font-semibold tracking-[-0.015em] text-[var(--fg)] leading-tight mb-3">
+                  Studio is where panels get built.
+                </h2>
+                <p className="text-[14px] text-[var(--fg-dim)] leading-relaxed mb-5 max-w-xl">
+                  Open Studio to add one screenshot panel per device.
+                  Drop the raw PNG, write the headline, pick a layout —
+                  each panel becomes one tile in the App Store pack.
+                </p>
+                <Link
+                  href={`/projects/${id}/studio`}
+                  className="inline-flex items-center gap-2 bg-[var(--accent)] text-[var(--accent-fg)] font-semibold text-[14px] px-4 py-2.5 rounded-md hover:opacity-90 transition-opacity"
+                >
+                  <Smartphone size={14} strokeWidth={2.5} aria-hidden />
+                  Open Studio
+                </Link>
+              </div>
+              {targets.length > 0 && (
+                <div className="md:col-span-5">
+                  <div className="text-[11px] uppercase tracking-[0.14em] text-[var(--fg-mute)] font-medium mb-2.5">
+                    Device targets
+                  </div>
+                  <ul className="space-y-1.5">
+                    {targets.map((targetId) => {
+                      const stats = computeTargetStats(targetId, studio);
+                      return (
+                        <li
+                          key={targetId}
+                          data-target-id={targetId}
+                          data-target-status={stats.status}
+                          data-target-ready={String(stats.ready)}
+                          data-target-total={String(stats.total)}
+                          className="flex items-center justify-between text-[13px] text-[var(--fg-dim)] py-1 border-b border-[var(--line)] last:border-b-0"
+                        >
+                          <span className="truncate">{stats.label}</span>
+                          <span className="text-[var(--fg-mute)] text-[12px] tabular-nums shrink-0 ml-2">
+                            {stats.spec}
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              )}
+            </div>
           </div>
-          {readiness.totalPanels === 0 ? (
-            <EmptyShotGrid projectId={id} />
-          ) : (
+        </section>
+      ) : (
+        <section className="grid grid-cols-12 border-t border-[var(--line)]">
+          <div className="col-span-12 md:col-span-8 border-r-0 md:border-r border-[var(--line)]">
+            <div className="px-5 sm:px-6 py-3 border-b border-[var(--line)] flex items-center justify-between flex-wrap gap-2">
+              <span className="text-[11px] uppercase tracking-[0.14em] text-[var(--accent)] font-medium">Shots</span>
+              <span
+                className="text-[12px] text-[var(--fg-mute)]"
+                data-shot-grid-ready={String(readiness.readyPanels)}
+                data-shot-grid-total={String(readiness.totalPanels)}
+              >
+                {readiness.readyPanels} / {readiness.totalPanels} ready
+              </span>
+            </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 grid-rule">
               {studio.panels.map((panel, idx) => (
                 <PanelTile
@@ -214,21 +284,11 @@ export default async function ProjectOverviewPage({
                 />
               ))}
             </div>
-          )}
-        </div>
-        <aside className="col-span-12 md:col-span-4 border-t md:border-t-0 border-[var(--line)]">
-          <div className="px-5 sm:px-6 py-3 border-b border-[var(--line)]">
-            <span className="t-eyebrow t-eyebrow-accent">Targets</span>
           </div>
-          {targets.length === 0 ? (
-            <div className="p-5 sm:p-6 t-mono-xs text-[var(--fg-mute)] text-center">
-              No device targets selected yet.
-              <br />
-              <Link href={`/projects/${id}/studio`} className="text-[var(--accent)] underline mt-2 inline-block">
-                Open studio →
-              </Link>
+          <aside className="col-span-12 md:col-span-4 border-t md:border-t-0 border-[var(--line)]">
+            <div className="px-5 sm:px-6 py-3 border-b border-[var(--line)]">
+              <span className="text-[11px] uppercase tracking-[0.14em] text-[var(--accent)] font-medium">Targets</span>
             </div>
-          ) : (
             <div className="grid grid-cols-1 grid-rule">
               {targets.map((targetId) => {
                 const stats = computeTargetStats(targetId, studio);
@@ -241,9 +301,9 @@ export default async function ProjectOverviewPage({
                 );
               })}
             </div>
-          )}
-        </aside>
-      </section>
+          </aside>
+        </section>
+      )}
     </>
   );
 }

@@ -3,69 +3,62 @@
 import { useTheme } from "@/components/providers/ThemeProvider";
 import { cn } from "@/lib/utils/cn";
 
-/**
- * Two-state visual-archetype switch.
- *
- * Both labels are always visible so users see what they'll swap into.
- * The leading "Style:" label + tooltip explain that this changes the
- * site's visual archetype, not just light/dark — without that signpost,
- * users click it, see the layout shift, and are confused.
- */
 export function ThemeSwitcher({
   className,
   compact = false,
   showLabel = true,
 }: {
   className?: string;
-  compact?:   boolean;
+  compact?: boolean;
   showLabel?: boolean;
 }) {
   const { theme, setTheme } = useTheme();
+
   return (
     <div className={cn("inline-flex items-center gap-2", className)}>
       {showLabel && (
         <span
-          className="t-mono-xs uppercase tracking-[0.16em] text-[var(--fg-mute)] hidden lg:inline"
-          title="Switch between dark and light themes. Tactical is the default."
+          className="hidden lg:inline text-[12px] text-[var(--fg-mute)]"
+          title="Choose the look you prefer."
         >
           Theme
         </span>
       )}
+
       <div
         role="group"
-        aria-label="Theme — Tactical (dark) or Swiss (light)"
-        title="Switch between dark and light themes."
-        className="inline-flex items-stretch border border-[var(--line-strong)] bg-[var(--bg)]"
+        aria-label="Theme"
+        className="inline-flex items-center rounded-full border border-[var(--line)] bg-[var(--bg-2)] p-1"
       >
         <button
           type="button"
           aria-pressed={theme === "tactical"}
           onClick={() => setTheme("tactical")}
-          title="Tactical — dark theme"
+          title="Dark theme"
           className={cn(
-            "t-mono-xs px-2.5 transition-colors",
+            "rounded-full px-3 text-[12px] font-medium transition-colors",
             compact ? "py-1.5" : "py-2",
             theme === "tactical"
-              ? "bg-[var(--accent)] text-[var(--accent-fg)]"
+              ? "bg-[var(--fg)] text-[var(--bg)]"
               : "text-[var(--fg-mute)] hover:text-[var(--fg)]",
           )}
         >
-          ◉ TACTICAL
+          Dark
         </button>
         <button
           type="button"
           aria-pressed={theme === "swiss"}
           onClick={() => setTheme("swiss")}
-          title="Swiss — light theme"
+          title="Light theme"
           className={cn(
-            "t-mono-xs px-2.5 border-l border-[var(--line-strong)] transition-colors",
+            "rounded-full px-3 text-[12px] font-medium transition-colors",
             compact ? "py-1.5" : "py-2",
             theme === "swiss"
-              ? "bg-[var(--accent)] text-[var(--accent-fg)]"
+              ? "bg-[var(--fg)] text-[var(--bg)]"
               : "text-[var(--fg-mute)] hover:text-[var(--fg)]",
           )}
         >
-          ▢ SWISS
+          Light
         </button>
       </div>
     </div>

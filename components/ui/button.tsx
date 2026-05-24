@@ -4,22 +4,28 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils/cn";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 select-none whitespace-nowrap font-mono uppercase tracking-[0.1em] transition-[background,color,border-color] duration-75 disabled:opacity-40 disabled:pointer-events-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent)]",
+  "inline-flex items-center justify-center gap-2 select-none whitespace-nowrap rounded-[10px] font-medium tracking-[-0.01em] transition-[background,color,border-color,box-shadow,opacity] duration-150 disabled:opacity-40 disabled:pointer-events-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--accent)_35%,white)]",
   {
     variants: {
       variant: {
-        default: "bg-[var(--bg)] text-[var(--fg)] border border-[var(--line-strong)] hover:bg-[var(--fg)] hover:text-[var(--bg)]",
-        accent:  "bg-[var(--accent)] text-[var(--accent-fg)] border border-[var(--accent)] hover:bg-[var(--accent-fg)] hover:text-[var(--accent)]",
-        ghost:   "bg-transparent text-[var(--fg)] border border-[var(--line)] hover:bg-[var(--bg-2)]",
-        link:    "bg-transparent text-[var(--fg)] underline-offset-4 hover:underline border-0 p-0",
-        outline: "bg-transparent text-[var(--fg)] border border-[var(--line)] hover:border-[var(--accent)] hover:text-[var(--accent)]",
-        destructive: "bg-[var(--accent)] text-[var(--accent-fg)] border border-[var(--accent)] hover:bg-[var(--accent-fg)] hover:text-[var(--accent)]",
+        default:
+          "bg-[var(--bg-3)] text-[var(--fg)] border border-[var(--line)] hover:border-[var(--line-strong)] hover:bg-[color-mix(in_srgb,var(--bg-3)_78%,white)]",
+        accent:
+          "bg-[var(--accent)] text-[var(--accent-fg)] border border-[var(--accent)] hover:opacity-92",
+        ghost:
+          "bg-transparent text-[var(--fg)] border border-[var(--line)] hover:border-[var(--line-strong)] hover:bg-[var(--bg-2)]",
+        link:
+          "bg-transparent text-[var(--fg)] underline-offset-4 hover:underline border-0 p-0 rounded-none",
+        outline:
+          "bg-transparent text-[var(--fg)] border border-[var(--line)] hover:border-[var(--accent)] hover:text-[var(--fg)] hover:bg-[var(--bg-2)]",
+        destructive:
+          "bg-transparent text-[#F5B5B5] border border-[color-mix(in_srgb,#DC2626_45%,var(--line))] hover:bg-[color-mix(in_srgb,#DC2626_8%,transparent)]",
       },
       size: {
-        sm: "text-[10px] px-3 h-8",
-        md: "text-[11px] px-4 h-10",
-        lg: "text-[12px] px-5 h-12",
-        xl: "text-[13px] px-6 h-14",
+        sm: "text-[12px] px-3 h-8",
+        md: "text-[13px] px-4 h-10",
+        lg: "text-[14px] px-5 h-11",
+        xl: "text-[15px] px-6 h-12",
         icon: "h-10 w-10 p-0 text-base",
       },
     },

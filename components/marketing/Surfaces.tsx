@@ -20,6 +20,7 @@
  * well-designed page for an unreleased tool.
  */
 import Link from "next/link";
+import { AppCta } from "@/components/marketing/AppCta";
 
 type ComingNextSurface = {
   id:          string;
@@ -132,19 +133,17 @@ export function Surfaces() {
             </ul>
 
             <div className="mt-auto pt-3 flex flex-wrap items-center gap-4">
-              <Link
-                href="/sign-up"
-                className="group inline-flex items-center gap-3 bg-[var(--accent)] text-[var(--accent-fg)] pl-5 pr-1.5 py-2 transition-transform duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98]"
-              >
-                <span className="btn-label">Start free</span>
-                <span className="inline-grid place-items-center w-9 h-9 bg-[var(--accent-fg)] text-[var(--accent)] transition-transform group-hover:translate-x-0.5 font-bold">→</span>
-              </Link>
-              <Link
-                href="/templates"
-                className="text-[13px] text-[var(--fg-dim)] hover:text-[var(--accent)] underline underline-offset-4 decoration-[var(--line-strong)] hover:decoration-[var(--accent)] transition-colors"
-              >
-                See sample output →
-              </Link>
+              <AppCta
+                dataCtaTag="surfaces-primary"
+                signedOut={{ href: "/sign-up",      label: "Start free"        }}
+                signedIn={{  href: "/projects/new", label: "Start a new project" }}
+              />
+              <AppCta
+                variant="secondary"
+                dataCtaTag="surfaces-secondary"
+                signedOut={{ href: "/templates",  label: "See sample output" }}
+                signedIn={{  href: "/templates",  label: "Browse templates"  }}
+              />
             </div>
           </div>
         </article>

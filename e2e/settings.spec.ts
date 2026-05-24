@@ -35,25 +35,27 @@ test.describe("/settings contract", () => {
     await expect(page.locator('[data-settings-section="danger"]')).toBeVisible();
   });
 
-  test("ASC section is an honest v1.1 surface — no fake credential form", async ({ page }) => {
+  test("ASC section is an honest planned surface — no fake credential form", async ({ page }) => {
     await page.goto("/settings");
     const asc = page.locator('[data-settings-section="asc"]');
-    // The honest status hook.
+    // The honest status hook. The visible body copy was softened in
+    // the post-ship redesign (less repeated v1.1 mentions in primary
+    // UX) — the data-asc-status="planned" hook is the canonical
+    // contract for "this surface is not live yet".
     await expect(asc.locator('[data-asc-status="planned"]')).toBeVisible();
     // The pre-cycle-11 fake form must be gone.
     await expect(asc.locator('input[name="issuerId"]')).toHaveCount(0);
     await expect(asc.locator('input[name="keyId"]')).toHaveCount(0);
     await expect(asc.locator('textarea[name="privateKey"]')).toHaveCount(0);
     await expect(asc.locator('button:has-text("Verify and save")')).toHaveCount(0);
-    // The corrected copy points to /docs/asc for the planned flow.
-    await expect(asc).toContainText(/v1\.1/i);
   });
 
-  test("Studio API section is an honest v1.1 surface — no fake API key display", async ({ page }) => {
+  test("Studio API section is an honest planned surface — no fake API key display", async ({ page }) => {
     await page.goto("/settings");
     const api = page.locator('[data-settings-section="api"]');
     // The E2E user is on the free plan so this renders the locked CTA.
-    // Either status is acceptable — both are v1.1 honest.
+    // Either status is acceptable — both indicate the surface is
+    // not yet live.
     const statusEl = api.locator('[data-api-status]');
     await expect(statusEl).toBeVisible();
     const status = await statusEl.getAttribute("data-api-status");
@@ -61,7 +63,6 @@ test.describe("/settings contract", () => {
     // The pre-cycle-11 fake key + rotate / copy buttons are gone.
     await expect(api.locator('input[name="apiKey"]')).toHaveCount(0);
     await expect(api.locator('input[name="webhookSecret"]')).toHaveCount(0);
-    await expect(api).toContainText(/v1\.1/i);
   });
 
   test("profile form: pristine state — no dirty markers, save button disabled", async ({ page }) => {

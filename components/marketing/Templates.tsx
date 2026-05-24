@@ -10,6 +10,7 @@ import {
   type Template,
 } from "@/lib/templates/catalog";
 import { templateHref } from "@/lib/templates/redirect";
+import { AppCta } from "@/components/marketing/AppCta";
 
 /**
  * Templates gallery. Each tile is a hand-tuned "screenshot inside a
@@ -45,7 +46,13 @@ export function Templates({ compact = false }: { compact?: boolean }) {
   const proCount  = TEMPLATES.filter((t) => t.tag === "Pro").length;
 
   return (
-    <section className="border-b border-[var(--line)] bg-[var(--bg)]">
+    // Post-ship audit fix: the section background lifted to bg-2 so
+    // every card silhouette is visible even when the preview itself
+    // is near-black. Before this, dark templates (mono-punch,
+    // hazard-stripe, tactical-dark, midnight-mono, neon-pulse, …)
+    // blended into the page and read as empty placeholders — the
+    // exact thing the brief flagged.
+    <section className="border-b border-[var(--line)] bg-[var(--bg-2)]">
       <div className="max-w-[1480px] mx-auto px-4 md:px-8 py-14 md:py-20">
         <div className="grid grid-cols-12 gap-8 mb-10 items-end">
           <h2 className="col-span-12 md:col-span-7 t-display t-h-3">
@@ -116,15 +123,11 @@ export function Templates({ compact = false }: { compact?: boolean }) {
               </p>
             </div>
             <div className="col-span-12 md:col-span-5 flex flex-col sm:flex-row md:flex-col gap-3 md:items-end">
-              <Link
-                href="/sign-up"
-                className="group inline-flex items-center gap-3 bg-[var(--accent)] text-[var(--accent-fg)] pl-6 pr-1.5 py-2 transition-transform duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]"
-              >
-                <span className="btn-label">Start free</span>
-                <span className="inline-grid place-items-center w-9 h-9 bg-[var(--accent-fg)] text-[var(--accent)] transition-transform duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0.5 leading-none font-bold">
-                  <span aria-hidden className="-mt-px">→</span>
-                </span>
-              </Link>
+              <AppCta
+                dataCtaTag="templates-bottom-primary"
+                signedOut={{ href: "/sign-up",      label: "Start free"        }}
+                signedIn={{  href: "/projects/new", label: "Start a new project" }}
+              />
               <Link
                 href="/pricing"
                 className="text-[13px] text-[var(--fg-dim)] hover:text-[var(--fg)] underline underline-offset-4 decoration-[var(--line-strong)] hover:decoration-[var(--accent)] transition-colors px-2 py-2"
@@ -207,10 +210,10 @@ function TemplateCard({
       href={href}
       aria-label={`Use the ${t.name} template`}
       style={{ cursor: "pointer" }}
-      className="group relative border border-[var(--line)] bg-[var(--bg)] hover:border-[var(--accent)] hover:-translate-y-1 hover:shadow-[8px_8px_0_var(--accent)] transition-all duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] flex flex-col cursor-pointer focus-visible:outline-none focus-visible:border-[var(--accent)] focus-visible:ring-1 focus-visible:ring-[var(--accent)] focus-visible:-translate-y-1 focus-visible:shadow-[8px_8px_0_var(--accent)]"
+      className="group relative border border-[var(--line-strong)] bg-[var(--bg-3)] hover:border-[var(--accent)] hover:-translate-y-1 hover:shadow-[8px_8px_0_var(--accent)] transition-all duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] flex flex-col cursor-pointer rounded-md overflow-hidden focus-visible:outline-none focus-visible:border-[var(--accent)] focus-visible:ring-1 focus-visible:ring-[var(--accent)] focus-visible:-translate-y-1 focus-visible:shadow-[8px_8px_0_var(--accent)]"
     >
       <div
-        className="relative overflow-hidden bg-[var(--bg-2)]"
+        className="relative overflow-hidden bg-[var(--bg)]"
         style={{ aspectRatio: "3 / 4" }}
       >
         <Image

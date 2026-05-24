@@ -30,121 +30,104 @@ export default function PricingPage() {
   return (
     <>
       <section className="border-b border-[var(--line)]">
-        <div className="max-w-[1480px] mx-auto px-4 md:px-8 py-14 md:py-20">
-          <div className="grid grid-cols-12 gap-8 items-end">
+        <div className="mx-auto max-w-[1480px] px-4 py-14 md:px-8 md:py-20">
+          <div className="grid grid-cols-12 items-end gap-8">
             <div className="col-span-12 md:col-span-7">
               <div className="t-eyebrow t-eyebrow-accent mb-3">Pricing</div>
-              <h1 className="t-display text-[clamp(2.5rem,7vw,6rem)] leading-[0.92] text-balance">
-                Pay for what you ship,
+              <h1 className="text-balance text-[clamp(2.4rem,6vw,5rem)] font-semibold tracking-[-0.045em] leading-[1.02] text-[var(--fg)]">
+                Choose the plan
                 <br />
-                <span className="text-[var(--accent)]">not what you don&apos;t.</span>
+                <span className="text-[var(--accent)]">that fits your launch pace.</span>
               </h1>
             </div>
             <div className="col-span-12 md:col-span-5">
               <p className="t-prose-lg max-w-md text-[var(--fg)]">
-                Three lanes, picked by launch cadence. Credits never
-                expire; Studio cancels anytime from the Stripe portal.
+                Start free, move to packs for one-off launches, or stay in Studio if screenshots are part of your regular shipping cadence.
               </p>
             </div>
           </div>
 
-          {/* Buyer framing — three plain-language one-liners under the
-              H1 so a visitor can pick a lane in one scan, before the
-              card grid. Was previously buried in plan descriptions. */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 mt-10 lg:mt-12">
+          <div className="mt-10 grid grid-cols-1 gap-3 md:grid-cols-3 md:gap-4 lg:mt-12">
             {[
-              { lane: "Free",   pitch: "Try the full editor.",        sub: "Watermarked exports · no card." },
-              { lane: "Packs",  pitch: "Pay per launch.",             sub: "Buy credits, ship a pack, done.", flag: true },
-              { lane: "Studio", pitch: "Ongoing production workflow.", sub: "Unmetered AI · $29 / month." },
+              { lane: "Free", pitch: "Try the full editor.", sub: "Watermarked exports · no card." },
+              { lane: "Packs", pitch: "Pay per launch.", sub: "Buy credits, ship a pack, done.", flag: true },
+              { lane: "Studio", pitch: "Keep the workflow always on.", sub: "Unmetered AI · $29 / month." },
             ].map((row) => (
               <div
                 key={row.lane}
-                className={`border p-4 ${
-                  row.flag
-                    ? "border-[var(--accent)] bg-[var(--bg)]"
-                    : "border-[var(--line)] bg-[var(--bg)]"
-                }`}
+                className={`rounded-[12px] border p-4 ${row.flag ? "border-[var(--accent)] bg-[var(--bg-2)]" : "border-[var(--line)] bg-[var(--bg)]"}`}
               >
-                <div className="flex items-baseline justify-between gap-3 mb-1">
+                <div className="mb-1 flex items-baseline justify-between gap-3">
                   <span className="t-eyebrow t-eyebrow-accent">{row.lane}</span>
-                  {row.flag && (
-                    <span className="t-mono-xs text-[var(--accent)] uppercase tracking-[0.14em]">Most pick this</span>
-                  )}
+                  {row.flag && <span className="text-[12px] text-[var(--accent)]">Most teams start here</span>}
                 </div>
                 <div className="text-[15px] font-medium text-[var(--fg)] leading-snug">{row.pitch}</div>
-                <div className="text-[12.5px] text-[var(--fg-dim)] mt-1">{row.sub}</div>
+                <div className="mt-1 text-[12.5px] text-[var(--fg-dim)]">{row.sub}</div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      <div className="max-w-[1480px] mx-auto px-4 md:px-8 py-12">
+      <div className="mx-auto max-w-[1480px] px-4 py-12 md:px-8">
         <PricingTable />
       </div>
 
       <section className="border-y border-[var(--line)] bg-[var(--bg-2)]">
-        <div className="max-w-[1480px] mx-auto px-4 md:px-8 py-16">
-          {/* FAQ — answers the questions blocking purchase */}
-          <div className="grid grid-cols-12 gap-8 mb-16">
+        <div className="mx-auto max-w-[1480px] px-4 py-16 md:px-8">
+          <div className="mb-16 grid grid-cols-12 gap-8">
             <div className="col-span-12 md:col-span-4">
               <div className="t-eyebrow t-eyebrow-accent mb-3">Pricing FAQ</div>
-              <h2 className="t-display text-[clamp(1.75rem,4vw,2.75rem)] leading-[0.95] text-balance">
+              <h2 className="text-balance text-[clamp(1.75rem,4vw,2.75rem)] font-semibold tracking-[-0.035em] leading-[1.04] text-[var(--fg)]">
                 Common questions before you buy.
               </h2>
               <p className="t-prose mt-4">
                 Read the full <Link href="/docs/billing" className="link-tick">billing docs</Link>{" "}
-                or email{" "}
-                <a href="mailto:support@shotshq.com" className="link-tick">support@shotshq.com</a>.
+                or email <a href="mailto:support@shotshq.com" className="link-tick">support@shotshq.com</a>.
               </p>
             </div>
-            <ul className="col-span-12 md:col-span-8 divide-y divide-[var(--line)] border-y border-[var(--line)]">
+            <ul className="col-span-12 divide-y divide-[var(--line)] border-y border-[var(--line)] md:col-span-8">
               {PRICING_FAQS.map((f) => (
                 <li key={f.q} className="py-5">
-                  <div className="t-mono-xs uppercase tracking-[0.16em] text-[var(--accent)] mb-1.5">
-                    Q.
-                  </div>
-                  <h3 className="text-[16px] font-medium text-[var(--fg)] leading-snug mb-2">
-                    {f.q}
-                  </h3>
+                  <div className="mb-1.5 text-[12px] text-[var(--accent)]">Question</div>
+                  <h3 className="mb-2 text-[16px] font-medium text-[var(--fg)] leading-snug">{f.q}</h3>
                   <p className="t-prose text-[14px]">{f.a}</p>
                 </li>
               ))}
             </ul>
           </div>
 
-          <div className="grid grid-cols-12 gap-8 mb-8">
+          <div className="mb-8 grid grid-cols-12 gap-8">
             <div className="col-span-12 md:col-span-5">
               <div className="t-eyebrow t-eyebrow-accent mb-3">Credit reference</div>
-              <h2 className="t-display text-[clamp(1.5rem,3vw,2.25rem)] leading-[0.95] text-balance normal-case tracking-[-0.02em]">
+              <h2 className="text-balance text-[clamp(1.5rem,3vw,2.25rem)] font-semibold tracking-[-0.03em] leading-[1.04] text-[var(--fg)]">
                 What each AI run costs.
               </h2>
             </div>
-            <div className="col-span-12 md:col-span-6 md:col-start-7 flex items-end">
+            <div className="col-span-12 flex items-end md:col-span-6 md:col-start-7">
               <p className="t-prose text-[var(--fg-dim)]">
-                Studio subscribers skip credits entirely. The table below is
-                a reference, not a buying decision — pick a lane up top.
+                Studio subscribers skip credits entirely. This table is here as a reference, not as homework before purchase.
               </p>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-[var(--line)] border border-[var(--line)]">
+          <div className="grid grid-cols-1 gap-px rounded-[12px] border border-[var(--line)] bg-[var(--line)] md:grid-cols-3">
             {[
-              { label: "AI copy generation",    cost: 1, body: "AI-generated headline, subheadline, and CTA — guaranteed well-formed." },
-              { label: "AI backdrop (per frame)",  cost: 2, body: "Flux 2 swaps the surrounding scene around your screenshot. Single frame, your UI untouched." },
-              { label: "AI template set",          cost: 8, body: "gpt-image-1 generates a cohesive 6-frame App Store carousel from your app metadata." },
-              { label: "AI restyle from ref",   cost: 3, body: "Lift palette and mood from a reference, restyle the full pack." },
-              { label: "Translate (per locale)",cost: 1, body: "Auto-relayout, RTL-aware, parallel fan-out." },
-              { label: "Export pack",           cost: 0, body: "Studio renders every active panel at App Store-exact dimensions (1290×2796, 1320×2868, 2064×2752). Server render queue + direct App Store Connect push are v1.1 targets." },
+              { label: "AI copy generation", cost: 1, body: "AI-generated headline, subheadline, and CTA — guaranteed well-formed." },
+              { label: "AI backdrop (per frame)", cost: 2, body: "Flux 2 swaps the surrounding scene around your screenshot. Single frame, your UI untouched." },
+              { label: "AI template set", cost: 8, body: "gpt-image-1 generates a cohesive 6-frame App Store carousel from your app metadata." },
+              { label: "AI restyle from ref", cost: 3, body: "Lift palette and mood from a reference, restyle the full pack." },
+              { label: "Translate (per locale)", cost: 1, body: "Auto-relayout, RTL-aware, parallel fan-out." },
+              { label: "Export pack", cost: 0, body: "Studio renders every active panel at App Store-exact dimensions. Direct App Store Connect push is a v1.1 target." },
             ].map((row) => (
-              <div key={row.label} className="bg-[var(--bg)] p-5 flex flex-col gap-3 min-h-[150px]">
+              <div key={row.label} className="flex min-h-[150px] flex-col gap-3 rounded-[0] bg-[var(--bg)] p-5">
                 <div className="flex items-baseline justify-between gap-3">
                   <span className="text-[14px] font-medium text-[var(--fg)]">{row.label}</span>
-                  <span className="t-display text-[24px] t-numeric">
-                    {row.cost === 0 ? "Free" : `${row.cost} cr`}
+                  <span className="text-[24px] font-semibold tracking-[-0.03em] text-[var(--fg)]">
+                    {row.cost === 0 ? "Free" : `${row.cost} cr`}
                   </span>
                 </div>
-                <p className="t-prose text-[13px] mt-auto">{row.body}</p>
+                <p className="t-prose mt-auto text-[13px]">{row.body}</p>
               </div>
             ))}
           </div>
