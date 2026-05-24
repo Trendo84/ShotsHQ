@@ -1,5 +1,163 @@
 # ShotsHQ overnight BrowserOS status
 
+## 2026-05-24 16:30 AEST · structural redesign + ASOForge productization
+
+### Why this cycle happened
+
+The user pushed back with the exact verdict the recovery cycles had been failing to escape: *"so it looks the same just different colors"*. Every prior cycle had recolored or softened the same composition — the structure was preserved out of inertia. This cycle replaces the composition.
+
+### Commit pushed to origin/main
+
+**`21588a5`** — `feat(structural): replace sidebar shell + recompose homepage/pricing/templates/projects + drop Studio Phase-C labels`
+
+### What changed structurally
+
+#### App shell — sidebar replaced
+- `components/app/AppNav.tsx` (NEW) — single thin 56px horizontal header (BrandMark + workspace nav + credits chip + new-project pill + UserButton). Mobile drops to a secondary horizontally-scrolling nav row.
+- `app/(app)/layout.tsx` — dropped the 240px Sidebar + 64px Topbar wrapper (~250px of persistent chrome). The shell recedes; pages get the stage.
+- `components/app/Topbar.tsx` — converted to a no-op. The dozen call sites still compile; nothing renders. Page H1s carry the section identity.
+
+#### Homepage — section-stack collapsed to three coherent moments
+Was: Hero + Templates(compact) + PipelineDiagram + Surfaces + FeatureGrid + CTA (six section-stack beats). Now:
+1. Hero (output-first + before/after slider)
+2. `<LandingWorkflow>` (NEW) — single continuous 4-step row (Drop → Compose → Polish → Ship) with continuity arrows on desktop. Replaces PipelineDiagram + Surfaces + FeatureGrid.
+3. Templates (compact, unchanged)
+4. `<LandingClose>` (NEW) — two-column closer with verifiable promise list. Replaces FeatureGrid + CTA double-section.
+
+#### Pricing — decision-first
+Was: 3-lane buyer grid → 5-card pricing matrix → FAQ → cost table (four equal-weight beats). Now:
+- Header → TWO branches: "Shipping a launch this month?" → Pro pack · "Screenshots are part of monthly cadence?" → Studio. Each branch presents ONE recommended plan + a quiet "or pick the smaller one" link.
+- 5-card matrix is gone from the primary surface. Cost reference + FAQ collapse into a single `<details>` block below the fold.
+- Page answers "which plan should I buy?" before "what are all the plans?"
+
+#### Templates — curated library
+Was: header + 21-card grid. Now: header → `<TemplateFeaturePick>` (NEW) three-up editorial pick with explicit "Best for · Productivity / Travel / News" framing → category index of anchor pills → full library framed as "browse the rest." Page answers "which template should I start from?" before "what's in your catalog?"
+
+#### Projects — workspace grouped by lifecycle
+Was: single flat 2/3-up card grid. Now grouped into three sections:
+- Ready to ship (`status === "ready"`)
+- In progress (`status === "partial" | "blocked"`)
+- Empty — needs Studio (`status === "empty"`)
+
+Empty groups are filtered out. Same card shape per group preserves muscle memory; the page reads as a curated workspace.
+
+#### Studio — Phase-C labels stripped
+- Header H1 "Studio engine · Phase C / Constrained screenshot studio." → "Studio · Build your screenshot pack" with product-language description ("One panel per App Store screenshot…").
+- JSDoc in `components/studio/types.ts` + `app/(app)/projects/[id]/studio/page.tsx` reworded to describe product behaviour, not implementation phase. Studio now reads as a productized engine.
+
+### Files touched
+
+```
+A  components/app/AppNav.tsx                       (NEW)
+A  components/marketing/LandingWorkflow.tsx       (NEW)
+A  components/marketing/LandingClose.tsx          (NEW)
+A  components/marketing/TemplateFeaturePick.tsx   (NEW)
+M  app/(app)/layout.tsx                            (sidebar dropped, AppNav mounted)
+M  app/(app)/projects/page.tsx                     (workspace-grouped layout)
+M  app/(app)/projects/[id]/studio/page.tsx         (Phase-C stripped from JSDoc)
+M  app/(app)/projects/[id]/surfaces/page.tsx       (project name + "·" Surfaces breadcrumb-in-page)
+M  app/(marketing)/page.tsx                        (3-moment composition)
+M  app/(marketing)/pricing/page.tsx                (2-branch decision-first)
+M  app/(marketing)/templates/page.tsx              (curated library)
+M  components/app/Topbar.tsx                       (no-op deprecation)
+M  components/studio/StudioClient.tsx              (Phase C label → product copy)
+M  components/studio/types.ts                      (JSDoc productized)
+M  e2e/surfaces.spec.ts                            (breadcrumb test → body-scope)
+```
+
+### Verification (all green on commit `21588a5`)
+
+```
+pnpm typecheck                clean
+pnpm test                     231 / 231 pass
+pnpm test:e2e --workers=1     65 / 65 pass
+pnpm build                    clean
+git push                      6b957e0..21588a5 main -> main
+```
+
+### Definition-of-done — structural verdict
+
+The brief's primary mission: *"the user should NOT be able to say 'it looks the same just different colors'."*
+
+Six structural shifts that fail that verdict:
+
+1. ✅ App shell — sidebar dropped entirely. EVERY authenticated page reads top-down full-width instead of left-rail + content split. Single biggest perceived change.
+2. ✅ Homepage — section-stack of six beats → three moments. No more "comparable modules grid" feeling.
+3. ✅ Pricing — card matrix removed from primary surface. The page is now a 2-branch decision instead of a 5-card scan.
+4. ✅ Templates — featured pick + category index added above the grid. The grid is now the "browse the rest" tier.
+5. ✅ Projects — workspace grouping by lifecycle. Not a flat index.
+6. ✅ Studio — Phase-C internal labels stripped. Reads as a productized engine.
+
+### Blockers
+
+None code-side. Carry-forwards (unchanged):
+
+- Prod DB migration from cycle #11 — runs on next Vercel deploy
+- Clerk live-key swap in Vercel production env
+- `?e2e_plan=` fixture override — cycle #9
+- Dead `Comparison.tsx`, unmounted `WipBanner.tsx`, unmounted `Sidebar.tsx`, unmounted `PipelineDiagram.tsx` + `FeatureGrid.tsx` — small file-cleanup follow-up
+- Parallel-worker e2e flake at `--workers=2`
+
+### Highest-priority next target
+
+1. **Live browser verification on shotshq.com** post-deploy — confirm the new AppNav, homepage workflow row, branched pricing, and Studio product framing land correctly on production.
+2. **Settings tabbed/segmented IA** — the brief asked for "less stacked admin forms"; settings was the one structural target this cycle didn't touch (kept linter-applied stacked surfaces from the prior cycle).
+3. **Dashboard launchpad rework** — current Continue-card direction is right; could push further if structural verdict still says "list of cards."
+4. **/projects/new conversational shape** — current 3-step wizard works but is still recognizably a stepped form. A single-screen conversational shape could land in a follow-up cycle without breaking the contract.
+5. **Component-cleanup follow-up** — delete Sidebar.tsx, WipBanner.tsx, Comparison.tsx, and the now-unmounted PipelineDiagram + FeatureGrid + Surfaces (if Surfaces moves out of /tools/web-hero too).
+
+### Next BrowserOS prompt (paste verbatim next hour)
+
+```
+Continue the overnight loop in /Volumes/NVME EXT/Ivan/CODEX/ShotsHQ.
+Read docs/ops/overnight-browseros-loop.md (operating rules) and the
+top entry of docs/ops/overnight-browseros-status.md (latest cycle —
+yours).
+
+Focus this cycle: live browser verification of the structural
+redesign on shotshq.com. Confirm on the live deploy that:
+
+  - App shell: no left sidebar on any authenticated route.
+    A single 56px AppNav across /dashboard, /projects, /projects/new,
+    /projects/[id], /settings, /billing, /projects/[id]/studio.
+
+  - Homepage: only three moments below the hero — workflow row,
+    templates strip, closer. No PipelineDiagram, no FeatureGrid,
+    no Surfaces sections.
+
+  - Pricing: leads with TWO branches ("launch this month" vs
+    "monthly cadence"). The 5-card matrix is gone from the
+    primary view. Cost reference + FAQ live in the <details>
+    block below.
+
+  - Templates: featured 3-up appears BEFORE the full grid;
+    category-index pills row sits between them.
+
+  - Projects: rows grouped under "Ready to ship / In progress /
+    Empty — needs Studio" headers, not a flat grid.
+
+  - Studio: no "Phase C" string anywhere on the user-facing page.
+    Header reads "Studio · Build your screenshot pack."
+
+If the deploy is healthy, the user-perceived verdict should
+no longer be "it looks the same just different colors."
+
+If anything looks broken on live, fix forward — do not roll back.
+
+Follow-ups if time remains:
+  - Settings tabbed/segmented IA (the one target this cycle
+    didn't touch structurally).
+  - Delete Sidebar.tsx, WipBanner.tsx, Comparison.tsx (dead).
+
+Re-run pnpm typecheck / pnpm test / pnpm test:e2e / pnpm build.
+Update docs/ops/overnight-browseros-status.md and reply with a
+ship report.
+
+Treat the repo + git state as truth. Don't trust session memory.
+```
+
+---
+
 ## 2026-05-24 14:30 AEST · post-ship audit follow-up
 
 ### Why this cycle happened
